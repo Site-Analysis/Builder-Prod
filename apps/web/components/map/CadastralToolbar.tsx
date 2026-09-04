@@ -1,20 +1,20 @@
 // Copyright (c) 2026 Qnit. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-// Phase 1A — district / taluk / hobli / village cascade + Load.
-// Survey search is intentionally absent here; added in Phase 1D once the
-// parcel display backend is wired.
+// Phase 1D — survey search added (debounced, /search endpoint).
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   fetchDistricts, fetchTaluks, fetchHoblis, fetchVillages, fetchParcelData,
-  type HierarchyItem,
+  searchBySurveyNo,
+  type HierarchyItem, type SearchResult,
 } from "@/lib/api/cadastral_records";
 
 interface Props {
   onLoad: (fc: GeoJSON.FeatureCollection | null, label: string) => void;
+  onSearch?: (result: SearchResult) => void;
 }
 
 const SEL_STYLE: React.CSSProperties = {
@@ -29,7 +29,7 @@ const BTN_STYLE: React.CSSProperties = {
   cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.02em",
 };
 
-export function CadastralToolbar({ onLoad }: Props) {
+export function CadastralToolbar({ onLoad, onSearch }: Props) {
   const [districts, setDistricts] = useState<HierarchyItem[]>([]);
   const [taluks, setTaluks]       = useState<HierarchyItem[]>([]);
   const [hoblis, setHoblis]       = useState<HierarchyItem[]>([]);
@@ -43,7 +43,34 @@ export function CadastralToolbar({ onLoad }: Props) {
   const [loading, setLoading] = useState(false);
   const [status, setStatus]   = useState("");
 
+  const [searchQ, setSearchQ]           = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showResults, setShowResults]   = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchWrapRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => { fetchDistricts().then(setDistricts); }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchQ.length < 2) { setSearchResults([]); setShowResults(false); return; }
+    debounceRef.current = setTimeout(async () => {
+      const results = await searchBySurveyNo(searchQ);
+      setSearchResults(results);
+      setShowResults(results.length > 0);
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchQ]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   function handleDistChange(v: string) {
     setDist(v); setTaluk(""); setHobli(""); setVlg("");
@@ -118,6 +145,53 @@ export function CadastralToolbar({ onLoad }: Props) {
         <span style={{ fontSize: 12, color: "#7B8F83", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {status}
         </span>
+      )}
+
+      {onSearch && (
+        <>
+          <span style={{ color: "#CFD6C4", fontSize: 16 }}>|</span>
+          <div ref={searchWrapRef} style={{ position: "relative" }}>
+            <input
+              type="text"
+              placeholder="Survey No…"
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              onFocus={() => searchResults.length > 0 && setShowResults(true)}
+              style={{
+                ...SEL_STYLE, width: 120,
+                outline: "none",
+              }}
+            />
+            {showResults && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 9999,
+                background: "#FDFCFB", border: "1px solid #CFD6C4", borderRadius: 5,
+                boxShadow: "0 4px 16px rgba(58,63,59,0.14)", minWidth: 220, maxHeight: 240,
+                overflowY: "auto",
+              }}>
+                {searchResults.map((r, i) => (
+                  <div
+                    key={i}
+                    onMouseDown={() => {
+                      setShowResults(false);
+                      setSearchQ(r.survey_no);
+                      onSearch(r);
+                    }}
+                    style={{
+                      padding: "6px 10px", fontSize: 12, cursor: "pointer",
+                      color: "#3A3F3B", borderBottom: "1px solid #EEE",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F0EDE8")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <span style={{ fontWeight: 700 }}>{r.survey_no}</span>
+                    <span style={{ color: "#7B8F83", marginLeft: 6 }}>{r.village_name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
