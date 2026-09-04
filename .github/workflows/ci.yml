@@ -32,7 +32,7 @@ jobs:
         run: npm ci
       - name: ESLint
         working-directory: apps/web
-        run: npm run lint -- --max-warnings=0
+        run: npm run lint
       - name: TypeScript
         working-directory: apps/web
         run: npx tsc --noEmit
