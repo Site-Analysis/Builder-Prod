@@ -9,7 +9,8 @@ import { ArrowLeft } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/auth";
 import { useProjectStore } from "@/lib/stores/project";
 import { getProject } from "@/lib/api/projects";
-import { MapView } from "@/components/map/MapView";
+import dynamic from "next/dynamic";
+const MapView = dynamic(() => import("@/components/map/MapView").then((m) => m.MapView), { ssr: false });
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();

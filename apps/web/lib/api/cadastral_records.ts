@@ -11,6 +11,7 @@ const BASE = process.env.NEXT_PUBLIC_CADASTRAL_API_URL ?? "https://api.builder.q
 const TIMEOUT_MS = 20_000;
 
 async function getToken(): Promise<string | null> {
+  if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "1") return null;
   for (let i = 0; i < 8; i++) {
     const session = await getSession();
     if (session?.accessToken) return session.accessToken as string;

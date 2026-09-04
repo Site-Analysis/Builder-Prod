@@ -28,10 +28,16 @@ function computeStats(projects: ProjectRow[]) {
   }
 }
 
+const DEV_USER_ID = "dev"
+
 export async function GET() {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 })
+  let userId: string
+  if (process.env.DEV_BYPASS_AUTH === "1") {
+    userId = DEV_USER_ID
+  } else {
+    const session = await auth()
+    if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 })
+    userId = session.user.id
   }
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return Response.json({ error: "Supabase not configured — set SUPABASE_SERVICE_ROLE_KEY" }, { status: 503 })
@@ -39,7 +45,7 @@ export async function GET() {
   const { data, error } = await getSupabaseAdmin()
     .from("builder_projects")
     .select("*")
-    .eq("user_id", session.user.id)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
   if (error) return Response.json({ error: error.message }, { status: 500 })
   const projects = (data ?? []) as ProjectRow[]
@@ -47,9 +53,13 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 })
+  let userId: string
+  if (process.env.DEV_BYPASS_AUTH === "1") {
+    userId = DEV_USER_ID
+  } else {
+    const session = await auth()
+    if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 })
+    userId = session.user.id
   }
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return Response.json({ error: "Supabase not configured — set SUPABASE_SERVICE_ROLE_KEY" }, { status: 503 })
@@ -58,7 +68,7 @@ export async function POST(req: Request) {
   const { data, error } = await getSupabaseAdmin()
     .from("builder_projects")
     .insert({
-      user_id: session.user.id,
+      user_id: userId,
       name: body.name,
       location: body.location,
       status: "needs-review",

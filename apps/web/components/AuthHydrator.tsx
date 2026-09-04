@@ -13,6 +13,10 @@ export function AuthHydrator({ children }: { children: React.ReactNode }) {
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "1") {
+      setAuth({ id: "dev", email: "dev@local", name: "Dev User" }, "dev-token");
+      return;
+    }
     if (status === "loading") return;
     if (status === "authenticated" && session?.user) {
       setAuth(
@@ -24,6 +28,7 @@ export function AuthHydrator({ children }: { children: React.ReactNode }) {
     }
   }, [session, status, setAuth, clearAuth]);
 
+  if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "1") return <>{children}</>;
   if (status === "loading") return null;
   return <>{children}</>;
 }

@@ -116,7 +116,7 @@ export function MapView() {
       />
 
       {/* Map fills remaining height */}
-      <div style={{ flex: 1, position: "relative" }}>
+      <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
         <MapContainer
           center={KA_CENTER}
           zoom={KA_ZOOM}

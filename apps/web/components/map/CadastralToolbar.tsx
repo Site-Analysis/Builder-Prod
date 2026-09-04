@@ -104,6 +104,7 @@ export function CadastralToolbar({ onLoad, onSearch }: Props) {
 
   return (
     <div style={{
+      position: "relative", zIndex: 10,
       display: "flex", alignItems: "center", gap: 8, padding: "6px 14px",
       background: "rgba(253,252,251,0.55)",
       backdropFilter: "blur(14px) saturate(160%)",
