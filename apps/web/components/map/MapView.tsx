@@ -69,12 +69,13 @@ function ParcelLayer({ fc }: { fc: GeoJSON.FeatureCollection }) {
 
 export function MapView() {
   const [parcelFc, setParcelFc] = useState<GeoJSON.FeatureCollection | null>(null);
+  const [loadKey, setLoadKey] = useState(0);
   const mapRef = useRef<LeafletMap | null>(null);
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {/* Cadastral toolbar sits above the map */}
-      <CadastralToolbar onLoad={(fc) => setParcelFc(fc)} />
+      <CadastralToolbar onLoad={(fc) => { setParcelFc(fc); setLoadKey((k) => k + 1); }} />
 
       {/* Map fills remaining height */}
       <div style={{ flex: 1, position: "relative" }}>
@@ -89,7 +90,7 @@ export function MapView() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             maxZoom={19}
           />
-          {parcelFc && <ParcelLayer key={parcelFc.features.length + String(parcelFc.features[0]?.id ?? parcelFc.features[0]?.properties?.survey_no ?? Math.random())} fc={parcelFc} />}
+          {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} />}
         </MapContainer>
       </div>
 
