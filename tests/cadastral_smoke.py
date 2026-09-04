@@ -5,17 +5,17 @@
 
 Covers:
   (a) /health → {status: ok, service: cadastral}
-  (b) all land-record endpoints → 403 without flag
+  (b) all land-record endpoints → 403 without flag (auth bypassed)
   (c) /districts → list[{code, name}] with flag
   (d) /taluks?dist=1 → list shape with flag
   (e) /hoblis?dist=1&taluk=9 → list shape with flag
   (f) /villages?dist=1&taluk=9&hobli=3 → list shape with flag
   (g) /search short query → 422
-  (h) /data → GeoJSON FeatureCollection shell with flag
-  (i) /search → list (empty OK, shape checked if survey_index exists)
+  (h) /data → GeoJSON FeatureCollection shell with flag (skipped without CADASTRAL_DATA_DIR)
+  (i) /search → list (empty OK; shape checked if survey_index populated)
 
 Run: pytest tests/cadastral_smoke.py
-Requires geopandas in the active venv: cd services/cadastral && pip install -r requirements.txt
+Requires geopandas: cd services/cadastral && pip install -r requirements.txt
 """
 
 from __future__ import annotations
@@ -49,23 +49,36 @@ from fastapi.testclient import TestClient  # noqa: E402
 _LAND_FLAG = "feature.cadastral.land-records"
 _HAS_DATA = bool(os.environ.get("CADASTRAL_DATA_DIR"))
 
+# Dummy payload returned by overridden verify_token — satisfies FastAPI dependency type.
+_DUMMY_PAYLOAD = {"sub": "test-user", "preferred_username": "smoke-test"}
 
-@pytest.fixture
-def client(monkeypatch):
-    monkeypatch.setenv("FLAGS", _LAND_FLAG)
+
+def _make_client(monkeypatch, tmp_path, flags: str):
+    """Build a TestClient with auth bypassed and SURVEY_INDEX_DB in a writable tmpdir."""
+    monkeypatch.setenv("FLAGS", flags)
+    monkeypatch.setenv("SURVEY_INDEX_DB", str(tmp_path / "survey_index.db"))
     sys.modules.pop("app", None)
     sys.modules.pop("app.main", None)
+    sys.modules.pop("app.auth", None)
+    from app.auth import verify_token
     from app.main import app
-    return TestClient(app)
+    app.dependency_overrides[verify_token] = lambda: _DUMMY_PAYLOAD
+    client = TestClient(app)
+    return client, app
 
 
 @pytest.fixture
-def client_no_flags(monkeypatch):
-    monkeypatch.setenv("FLAGS", "")
-    sys.modules.pop("app", None)
-    sys.modules.pop("app.main", None)
-    from app.main import app
-    return TestClient(app)
+def client(monkeypatch, tmp_path):
+    c, app = _make_client(monkeypatch, tmp_path, _LAND_FLAG)
+    yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client_no_flags(monkeypatch, tmp_path):
+    c, app = _make_client(monkeypatch, tmp_path, "")
+    yield c
+    app.dependency_overrides.clear()
 
 
 def test_a_health(client):
@@ -77,7 +90,7 @@ def test_a_health(client):
 
 
 def test_b_flag_guard(client_no_flags):
-    """All gated endpoints return 403 without flag."""
+    """All gated endpoints return 403 without flag (auth bypassed so flag is the only gate)."""
     for path in [
         "/districts",
         "/taluks?dist=1",
