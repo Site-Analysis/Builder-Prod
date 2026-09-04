@@ -31,11 +31,9 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: ESLint
-        working-directory: apps/web
-        run: npm run lint
+        run: npm run lint -w web
       - name: TypeScript
-        working-directory: apps/web
-        run: npx tsc --noEmit
+        run: npm run tsc -w web
 
   # ── Python lint ───────────────────────────────────────────────────────────
   lint-py:
