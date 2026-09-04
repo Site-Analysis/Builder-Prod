@@ -67,6 +67,9 @@ class _MockPool:
             return [{"vlg_code": 46, "name": "Test Village"}]
         return []
 
+    async def close(self) -> None:
+        pass
+
 
 def _make_client(monkeypatch, flags: str):
     monkeypatch.setenv("FLAGS", flags)
