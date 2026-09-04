@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter, HTTPException, Query
+import asyncpg
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import Response
 
 from app.services import cadastral_service as cs
@@ -25,15 +26,23 @@ def _require_flag() -> None:
         )
 
 
+def _pool(request: Request) -> asyncpg.Pool:
+    pool = request.app.state.pool
+    if pool is None:
+        raise HTTPException(status_code=503, detail="Database not configured")
+    return pool
+
+
 @router.get("/data")
-def get_parcel_data(
-    dist: str | None = Query(None),
-    taluk: str | None = Query(None),
-    hobli: str | None = Query(None),
-    vlg: str | None = Query(None),
+async def get_parcel_data(
+    request: Request,
+    dist: str = Query(...),
+    taluk: str = Query(...),
+    hobli: str = Query(...),
+    vlg: str = Query(...),
     survey: str | None = Query(None, description="Filter to exact survey_no"),
 ) -> Response:
-    """Parcel polygon GeoJSON for a village (provide all four params — unscoped loads full lake)."""
+    """Parcel polygon GeoJSON for a village."""
     _require_flag()
-    geojson = cs.build_geojson(dist, taluk, hobli, vlg, survey)
+    geojson = await cs.build_geojson(_pool(request), dist, taluk, hobli, vlg, survey)
     return Response(content=geojson, media_type="application/json")

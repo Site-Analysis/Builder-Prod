@@ -1,26 +1,27 @@
 # Copyright (c) 2026 Qnit. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
-"""Cadastral service smoke tests — Phase 1B.
+"""Cadastral service smoke tests — Phase 1C (CockroachDB).
 
 Covers:
   (a) /health → {status: ok, service: cadastral}
-  (b) all land-record endpoints → 403 without flag (auth bypassed)
-  (c) /districts → list[{code, name}] with flag
-  (d) /taluks?dist=1 → list shape with flag
-  (e) /hoblis?dist=1&taluk=9 → list shape with flag
-  (f) /villages?dist=1&taluk=9&hobli=3 → list shape with flag
+  (b) all land-record endpoints → 403 without flag
+  (c) /districts → list[{code, name}]
+  (d) /taluks?dist=1 → list shape
+  (e) /hoblis?dist=1&taluk=9 → list shape
+  (f) /villages?dist=1&taluk=9&hobli=3 → list shape
   (g) /search short query → 422
-  (h) /data → GeoJSON FeatureCollection shell with flag (skipped without CADASTRAL_DATA_DIR)
-  (i) /search → list (empty OK; shape checked if survey_index populated)
+  (h) /data → GeoJSON FeatureCollection
+  (i) /search → list (empty OK; shape checked if data present)
+
+MockPool replaces asyncpg.Pool — no real DB needed in CI.
 
 Run: pytest tests/cadastral_smoke.py
-Requires geopandas: cd services/cadastral && pip install -r requirements.txt
+Requires: cd services/cadastral && pip install -r requirements.txt
 """
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -30,10 +31,11 @@ if str(_SVC) in sys.path:
 sys.path.insert(0, str(_SVC))
 sys.modules.pop("app", None)
 
-import pytest
+import pytest  # noqa: E402
 
 try:
     import geopandas  # noqa: F401
+
     _HAS_GEOPANDAS = True
 except ImportError:
     _HAS_GEOPANDAS = False
@@ -47,38 +49,55 @@ if not _HAS_GEOPANDAS:
 from fastapi.testclient import TestClient  # noqa: E402
 
 _LAND_FLAG = "feature.cadastral.land-records"
-_HAS_DATA = bool(os.environ.get("CADASTRAL_DATA_DIR"))
-
-# Dummy payload returned by overridden verify_token — satisfies FastAPI dependency type.
 _DUMMY_PAYLOAD = {"sub": "test-user", "preferred_username": "smoke-test"}
 
 
-def _make_client(monkeypatch, tmp_path, flags: str):
-    """Build a TestClient with auth bypassed and SURVEY_INDEX_DB in a writable tmpdir."""
+class _MockPool:
+    """Async mock of asyncpg.Pool — returns minimal valid rows per query."""
+
+    async def fetch(self, query: str, *args: object) -> list[dict]:
+        q = query.lower()
+        if "from districts" in q:
+            return [{"dist_code": 1, "name": "Test District"}]
+        if "from taluks" in q:
+            return [{"taluk_code": 9, "name": "Test Taluk"}]
+        if "from hoblis" in q:
+            return [{"hobli_code": 3, "name": "Test Hobli"}]
+        if "from villages" in q:
+            return [{"vlg_code": 46, "name": "Test Village"}]
+        return []
+
+
+def _make_client(monkeypatch, flags: str):
     monkeypatch.setenv("FLAGS", flags)
-    monkeypatch.setenv("SURVEY_INDEX_DB", str(tmp_path / "survey_index.db"))
     sys.modules.pop("app", None)
     sys.modules.pop("app.main", None)
     sys.modules.pop("app.auth", None)
     from app.auth import verify_token
     from app.main import app
+
     app.dependency_overrides[verify_token] = lambda: _DUMMY_PAYLOAD
-    client = TestClient(app)
+    # Use TestClient as context manager so lifespan runs, then inject mock pool.
+    client = TestClient(app, raise_server_exceptions=True)
+    client.__enter__()
+    app.state.pool = _MockPool()
     return client, app
 
 
 @pytest.fixture
-def client(monkeypatch, tmp_path):
-    c, app = _make_client(monkeypatch, tmp_path, _LAND_FLAG)
+def client(monkeypatch):
+    c, app = _make_client(monkeypatch, _LAND_FLAG)
     yield c
     app.dependency_overrides.clear()
+    c.__exit__(None, None, None)
 
 
 @pytest.fixture
-def client_no_flags(monkeypatch, tmp_path):
-    c, app = _make_client(monkeypatch, tmp_path, "")
+def client_no_flags(monkeypatch):
+    c, app = _make_client(monkeypatch, "")
     yield c
     app.dependency_overrides.clear()
+    c.__exit__(None, None, None)
 
 
 def test_a_health(client):
@@ -90,13 +109,13 @@ def test_a_health(client):
 
 
 def test_b_flag_guard(client_no_flags):
-    """All gated endpoints return 403 without flag (auth bypassed so flag is the only gate)."""
+    """All gated endpoints return 403 without flag."""
     for path in [
         "/districts",
         "/taluks?dist=1",
         "/hoblis?dist=1&taluk=9",
         "/villages?dist=1&taluk=9&hobli=3",
-        "/data",
+        "/data?dist=1&taluk=9&hobli=3&vlg=46",
         "/search?q=30",
     ]:
         r = client_no_flags.get(path)
@@ -108,8 +127,8 @@ def test_c_districts_shape(client):
     assert r.status_code == 200
     results = r.json()
     assert isinstance(results, list)
-    if results:
-        assert {"code", "name"} <= set(results[0].keys())
+    assert len(results) > 0
+    assert {"code", "name"} <= set(results[0].keys())
 
 
 def test_d_taluks_shape(client):
@@ -117,8 +136,8 @@ def test_d_taluks_shape(client):
     assert r.status_code == 200
     results = r.json()
     assert isinstance(results, list)
-    if results:
-        assert {"code", "name"} <= set(results[0].keys())
+    assert len(results) > 0
+    assert {"code", "name"} <= set(results[0].keys())
 
 
 def test_e_hoblis_shape(client):
@@ -126,8 +145,8 @@ def test_e_hoblis_shape(client):
     assert r.status_code == 200
     results = r.json()
     assert isinstance(results, list)
-    if results:
-        assert {"code", "name"} <= set(results[0].keys())
+    assert len(results) > 0
+    assert {"code", "name"} <= set(results[0].keys())
 
 
 def test_f_villages_shape(client):
@@ -135,8 +154,8 @@ def test_f_villages_shape(client):
     assert r.status_code == 200
     results = r.json()
     assert isinstance(results, list)
-    if results:
-        assert {"code", "name"} <= set(results[0].keys())
+    assert len(results) > 0
+    assert {"code", "name"} <= set(results[0].keys())
 
 
 def test_g_search_short_query(client):
@@ -145,8 +164,8 @@ def test_g_search_short_query(client):
     assert r.status_code == 422
 
 
-@pytest.mark.skipif(not _HAS_DATA, reason="CADASTRAL_DATA_DIR not set")
 def test_h_data_geojson_shell(client):
+    """Empty village returns FeatureCollection shell."""
     r = client.get("/data?dist=1&taluk=9&hobli=3&vlg=46")
     assert r.status_code == 200
     body = r.json()
