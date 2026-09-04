@@ -28,11 +28,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - name: Install deps
         run: npm ci
       - name: ESLint
         working-directory: apps/web
-        run: ../../node_modules/.bin/next lint
+        run: ../../node_modules/.bin/eslint .
       - name: TypeScript
         working-directory: apps/web
         run: ../../node_modules/.bin/tsc --noEmit
