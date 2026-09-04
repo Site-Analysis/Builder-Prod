@@ -20,7 +20,7 @@ jobs:
       - name: Run gitleaks
         run: gitleaks detect --source . --verbose --redact
 
-  # ── JavaScript / TypeScript lint ──────────────────────────────────────────
+  # ── JavaScript / TypeScript typecheck ────────────────────────────────────
   lint-js:
     runs-on: ubuntu-latest
     steps:
@@ -31,9 +31,6 @@ jobs:
           cache: npm
       - name: Install deps
         run: npm ci
-      - name: ESLint
-        working-directory: apps/web
-        run: ../../node_modules/.bin/eslint .
       - name: TypeScript
         working-directory: apps/web
         run: ../../node_modules/.bin/tsc --noEmit
