@@ -20,15 +20,17 @@ router = APIRouter(tags=["parcels"])
 def _require_flag() -> None:
     enabled = {f.strip() for f in os.getenv("FLAGS", "").split(",") if f.strip()}
     if _LAND_FLAG not in enabled:
-        raise HTTPException(status_code=403, detail=f"Feature flag disabled: {_LAND_FLAG}")
+        raise HTTPException(
+            status_code=403, detail=f"Feature flag disabled: {_LAND_FLAG}"
+        )
 
 
 @router.get("/data")
 def get_parcel_data(
-    dist:   str | None = Query(None),
-    taluk:  str | None = Query(None),
-    hobli:  str | None = Query(None),
-    vlg:    str | None = Query(None),
+    dist: str | None = Query(None),
+    taluk: str | None = Query(None),
+    hobli: str | None = Query(None),
+    vlg: str | None = Query(None),
     survey: str | None = Query(None, description="Filter to exact survey_no"),
 ) -> Response:
     """Parcel polygon GeoJSON for a village (provide all four params — unscoped loads full lake)."""

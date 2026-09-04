@@ -23,18 +23,18 @@ jobs:
   # ── JavaScript / TypeScript lint ──────────────────────────────────────────
   lint-js:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
+      - name: Install deps
+        run: npm ci
       - name: ESLint
+        working-directory: apps/web
         run: npx eslint . --max-warnings=0
       - name: TypeScript
+        working-directory: apps/web
         run: npx tsc --noEmit
 
   # ── Python lint ───────────────────────────────────────────────────────────

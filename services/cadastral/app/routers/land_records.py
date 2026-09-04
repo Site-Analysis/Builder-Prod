@@ -25,7 +25,9 @@ router = APIRouter(tags=["land-records"])
 def _require_flag() -> None:
     enabled = {f.strip() for f in os.getenv("FLAGS", "").split(",") if f.strip()}
     if _LAND_FLAG not in enabled:
-        raise HTTPException(status_code=403, detail=f"Feature flag disabled: {_LAND_FLAG}")
+        raise HTTPException(
+            status_code=403, detail=f"Feature flag disabled: {_LAND_FLAG}"
+        )
 
 
 @router.get("/search")
@@ -43,7 +45,9 @@ def list_districts() -> list[dict[str, str]]:
 
 
 @router.get("/taluks")
-def list_taluks(dist: str = Query(..., description="District e-Chawadi code")) -> list[dict[str, str]]:
+def list_taluks(
+    dist: str = Query(..., description="District e-Chawadi code"),
+) -> list[dict[str, str]]:
     """Taluks with names for a given district code."""
     _require_flag()
     return cs.list_taluks(dist)

@@ -53,10 +53,10 @@ def find_paths(
     hobli: str | None = None,
     vlg: str | None = None,
 ) -> list[str]:
-    dist_part  = f"dist_{dist}"        if dist  else "dist_*"
-    taluk_part = f"taluk_{taluk}"      if taluk else "taluk_*"
-    hobli_part = f"hobli_{hobli}"      if hobli else "hobli_*"
-    vlg_part   = f"vlg_{vlg}.parquet" if vlg   else "vlg_*.parquet"
+    dist_part = f"dist_{dist}" if dist else "dist_*"
+    taluk_part = f"taluk_{taluk}" if taluk else "taluk_*"
+    hobli_part = f"hobli_{hobli}" if hobli else "hobli_*"
+    vlg_part = f"vlg_{vlg}.parquet" if vlg else "vlg_*.parquet"
     pattern = os.path.join(DATA_DIR, dist_part, taluk_part, hobli_part, vlg_part)
     return sorted(glob.glob(pattern))
 
@@ -68,7 +68,11 @@ def build_geojson(
     vlg: str | None = None,
     survey: str | None = None,
 ) -> str:
-    frames = [g for p in find_paths(dist, taluk, hobli, vlg) if (g := load_village(p)) is not None]
+    frames = [
+        g
+        for p in find_paths(dist, taluk, hobli, vlg)
+        if (g := load_village(p)) is not None
+    ]
     if not frames:
         return '{"type":"FeatureCollection","features":[]}'
     merged = pd.concat(frames, ignore_index=True)
@@ -98,7 +102,14 @@ def search_survey(q: str, limit: int = 25) -> list[dict[str, Any]]:
         return []
     conn.close()
     return [
-        {"survey_no": r[0], "village_name": r[1], "dist": r[2], "taluk": r[3], "hobli": r[4], "vlg": r[5]}
+        {
+            "survey_no": r[0],
+            "village_name": r[1],
+            "dist": r[2],
+            "taluk": r[3],
+            "hobli": r[4],
+            "vlg": r[5],
+        }
         for r in rows
     ]
 
@@ -109,7 +120,7 @@ def _list_dir_codes(path: str, prefix: str) -> list[str]:
     codes = []
     for n in os.listdir(path):
         if n.startswith(prefix):
-            stem = os.path.splitext(n[len(prefix):])[0]
+            stem = os.path.splitext(n[len(prefix) :])[0]
             if stem.isdigit():
                 codes.append(stem)
     return sorted(codes, key=int)
@@ -171,14 +182,16 @@ def _build_survey_index() -> None:
         parts = path.replace("\\", "/").split("/")
         try:
             di = next(i for i, p in enumerate(parts) if p.startswith("dist_"))
-            dist  = parts[di].replace("dist_", "")
+            dist = parts[di].replace("dist_", "")
             taluk = parts[di + 1].replace("taluk_", "")
             hobli = parts[di + 2].replace("hobli_", "")
-            vlg   = os.path.splitext(parts[di + 3])[0].replace("vlg_", "")
+            vlg = os.path.splitext(parts[di + 3])[0].replace("vlg_", "")
         except (StopIteration, IndexError):
             continue
         try:
-            df = pd.read_parquet(path, columns=["survey_no", "village_name", "village_code"])
+            df = pd.read_parquet(
+                path, columns=["survey_no", "village_name", "village_code"]
+            )
         except Exception:  # noqa: BLE001,S112
             continue
         if df.empty or "survey_no" not in df.columns:
@@ -188,13 +201,18 @@ def _build_survey_index() -> None:
             sno = str(row.get("survey_no") or "").strip()
             if not sno:
                 continue
-            rows.append((
-                sno,
-                sno.split("/")[0].strip(),
-                str(row.get("village_name") or ""),
-                str(row.get("village_code") or ""),
-                dist, taluk, hobli, vlg,
-            ))
+            rows.append(
+                (
+                    sno,
+                    sno.split("/")[0].strip(),
+                    str(row.get("village_name") or ""),
+                    str(row.get("village_code") or ""),
+                    dist,
+                    taluk,
+                    hobli,
+                    vlg,
+                )
+            )
         if rows:
             conn.executemany("INSERT INTO survey_index VALUES (?,?,?,?,?,?,?,?)", rows)
         done += 1
@@ -232,5 +250,7 @@ def list_hoblis(dist: str, taluk: str) -> list[dict[str, str]]:
 def list_villages(dist: str, taluk: str, hobli: str) -> list[dict[str, str]]:
     path = os.path.join(DATA_DIR, f"dist_{dist}", f"taluk_{taluk}", f"hobli_{hobli}")
     codes = _list_dir_codes(path, "vlg_")
-    result = [{"code": c, "name": _NAMES.get((dist, taluk, hobli, c), c)} for c in codes]
+    result = [
+        {"code": c, "name": _NAMES.get((dist, taluk, hobli, c), c)} for c in codes
+    ]
     return sorted(result, key=lambda x: x["name"])

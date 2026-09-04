@@ -24,7 +24,9 @@ async def _get_jwks() -> dict:
                 r.raise_for_status()
                 _jwks_cache = r.json()
         except Exception as exc:
-            raise HTTPException(status_code=401, detail=f"Auth service unreachable: {exc}") from exc
+            raise HTTPException(
+                status_code=401, detail=f"Auth service unreachable: {exc}"
+            ) from exc
     return _jwks_cache
 
 
@@ -43,4 +45,6 @@ async def verify_token(authorization: str | None = Header(default=None)) -> dict
     except JWTError as exc:
         raise HTTPException(status_code=401, detail=f"Invalid token: {exc}") from exc
     except Exception as exc:
-        raise HTTPException(status_code=401, detail=f"Token verification failed: {exc}") from exc
+        raise HTTPException(
+            status_code=401, detail=f"Token verification failed: {exc}"
+        ) from exc
