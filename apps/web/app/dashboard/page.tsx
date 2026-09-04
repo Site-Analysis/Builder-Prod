@@ -32,7 +32,6 @@ export default function DashboardPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { projects, stats, setProjects } = useProjectStore();
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newLocation, setNewLocation] = useState("");
   const hasFetched = useRef(false);

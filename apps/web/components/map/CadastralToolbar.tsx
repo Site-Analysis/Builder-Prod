@@ -69,7 +69,7 @@ export function CadastralToolbar({ onLoad }: Props) {
     if (!fc) { setStatus("No parcel data"); onLoad(null, ""); return; }
     const n = fc.features?.length ?? 0;
     const label = n > 500
-      ? `${n} parcel(s) loaded (labels hidden above 500 — click a parcel to see its survey no.)`
+      ? `${n} parcel(s) loaded (hover tooltips hidden above 500)`
       : `${n} parcel(s) loaded`;
     setStatus(label);
     onLoad(fc, label);

@@ -18,7 +18,7 @@ function rowToProject(row: ProjectRow): Project {
     id: row.id,
     name: row.name,
     location: row.location ?? "",
-    status: (row.status as Project["status"]) ?? "needs-review",
+    status: (["complete", "needs-review"].includes(row.status) ? row.status : "needs-review") as Project["status"],
     boundary: row.boundary ?? undefined,
     created_at: row.created_at,
   };

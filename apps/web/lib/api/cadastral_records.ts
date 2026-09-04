@@ -22,12 +22,14 @@ async function getToken(): Promise<string | null> {
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  // Propagate caller's abort into our controller so both timeout and external cancel work.
+  signal?.addEventListener("abort", () => ctrl.abort(), { once: true });
   const token = await getToken();
   const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
   try {
     const res = await fetch(`${BASE}${path}`, {
       headers: { ...authHeader },
-      signal: signal ?? ctrl.signal,
+      signal: ctrl.signal,
     });
     if (!res.ok) {
       const detail = await res.json().then((b) => b?.detail ?? `HTTP ${res.status}`).catch(() => `HTTP ${res.status}`);
@@ -53,15 +55,15 @@ export async function fetchDistricts(signal?: AbortSignal): Promise<HierarchyIte
 }
 
 export async function fetchTaluks(dist: string, signal?: AbortSignal): Promise<HierarchyItem[]> {
-  try { return await get<HierarchyItem[]>(`/taluks?dist=${dist}`, signal); } catch { return []; }
+  try { return await get<HierarchyItem[]>(`/taluks?dist=${encodeURIComponent(dist)}`, signal); } catch { return []; }
 }
 
 export async function fetchHoblis(dist: string, taluk: string, signal?: AbortSignal): Promise<HierarchyItem[]> {
-  try { return await get<HierarchyItem[]>(`/hoblis?dist=${dist}&taluk=${taluk}`, signal); } catch { return []; }
+  try { return await get<HierarchyItem[]>(`/hoblis?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}`, signal); } catch { return []; }
 }
 
 export async function fetchVillages(dist: string, taluk: string, hobli: string, signal?: AbortSignal): Promise<HierarchyItem[]> {
-  try { return await get<HierarchyItem[]>(`/villages?dist=${dist}&taluk=${taluk}&hobli=${hobli}`, signal); } catch { return []; }
+  try { return await get<HierarchyItem[]>(`/villages?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}&hobli=${encodeURIComponent(hobli)}`, signal); } catch { return []; }
 }
 
 // ─── Parcel GeoJSON ──────────────────────────────────────────────────────────
@@ -72,7 +74,7 @@ export async function fetchParcelData(
 ): Promise<GeoJSON.FeatureCollection | null> {
   try {
     return await get<GeoJSON.FeatureCollection>(
-      `/data?dist=${dist}&taluk=${taluk}&hobli=${hobli}&vlg=${vlg}`, signal,
+      `/data?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}&hobli=${encodeURIComponent(hobli)}&vlg=${encodeURIComponent(vlg)}`, signal,
     );
   } catch { return null; }
 }

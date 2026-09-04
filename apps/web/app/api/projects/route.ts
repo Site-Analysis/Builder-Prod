@@ -34,7 +34,7 @@ export async function GET() {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return Response.json({ projects: [], stats: { total: 0, fully_analysed: 0, needs_review: 0, this_month: 0 } })
+    return Response.json({ error: "Supabase not configured — set SUPABASE_SERVICE_ROLE_KEY" }, { status: 503 })
   }
   const { data, error } = await getSupabaseAdmin()
     .from("builder_projects")

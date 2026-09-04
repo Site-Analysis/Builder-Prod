@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Map as LeafletMap, Layer, GeoJSONOptions } from "leaflet";
 import { CadastralToolbar } from "./CadastralToolbar";
@@ -17,8 +17,11 @@ import "leaflet/dist/leaflet.css";
 const KA_CENTER: [number, number] = [15.3173, 75.7139];
 const KA_ZOOM = 7;
 
+const TOOLTIP_THRESHOLD = 500;
+
 function ParcelLayer({ fc }: { fc: GeoJSON.FeatureCollection }) {
   const map = useMap();
+  const showTooltips = fc.features.length <= TOOLTIP_THRESHOLD;
 
   const options: GeoJSONOptions = {
     style: () => ({
@@ -28,22 +31,20 @@ function ParcelLayer({ fc }: { fc: GeoJSON.FeatureCollection }) {
       fillColor: "#306223",
       fillOpacity: 0.08,
     }),
-    onEachFeature: (feature, layer: Layer) => {
-      const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
-      if (surveyNo) {
-        layer.bindTooltip(surveyNo, { permanent: false, sticky: true, className: "cadastral-tooltip" });
-      }
-    },
+    onEachFeature: showTooltips
+      ? (feature, layer: Layer) => {
+          const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
+          if (surveyNo) {
+            layer.bindTooltip(surveyNo, { permanent: false, sticky: true, className: "cadastral-tooltip" });
+          }
+        }
+      : undefined,
   };
 
-  // Fly to bounds of loaded data
-  const ref = useRef(false);
-  if (!ref.current) {
-    ref.current = true;
-    // defer so the component mounts first
-    setTimeout(() => {
+  // Fly to bounds whenever this component mounts (keyed per load in MapView).
+  useEffect(() => {
+    const timer = setTimeout(() => {
       try {
-        // Compute bounding box from features
         const coords = fc.features.flatMap((f) => {
           if (f.geometry.type === "Polygon") return f.geometry.coordinates[0];
           if (f.geometry.type === "MultiPolygon") return f.geometry.coordinates.flatMap((r) => r[0]);
@@ -59,9 +60,11 @@ function ParcelLayer({ fc }: { fc: GeoJSON.FeatureCollection }) {
         }
       } catch { /* ignore */ }
     }, 50);
-  }
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  return <GeoJSON key={JSON.stringify(fc.bbox ?? fc.features.length)} data={fc} {...options} />;
+  return <GeoJSON data={fc} {...options} />;
 }
 
 export function MapView() {
@@ -86,7 +89,7 @@ export function MapView() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             maxZoom={19}
           />
-          {parcelFc && <ParcelLayer fc={parcelFc} />}
+          {parcelFc && <ParcelLayer key={parcelFc.features.length + String(parcelFc.features[0]?.id ?? parcelFc.features[0]?.properties?.survey_no ?? Math.random())} fc={parcelFc} />}
         </MapContainer>
       </div>
 
