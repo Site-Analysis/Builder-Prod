@@ -30,7 +30,12 @@ async def _get_jwks() -> dict:
     return _jwks_cache
 
 
+_DEV_BYPASS = os.getenv("DEV_BYPASS_AUTH", "").lower() in ("1", "true", "yes")
+
+
 async def verify_token(authorization: str | None = Header(default=None)) -> dict:
+    if _DEV_BYPASS:
+        return {"sub": "dev", "preferred_username": "dev"}
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing Bearer token")
     token = authorization.removeprefix("Bearer ")
