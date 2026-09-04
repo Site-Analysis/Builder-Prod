@@ -1,0 +1,71 @@
+// Copyright (c) 2026 Qnit. All rights reserved.
+// SPDX-License-Identifier: LicenseRef-Proprietary
+
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { useAuthStore } from "@/lib/stores/auth";
+import { useProjectStore } from "@/lib/stores/project";
+import { getProject } from "@/lib/api/projects";
+import { MapView } from "@/components/map/MapView";
+
+export default function ProjectPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { currentProject, setCurrentProject } = useProjectStore();
+  const [loading, setLoading] = useState(!currentProject || currentProject.id !== id);
+  const fetched = useRef(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) { router.replace("/"); return; }
+    if (fetched.current) return;
+    if (currentProject?.id === id) { setLoading(false); return; }
+    fetched.current = true;
+    getProject(id)
+      .then((p) => { setCurrentProject(p); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [id, isAuthenticated, router, currentProject, setCurrentProject]);
+
+  if (loading) {
+    return (
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F2EDE8" }}>
+        <span style={{ color: "#7B8F83", fontSize: 14 }}>Loading…</span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#F2EDE8" }}>
+      {/* Top bar */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 12, padding: "0 20px", height: 48,
+        background: "rgba(253,252,251,0.9)",
+        backdropFilter: "blur(14px)",
+        borderBottom: "1px solid #CFD6C4",
+        flexShrink: 0, zIndex: 200,
+      }}>
+        <button
+          onClick={() => router.push("/dashboard")}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#7B8F83", display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}
+        >
+          <ArrowLeft size={14} /> Dashboard
+        </button>
+        <span style={{ color: "#CFD6C4" }}>|</span>
+        <span style={{ fontWeight: 700, fontSize: 14, color: "#3A3F3B" }}>
+          {currentProject?.name ?? id}
+        </span>
+        {currentProject?.location && (
+          <span style={{ fontSize: 12, color: "#7B8F83" }}>— {currentProject.location}</span>
+        )}
+      </div>
+
+      {/* Map fills remaining height */}
+      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+        <MapView />
+      </div>
+    </div>
+  );
+}
