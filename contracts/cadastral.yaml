@@ -1,0 +1,172 @@
+openapi: "3.1.0"
+info:
+  title: Cadastral Service
+  version: "1.0.0"
+  description: >
+    Karnataka e-Chawadi (Bhoomi) cadastral data service. Exposes parcel geometries
+    and administrative hierarchy (district / taluk / hobli / village). All parcel
+    geometry is EPSG:4326 (WGS84). Source parquets store EPSG:32643 with X/Y swapped —
+    the service fixes this at read time via affine transform.
+
+    Gated by `feature.cadastral.land-records`.
+
+servers:
+  - url: http://localhost:8011
+    description: Local dev
+
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      responses:
+        "200":
+          description: Service running
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, service]
+                properties:
+                  status: { type: string, example: "ok" }
+                  service: { type: string, example: "cadastral" }
+
+  /search:
+    get:
+      operationId: searchSurveyNumber
+      summary: Survey number prefix search (max 25 results)
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2 }
+          description: Survey number prefix (e.g. "309")
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SurveySearchResult"
+        "403":
+          description: Feature flag disabled
+
+  /districts:
+    get:
+      operationId: listDistricts
+      summary: Districts with human-readable names
+      responses:
+        "200":
+          description: Sorted list of {code, name} objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HierarchyItem"
+        "403":
+          description: Feature flag disabled
+
+  /taluks:
+    get:
+      operationId: listTaluks
+      summary: Taluks for a given district
+      parameters:
+        - { name: dist, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Sorted list of {code, name} objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HierarchyItem"
+        "403":
+          description: Feature flag disabled
+
+  /hoblis:
+    get:
+      operationId: listHoblis
+      summary: Hoblis for a given district + taluk
+      parameters:
+        - { name: dist,  in: query, required: true, schema: { type: string } }
+        - { name: taluk, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Sorted list of {code, name} objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HierarchyItem"
+        "403":
+          description: Feature flag disabled
+
+  /villages:
+    get:
+      operationId: listVillages
+      summary: Villages for a given district + taluk + hobli
+      parameters:
+        - { name: dist,  in: query, required: true, schema: { type: string } }
+        - { name: taluk, in: query, required: true, schema: { type: string } }
+        - { name: hobli, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Sorted list of {code, name} objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HierarchyItem"
+        "403":
+          description: Feature flag disabled
+
+  /data:
+    get:
+      operationId: getParcelData
+      summary: Parcel polygon GeoJSON for a village
+      description: >
+        Returns GeoJSON FeatureCollection of survey parcels. Provide all four hierarchy
+        params — unscoped calls load the full 1.7 GB lake.
+        Gated by `feature.cadastral.land-records`.
+      parameters:
+        - { name: dist,   in: query, required: false, schema: { type: string } }
+        - { name: taluk,  in: query, required: false, schema: { type: string } }
+        - { name: hobli,  in: query, required: false, schema: { type: string } }
+        - { name: vlg,    in: query, required: false, schema: { type: string } }
+        - { name: survey, in: query, required: false, schema: { type: string }, description: "Filter to exact survey_no" }
+      responses:
+        "200":
+          description: GeoJSON FeatureCollection of parcels
+          content:
+            application/json:
+              schema:
+                type: object
+                description: GeoJSON FeatureCollection
+        "403":
+          description: Feature flag disabled
+
+components:
+  schemas:
+    HierarchyItem:
+      type: object
+      required: [code, name]
+      properties:
+        code: { type: string }
+        name: { type: string }
+
+    SurveySearchResult:
+      type: object
+      required: [survey_no, village_name, dist, taluk, hobli, vlg]
+      properties:
+        survey_no:    { type: string, example: "309/*/*" }
+        village_name: { type: string, example: "Krishnarajapura" }
+        dist:         { type: string, example: "1" }
+        taluk:        { type: string, example: "9" }
+        hobli:        { type: string, example: "3" }
+        vlg:          { type: string, example: "46" }
