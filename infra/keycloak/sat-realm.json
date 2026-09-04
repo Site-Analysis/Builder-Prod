@@ -1,0 +1,70 @@
+{
+  "realm": "sat",
+  "enabled": true,
+  "displayName": "Qnit Builders",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "clients": [
+    {
+      "clientId": "sat-web",
+      "name": "Qnit Builders Web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*##https://builder.qnit.site/*"
+      },
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "https://builder.qnit.site/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "https://builder.qnit.site"
+      ],
+      "fullScopeAllowed": true,
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+    }
+  ],
+  "users": [
+    {
+      "username": "builder",
+      "email": "builder@qnit.site",
+      "firstName": "Builder",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "REPLACE_WITH_YOUR_PASSWORD",
+          "temporary": true
+        }
+      ],
+      "realmRoles": ["default-roles-sat"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "builder",
+        "description": "Builder role"
+      }
+    ]
+  },
+  "defaultRoles": ["builder"]
+}
