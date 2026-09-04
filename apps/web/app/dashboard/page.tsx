@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Plus, Layers, BadgeCheck, Clock, CalendarDays } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/auth";
 import { signOut } from "next-auth/react";
 import { useProjectStore } from "@/lib/stores/project";
@@ -312,53 +312,175 @@ function GhostCard({ variant }: { variant: number }) {
   );
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// ─── Building hero ────────────────────────────────────────────────────────────
 
-const STAT_META = [
-  { accent: "#99CDD8", tint: "rgba(153,205,216,0.08)", icon: Layers,       iconColor: "#99CDD8", label: "Total projects"  },
-  { accent: "#5A8F6A", tint: "rgba(90,143,106,0.07)",  icon: BadgeCheck,   iconColor: "#5A8F6A", label: "Fully analysed"  },
-  { accent: "#C4865A", tint: "rgba(196,134,90,0.07)",  icon: Clock,        iconColor: "#C4865A", label: "Needs review"    },
-  { accent: "#306223", tint: "rgba(48,98,35,0.07)",    icon: CalendarDays, iconColor: "#306223", label: "This month"      },
-] as const;
-
-function StatCard({ num, meta, dim }: { num: number; meta: typeof STAT_META[number]; dim: boolean }) {
-  const Icon = meta.icon;
+function BuildingHero() {
   return (
     <div style={{
       position: "relative", overflow: "hidden",
-      background: dim ? "#FDFCFB" : meta.tint,
-      border: "1px solid #CFD6C4",
-      borderTop: `2.5px solid ${dim ? "#CFD6C4" : meta.accent}`,
-      borderRadius: 14, padding: "20px 22px 18px",
+      borderRadius: 16, border: "1px solid #CFD6C4",
+      display: "flex", marginBottom: 36,
+      boxShadow: "0 2px 12px rgba(48,98,35,0.07)",
     }}>
-      <svg style={{ position: "absolute", top: 0, right: 0, opacity: dim ? 0.04 : 0.10, pointerEvents: "none" }}
-        width="80" height="80" viewBox="0 0 80 80" fill="none">
-        {[0,16,32,48,64].flatMap(x => [0,16,32,48,64].map(y =>
-          <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" fill={meta.accent}/>
-        ))}
-      </svg>
+      {/* Left: text */}
       <div style={{
-        display: "inline-flex", alignItems: "center", justifyContent: "center",
-        width: 32, height: 32, borderRadius: 8, marginBottom: 14,
-        background: dim ? "rgba(48,98,35,0.06)" : `${meta.accent}18`,
-        border: `1px solid ${dim ? "#CFD6C4" : `${meta.accent}30`}`,
+        flex: "0 0 52%", padding: "32px 36px",
+        background: "linear-gradient(135deg, #F5F0EB 0%, #EEE9E3 100%)",
+        display: "flex", flexDirection: "column", justifyContent: "center", gap: 0,
       }}>
-        <Icon size={15} color={dim ? "#B8C4BB" : meta.iconColor} />
-      </div>
-      <div style={{
-        fontSize: 36, fontWeight: 700, lineHeight: 1, letterSpacing: "-1px",
-        color: dim ? "#B8C4BB" : "#3A3F3B",
-      }}>{num}</div>
-      <div style={{
-        fontSize: 11, fontWeight: 500, marginTop: 6, letterSpacing: "0.2px",
-        color: dim ? "#B8C4BB" : "#7B8F83", textTransform: "uppercase",
-      }}>{meta.label}</div>
-      {!dim && (
         <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: 2,
-          background: `linear-gradient(to right, ${meta.accent}40, transparent)`,
-        }}/>
-      )}
+          display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 14,
+          padding: "4px 10px", borderRadius: 9999, width: "fit-content",
+          background: "rgba(48,98,35,0.08)", border: "1px solid rgba(48,98,35,0.18)",
+          fontSize: 10, fontWeight: 700, letterSpacing: "0.7px", color: "#306223",
+          textTransform: "uppercase",
+        }}>
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#306223" }}/>
+          Qnit Builders
+        </div>
+        <div style={{
+          fontSize: 22, fontWeight: 800, color: "#3A3F3B",
+          lineHeight: 1.2, letterSpacing: "-0.5px", marginBottom: 10,
+          fontFamily: "var(--font-space-grotesk, inherit)",
+        }}>
+          Karnataka&apos;s land records,<br />down to every parcel.
+        </div>
+        <div style={{ fontSize: 12, color: "#7B8F83", lineHeight: 1.6, marginBottom: 18, maxWidth: 320 }}>
+          Navigate Karnataka land records — district to village — with survey search and parcel boundary overlays.
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {[
+            { label: "District → Village", color: "#5B93C9" },
+            { label: "Survey search",      color: "#306223" },
+            { label: "Parcel boundaries",  color: "#8B6FCB" },
+          ].map(({ label, color }) => (
+            <span key={label} style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              padding: "4px 10px", borderRadius: 9999,
+              fontSize: 11, fontWeight: 500,
+              background: `${color}14`, color,
+              border: `1px solid ${color}28`,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: color }}/>
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Right: architectural building SVG */}
+      <div style={{ flex: 1, position: "relative", background: "#E8E3DC", overflow: "hidden" }}>
+        <svg viewBox="0 0 420 180" xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="xMidYMid slice"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+
+          {/* Sky */}
+          <rect width="420" height="180" fill="#EAE5DF"/>
+
+          {/* Subtle dot grid texture */}
+          {[40,80,120,160,200,240,280,320,360,400].flatMap(x =>
+            [20,50,80,110,140].map(y =>
+              <circle key={`${x}-${y}`} cx={x} cy={y} r="1" fill="#C8C3BB" opacity="0.5"/>
+            )
+          )}
+
+          {/* Ground plane */}
+          <rect x="0" y="155" width="420" height="25" fill="#C8C3BB" opacity="0.4"/>
+          <line x1="0" y1="155" x2="420" y2="155" stroke="#A8A39C" strokeWidth="0.8"/>
+
+          {/* Ground shadow under building */}
+          <ellipse cx="210" cy="156" rx="130" ry="5" fill="rgba(58,63,59,0.07)"/>
+
+          {/* ── Left wing (2-storey) ── */}
+          <rect x="28" y="97" width="74" height="58" fill="#EDE8E2" stroke="#9CAC9C" strokeWidth="1"/>
+          {/* Left wing floor line */}
+          <line x1="28" y1="126" x2="102" y2="126" stroke="#CFD6C4" strokeWidth="0.6"/>
+          {/* Left wing windows - 2 cols × 2 rows */}
+          {[38,62].flatMap(wx => [104,132].map(wy =>
+            <rect key={`lw-${wx}-${wy}`} x={wx} y={wy} width="20" height="14"
+              fill="rgba(153,205,216,0.28)" stroke="#99CDD8" strokeWidth="0.7" rx="1"/>
+          ))}
+
+          {/* ── Right wing (2-storey) ── */}
+          <rect x="318" y="97" width="74" height="58" fill="#EDE8E2" stroke="#9CAC9C" strokeWidth="1"/>
+          <line x1="318" y1="126" x2="392" y2="126" stroke="#CFD6C4" strokeWidth="0.6"/>
+          {[328,352].flatMap(wx => [104,132].map(wy =>
+            <rect key={`rw-${wx}-${wy}`} x={wx} y={wy} width="20" height="14"
+              fill="rgba(153,205,216,0.28)" stroke="#99CDD8" strokeWidth="0.7" rx="1"/>
+          ))}
+
+          {/* ── Main building body ── */}
+          <rect x="100" y="22" width="220" height="133" fill="#F2EEE9" stroke="#9CAC9C" strokeWidth="1.2"/>
+
+          {/* Parapet / roofline cap */}
+          <rect x="96" y="18" width="228" height="9" rx="1" fill="#CFD6C4" stroke="#9CAC9C" strokeWidth="0.8"/>
+
+          {/* Floor division lines */}
+          <line x1="100" y1="55"  x2="320" y2="55"  stroke="#CFD6C4" strokeWidth="0.7"/>
+          <line x1="100" y1="88"  x2="320" y2="88"  stroke="#CFD6C4" strokeWidth="0.7"/>
+          <line x1="100" y1="121" x2="320" y2="121" stroke="#CFD6C4" strokeWidth="0.7"/>
+
+          {/* Subtle structural pilasters */}
+          {[155, 210, 265].map(px =>
+            <line key={px} x1={px} y1="22" x2={px} y2="155" stroke="#CFD6C4" strokeWidth="0.5" strokeDasharray="2,4"/>
+          )}
+
+          {/* ── Windows: 4 rows × 4 cols (skip centre-bottom for entrance) ── */}
+          {/* Cols at x: 113, 148, 183, 218, 253, 288 — 4 usable: 113,163,247,297 → let's do 5 evenly */}
+          {/* 5 cols: starting at 112, step 36 → 112,148,184,220,256,292 — that's 6, trim to 5: 113,149,185,221,257 */}
+          {[113,149,185,221,257].flatMap((wx, ci) =>
+            [28,61,94,127].map((wy, ri) => {
+              // Skip centre col (ci===2) on bottom row (ri===3) — that's the entrance
+              if (ci === 2 && ri === 3) return null;
+              const lit = (ci + ri) % 3 !== 0;
+              return (
+                <g key={`w-${wx}-${wy}`}>
+                  <rect x={wx} y={wy} width="26" height="19"
+                    fill={lit ? "rgba(153,205,216,0.32)" : "rgba(197,214,204,0.25)"}
+                    stroke="#99CDD8" strokeWidth="0.8" rx="1"/>
+                  {/* Mullion */}
+                  <line x1={wx+13} y1={wy} x2={wx+13} y2={wy+19} stroke="#99CDD8" strokeWidth="0.4" opacity="0.5"/>
+                  {/* Sill */}
+                  <line x1={wx} y1={wy+16} x2={wx+26} y2={wy+16} stroke="#99CDD8" strokeWidth="0.5" opacity="0.4"/>
+                </g>
+              );
+            })
+          )}
+
+          {/* ── Entrance ── */}
+          {/* Canopy */}
+          <rect x="188" y="118" width="44" height="5" rx="1" fill="#306223" opacity="0.55"/>
+          <line x1="185" y1="123" x2="235" y2="123" stroke="#306223" strokeWidth="0.6" opacity="0.4"/>
+          {/* Door opening */}
+          <rect x="198" y="127" width="24" height="28" fill="rgba(48,98,35,0.12)" stroke="#9CAC9C" strokeWidth="0.8" rx="1"/>
+          {/* Door panels */}
+          <line x1="210" y1="127" x2="210" y2="155" stroke="#9CAC9C" strokeWidth="0.5"/>
+          <rect x="200" y="129" width="8" height="10" rx="0.5" fill="rgba(153,205,216,0.3)" stroke="#99CDD8" strokeWidth="0.4"/>
+          <rect x="212" y="129" width="8" height="10" rx="0.5" fill="rgba(153,205,216,0.3)" stroke="#99CDD8" strokeWidth="0.4"/>
+          {/* Steps */}
+          <rect x="194" y="153" width="32" height="2"   fill="#C8C3BB"/>
+          <rect x="190" y="153.5" width="40" height="1.5" fill="#B8B3AB" opacity="0.5"/>
+
+          {/* ── Left trees (architectural elevation style) ── */}
+          {/* Tree 1 */}
+          <line x1="20" y1="120" x2="20" y2="155" stroke="#7B9A7E" strokeWidth="1.5"/>
+          <ellipse cx="20" cy="105" rx="14" ry="20" fill="#9CB89E" opacity="0.55" stroke="#7B9A7E" strokeWidth="0.8"/>
+          <ellipse cx="20" cy="100" rx="10" ry="14" fill="#8AAF8C" opacity="0.45"/>
+          {/* Tree 2 */}
+          <line x1="58" y1="128" x2="58" y2="155" stroke="#7B9A7E" strokeWidth="1.2"/>
+          <ellipse cx="58" cy="115" rx="11" ry="16" fill="#9CB89E" opacity="0.50" stroke="#7B9A7E" strokeWidth="0.7"/>
+
+          {/* ── Right trees ── */}
+          <line x1="400" y1="120" x2="400" y2="155" stroke="#7B9A7E" strokeWidth="1.5"/>
+          <ellipse cx="400" cy="105" rx="14" ry="20" fill="#9CB89E" opacity="0.55" stroke="#7B9A7E" strokeWidth="0.8"/>
+          <ellipse cx="400" cy="100" rx="10" ry="14" fill="#8AAF8C" opacity="0.45"/>
+          <line x1="362" y1="128" x2="362" y2="155" stroke="#7B9A7E" strokeWidth="1.2"/>
+          <ellipse cx="362" cy="115" rx="11" ry="16" fill="#9CB89E" opacity="0.50" stroke="#7B9A7E" strokeWidth="0.7"/>
+
+          {/* Foreground ground line accent */}
+          <line x1="0" y1="158" x2="420" y2="158" stroke="#B8B3AB" strokeWidth="0.4" opacity="0.5"/>
+        </svg>
+      </div>
     </div>
   );
 }
@@ -392,7 +514,7 @@ function WelcomeHero() {
           Explore land records,<br/>survey by survey.
         </div>
         <div style={{ fontSize: 13, color: "#7B8F83", lineHeight: 1.65, marginBottom: 18, maxWidth: 340 }}>
-          Navigate Karnataka&apos;s e-Chawadi data — district to village to parcel — with survey number search and boundary overlays.
+          Navigate Karnataka land records — district to village to parcel — with survey number search and boundary overlays.
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
           {[
@@ -454,12 +576,6 @@ export default function DashboardPage() {
 
   const initials = user ? getInitials({ email: user.email, name: user.name }) : "U";
   const isEmpty  = !loading && projects.length === 0;
-  const statNums = [
-    stats?.total          ?? 0,
-    stats?.fully_analysed ?? 0,
-    stats?.needs_review   ?? 0,
-    stats?.this_month     ?? 0,
-  ];
 
   return (
     <div style={{ minHeight: "100vh", background: "#F2EDE8", fontFamily: "var(--font-inter)" }}>
@@ -498,14 +614,8 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 24px 60px" }}>
 
-        {/* Stat cards */}
-        {stats && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 36 }}>
-            {STAT_META.map((meta, i) => (
-              <StatCard key={meta.label} num={statNums[i]} meta={meta} dim={statNums[i] === 0} />
-            ))}
-          </div>
-        )}
+        {/* Building hero */}
+        <BuildingHero />
 
         {/* Welcome hero — only on first visit (empty state) */}
         {isEmpty && <WelcomeHero />}
