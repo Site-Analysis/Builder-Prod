@@ -38,7 +38,7 @@ def load_village(path: str) -> gpd.GeoDataFrame | None:
     """Read one vlg_*.parquet, fix swapped axes, reproject to WGS84. None if placeholder."""
     try:
         gdf = gpd.read_parquet(path)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
     if gdf.empty or "geometry" not in gdf.columns:
         return None
@@ -179,7 +179,7 @@ def _build_survey_index() -> None:
             continue
         try:
             df = pd.read_parquet(path, columns=["survey_no", "village_name", "village_code"])
-        except Exception:
+        except Exception:  # noqa: BLE001,S112
             continue
         if df.empty or "survey_no" not in df.columns:
             continue
