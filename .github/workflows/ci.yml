@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [main, Cadestral]
+  pull_request:
+
+jobs:
+  # ── Secret scan (all PRs) ─────────────────────────────────────────────────
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── JavaScript / TypeScript lint (when apps/web changes) ─────────────────
+  lint-js:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'pull_request' &&
+      contains(toJson(github.event.pull_request.changed_files), 'apps/web')
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: ESLint
+        run: npx eslint . --max-warnings=0
+      - name: TypeScript
+        run: npx tsc --noEmit

@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# build output
+.next/
+out/
+dist/
+*.cache/
+
+# env files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# misc
+.DS_Store
+*.log
+*.log.*
+npm-debug.log*
+
+# claude
+.claude/mcp.json
+.claude/settings.local.json
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# data (large datasets — never commit parquets or DBs)
+*.parquet
+*.db
+*.sqlite
+data/
