@@ -66,6 +66,23 @@ export async function fetchVillages(dist: string, taluk: string, hobli: string, 
   try { return await get<HierarchyItem[]>(`/villages?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}&hobli=${encodeURIComponent(hobli)}`, signal); } catch { return []; }
 }
 
+// ─── Survey search ───────────────────────────────────────────────────────────
+
+export interface SearchResult {
+  survey_no: string;
+  village_name: string;
+  dist: string;
+  taluk: string;
+  hobli: string;
+  vlg: string;
+}
+
+export async function searchBySurveyNo(q: string, signal?: AbortSignal): Promise<SearchResult[]> {
+  if (q.length < 2) return [];
+  try { return await get<SearchResult[]>(`/search?q=${encodeURIComponent(q)}`, signal); }
+  catch { return []; }
+}
+
 // ─── Parcel GeoJSON ──────────────────────────────────────────────────────────
 
 export async function fetchParcelData(

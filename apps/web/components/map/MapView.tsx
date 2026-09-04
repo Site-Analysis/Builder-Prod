@@ -1,9 +1,7 @@
 // Copyright (c) 2026 Qnit. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-// Phase 1A — Leaflet map with Karnataka Cadastral toolbar.
-// Renders loaded GeoJSON parcel layer on top of OSM base tiles.
-// No parcel click handler, no overlays, no analysis cards yet.
+// Phase 1D — parcel click popup + survey search fly-to added.
 
 "use client";
 
@@ -11,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Map as LeafletMap, Layer, GeoJSONOptions } from "leaflet";
 import { CadastralToolbar } from "./CadastralToolbar";
+import { fetchParcelData, type SearchResult } from "@/lib/api/cadastral_records";
 import "leaflet/dist/leaflet.css";
 
 // Karnataka centroid — default map center
@@ -31,14 +30,17 @@ function ParcelLayer({ fc }: { fc: GeoJSON.FeatureCollection }) {
       fillColor: "#306223",
       fillOpacity: 0.08,
     }),
-    onEachFeature: showTooltips
-      ? (feature, layer: Layer) => {
-          const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
-          if (surveyNo) {
-            layer.bindTooltip(surveyNo, { permanent: false, sticky: true, className: "cadastral-tooltip" });
-          }
-        }
-      : undefined,
+    onEachFeature: (feature, layer: Layer) => {
+      const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
+      if (!surveyNo) return;
+      if (showTooltips) {
+        layer.bindTooltip(surveyNo, { permanent: false, sticky: true, className: "cadastral-tooltip" });
+      }
+      layer.bindPopup(
+        `<span style="font-size:12px;font-family:inherit"><b>Survey No:</b> ${surveyNo}</span>`,
+        { closeButton: true, className: "cadastral-popup" },
+      );
+    },
   };
 
   // Fly to bounds whenever this component mounts (keyed per load in MapView).
@@ -67,15 +69,51 @@ function ParcelLayer({ fc }: { fc: GeoJSON.FeatureCollection }) {
   return <GeoJSON data={fc} {...options} />;
 }
 
+function flyToBounds(map: LeafletMap, fc: GeoJSON.FeatureCollection, surveyNo?: string) {
+  const target = surveyNo
+    ? fc.features.find((f) => (f.properties as Record<string, string>)?.survey_no === surveyNo)
+    : null;
+  const features = target ? [target] : fc.features;
+  const coords = features.flatMap((f) => {
+    if (f.geometry.type === "Polygon") return f.geometry.coordinates[0];
+    if (f.geometry.type === "MultiPolygon") return f.geometry.coordinates.flatMap((r) => r[0]);
+    return [];
+  }) as [number, number][];
+  if (!coords.length) return;
+  const lats = coords.map((c) => c[1]);
+  const lngs = coords.map((c) => c[0]);
+  map.fitBounds(
+    [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]],
+    { padding: [40, 40], maxZoom: surveyNo ? 18 : 16 },
+  );
+}
+
 export function MapView() {
   const [parcelFc, setParcelFc] = useState<GeoJSON.FeatureCollection | null>(null);
   const [loadKey, setLoadKey] = useState(0);
   const mapRef = useRef<LeafletMap | null>(null);
 
+  async function handleSearchResult(result: SearchResult) {
+    const fc = await fetchParcelData(result.dist, result.taluk, result.hobli, result.vlg);
+    if (!fc) return;
+    setParcelFc(fc);
+    setLoadKey((k) => k + 1);
+    // fly happens after react-leaflet re-renders; small delay lets the layer mount
+    setTimeout(() => {
+      if (mapRef.current) flyToBounds(mapRef.current, fc, result.survey_no);
+    }, 80);
+  }
+
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {/* Cadastral toolbar sits above the map */}
-      <CadastralToolbar onLoad={(fc) => { setParcelFc(fc); setLoadKey((k) => k + 1); }} />
+      <CadastralToolbar
+        onLoad={(fc) => {
+          setParcelFc(fc);
+          setLoadKey((k) => k + 1);
+        }}
+        onSearch={handleSearchResult}
+      />
 
       {/* Map fills remaining height */}
       <div style={{ flex: 1, position: "relative" }}>
@@ -103,6 +141,16 @@ export function MapView() {
           color: #3A3F3B;
           padding: 2px 6px;
           box-shadow: 0 2px 8px rgba(58,63,59,0.12);
+        }
+        .cadastral-popup .leaflet-popup-content-wrapper {
+          background: rgba(253,252,251,0.96);
+          border: 1px solid #CFD6C4;
+          border-radius: 6px;
+          box-shadow: 0 4px 16px rgba(58,63,59,0.16);
+          font-family: inherit;
+        }
+        .cadastral-popup .leaflet-popup-tip {
+          background: rgba(253,252,251,0.96);
         }
         .leaflet-tooltip-top:before,
         .leaflet-tooltip-bottom:before,
