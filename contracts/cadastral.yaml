@@ -151,6 +151,54 @@ paths:
         "403":
           description: Feature flag disabled
 
+  /boundary:
+    get:
+      operationId: getVillageBoundary
+      summary: Derived village boundary polygon (union of all parcels in village)
+      description: >
+        Returns a GeoJSON FeatureCollection containing a single Polygon/MultiPolygon
+        feature representing the boundary of the specified village, derived by computing
+        the union of all parcel geometries. Gated by `feature.cadastral.land-records`.
+      parameters:
+        - { name: dist,  in: query, required: true, schema: { type: string } }
+        - { name: taluk, in: query, required: true, schema: { type: string } }
+        - { name: hobli, in: query, required: true, schema: { type: string } }
+        - { name: vlg,   in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: GeoJSON FeatureCollection with one polygon feature
+          content:
+            application/json:
+              schema:
+                type: object
+                description: GeoJSON FeatureCollection
+        "403":
+          description: Feature flag disabled
+
+  /boundaries:
+    get:
+      operationId: getHobliBoundaries
+      summary: All village boundary polygons within a hobli (for nearby overlay)
+      description: >
+        Returns a GeoJSON FeatureCollection with one Polygon/MultiPolygon per village
+        in the hobli. Each feature's properties include `village_code` and `village_name`.
+        Used to render neighboring village outlines on the map.
+        Gated by `feature.cadastral.land-records`.
+      parameters:
+        - { name: dist,  in: query, required: true, schema: { type: string } }
+        - { name: taluk, in: query, required: true, schema: { type: string } }
+        - { name: hobli, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: GeoJSON FeatureCollection — one polygon per village in hobli
+          content:
+            application/json:
+              schema:
+                type: object
+                description: GeoJSON FeatureCollection
+        "403":
+          description: Feature flag disabled
+
 components:
   schemas:
     HierarchyItem:
