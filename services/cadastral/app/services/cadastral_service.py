@@ -33,6 +33,15 @@ _INDEX_DB = os.environ.get("SURVEY_INDEX_DB", "/app/survey_index.db")
 # Polygon(Easting, Northing) in EPSG:32643.
 _SWAP_XY = [0, 1, 1, 0, 0, 0]
 
+# CADASTRAL_DATUM controls source ellipsoid assumption for reprojection.
+# Options: wgs84 (default), everest (Everest 1830 ellipsoid only),
+#          kalianpur (Everest ellipsoid + full 3-param Bursa-Wolf shift to WGS84).
+# Everest confirmed better alignment than wgs84 for pre-2000 Karnataka cadastral data.
+# Kalianpur adds ~59 m N / ~108 m W geocentric origin correction on top of everest.
+_DATUM = os.environ.get("CADASTRAL_DATUM", "wgs84").lower()
+_EVEREST_UTM43N   = "+proj=utm +zone=43 +a=6377276.345 +b=6356075.413 +units=m +no_defs"
+_KALIANPUR_UTM43N = "+proj=utm +zone=43 +a=6377309.613 +b=6356108.571 +towgs84=295,736,257,0,0,0,0 +units=m +no_defs"
+
 
 def load_village(path: str) -> gpd.GeoDataFrame | None:
     """Read one vlg_*.parquet, fix swapped axes, reproject to WGS84. None if placeholder."""
@@ -43,7 +52,13 @@ def load_village(path: str) -> gpd.GeoDataFrame | None:
     if gdf.empty or "geometry" not in gdf.columns:
         return None
     gdf["geometry"] = gdf.geometry.affine_transform(_SWAP_XY)
-    gdf = gdf.set_crs(32643, allow_override=True).to_crs(4326)
+    if _DATUM == "everest":
+        src_crs = _EVEREST_UTM43N
+    elif _DATUM == "kalianpur":
+        src_crs = _KALIANPUR_UTM43N
+    else:
+        src_crs = 32643
+    gdf = gdf.set_crs(src_crs, allow_override=True).to_crs(4326)
     return gdf
 
 

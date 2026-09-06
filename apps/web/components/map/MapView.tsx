@@ -20,20 +20,29 @@ const KA_ZOOM = 7;
 const TOOLTIP_THRESHOLD = 500;
 const PERMANENT_LABEL_THRESHOLD = 1500;
 
-function ParcelLayer({ fc, onParcelClick }: { fc: GeoJSON.FeatureCollection; onParcelClick: (no: string) => void }) {
+function ParcelLayer({
+  fc,
+  onParcelClick,
+  mapLayer,
+}: {
+  fc: GeoJSON.FeatureCollection;
+  onParcelClick: (no: string) => void;
+  mapLayer: "base" | "satellite";
+}) {
   const map = useMap();
   const showPermanent = fc.features.length <= PERMANENT_LABEL_THRESHOLD;
   const showTooltips  = fc.features.length <= TOOLTIP_THRESHOLD;
   const renderer = useMemo(() => L.canvas({ padding: 0.5 }), []);
+  const isSat = mapLayer === "satellite";
 
   const options = {
     renderer,
     style: () => ({
-      color: "#306223",
-      weight: 1,
-      opacity: 0.8,
-      fillColor: "#306223",
-      fillOpacity: 0.08,
+      color:       isSat ? "#FFFFFF" : "#306223",
+      weight:      isSat ? 1.5 : 1,
+      opacity:     0.9,
+      fillColor:   isSat ? "#FFFFFF" : "#306223",
+      fillOpacity: isSat ? 0.10 : 0.08,
     }),
     onEachFeature: (feature: GeoJSON.Feature, layer: Layer) => {
       const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
@@ -218,7 +227,7 @@ export function MapView() {
           ref={mapRef}
         >
           <TileLayer key={mapLayer} {...TILES[mapLayer]} />
-          {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} onParcelClick={setClickedSurveyNo} />}
+          {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} onParcelClick={setClickedSurveyNo} mapLayer={mapLayer} />}
         </MapContainer>
       </div>
 
