@@ -190,6 +190,13 @@ export function MapView() {
   const currentHierRef = useRef<VillageCoords | null>(null);
   const { isMobile }  = useIsMobile();
 
+  const missingVillages = useMemo<string[]>(() => {
+    if (!hobliBoundaryFc) return [];
+    return hobliBoundaryFc.features
+      .filter(f => !(f.properties as Record<string, unknown>)?.has_data)
+      .map(f => (f.properties as Record<string, string>)?.village_name || "Unknown");
+  }, [hobliBoundaryFc]);
+
   const loadedSurveyNos = useMemo<Set<string>>(() => {
     if (!parcelFc) return new Set();
     const s = new Set<string>();
@@ -300,6 +307,30 @@ export function MapView() {
           </button>
         </div>
 
+        {/* Missing LGD villages strip — visible when Nearby is on and some villages lack data */}
+        {showNearby && missingVillages.length > 0 && (
+          <div style={{
+            position: "absolute", top: isMobile ? 52 : 42, right: 10, zIndex: 999,
+            background: "rgba(253,252,251,0.95)", border: "1px solid #CFD6C4",
+            borderRadius: 6, padding: "5px 8px",
+            boxShadow: "0 2px 8px rgba(58,63,59,0.12)",
+            maxWidth: isMobile ? 280 : 320, display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center",
+          }}>
+            <span style={{ fontSize: 10, color: "#e53e3e", fontWeight: 700, whiteSpace: "nowrap" }}>
+              No data:
+            </span>
+            {missingVillages.map(name => (
+              <span key={name} style={{
+                fontSize: 10, color: "#e53e3e", background: "#fee2e2",
+                border: "1px solid #fca5a5", borderRadius: 4, padding: "1px 5px",
+                whiteSpace: "nowrap",
+              }}>
+                {name}
+              </span>
+            ))}
+          </div>
+        )}
+
         {clickedSurveyNo && (
           <div style={{
             position: "absolute", bottom: isMobile ? 12 : 48, left: 12, zIndex: 1000,
@@ -327,7 +358,7 @@ export function MapView() {
             <VillageBoundaryLayer
               key={`hb-${hobliBoundaryKey}`}
               fc={hobliBoundaryFc}
-              colorFn={(f) => (f.properties as Record<string, string>)?.village_name ? "#16A34A" : "#e53e3e"}
+              colorFn={(f) => (f.properties as Record<string, unknown>)?.has_data ? "#16A34A" : "#e53e3e"}
               weight={1.5}
             />
           )}

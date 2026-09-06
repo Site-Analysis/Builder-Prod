@@ -4,6 +4,15 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.2.0 — 2026-09-06 — cadastral
+
+`GET /boundaries` now returns ALL LGD villages in the hobli (from echawadi_village_list.json),
+not only those with cadastral parquet data. Each feature gains a `has_data: boolean` property.
+Villages without parquet data are returned with `geometry: null` and `has_data: false` — frontend
+uses this to render a red "No data" chip list alongside the green polygon overlays.
+
+---
+
 ## 1.1.0 — 2026-09-06 — cadastral
 
 Added village boundary overlay endpoints.
