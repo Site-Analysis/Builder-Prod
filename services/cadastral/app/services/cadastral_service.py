@@ -188,15 +188,17 @@ def build_boundary(
         # LGD villages with no parquet data — null geometry, flagged for frontend
         for vcode, vname in sorted(all_vlg_codes.items()):
             if vcode not in by_vlg:
-                features.append({
-                    "type": "Feature",
-                    "geometry": None,
-                    "properties": {
-                        "village_code": vcode,
-                        "village_name": vname,
-                        "has_data": False,
-                    },
-                })
+                features.append(
+                    {
+                        "type": "Feature",
+                        "geometry": None,
+                        "properties": {
+                            "village_code": vcode,
+                            "village_name": vname,
+                            "has_data": False,
+                        },
+                    }
+                )
 
     return json.dumps({"type": "FeatureCollection", "features": features})
 
