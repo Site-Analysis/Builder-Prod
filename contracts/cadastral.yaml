@@ -180,9 +180,11 @@ paths:
       operationId: getHobliBoundaries
       summary: All village boundary polygons within a hobli (for nearby overlay)
       description: >
-        Returns a GeoJSON FeatureCollection with one Polygon/MultiPolygon per village
-        in the hobli. Each feature's properties include `village_code` and `village_name`.
-        Used to render neighboring village outlines on the map.
+        Returns a GeoJSON FeatureCollection with one feature per LGD village in the hobli.
+        Villages with cadastral parquet data have a Polygon/MultiPolygon geometry and
+        `has_data: true`. Villages listed in the LGD directory but lacking cadastral data
+        have `geometry: null` and `has_data: false`. Properties always include
+        `village_code`, `village_name`, and `has_data`.
         Gated by `feature.cadastral.land-records`.
       parameters:
         - { name: dist,  in: query, required: true, schema: { type: string } }

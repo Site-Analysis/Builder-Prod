@@ -154,25 +154,51 @@ def build_boundary(
             )
             feat = _union_to_feature(frames, vlg, vname)
             if feat:
+                feat["properties"]["has_data"] = True
                 features.append(feat)
     else:
+        # All LGD villages for this hobli from echawadi list (may be empty if JSON missing)
+        all_vlg_codes: dict[str, str] = {
+            k[3]: v
+            for k, v in _NAMES.items()
+            if len(k) == 4 and k[0] == dist and k[1] == taluk and k[2] == hobli
+        }
+
         by_vlg: dict[str, list] = {}
         for p in paths:
             m = re.search(r"vlg_(\w+)\.parquet$", p)
             if m:
                 by_vlg.setdefault(m.group(1), []).append(p)
+
         for vcode, vpaths in sorted(by_vlg.items()):
             frames = [g for p in vpaths if (g := load_village(p)) is not None]
             if not frames:
                 continue
-            vname = (
+            # Prefer echawadi name; fall back to parquet column
+            vname = all_vlg_codes.get(vcode) or (
                 str(frames[0]["village_name"].iloc[0])
                 if "village_name" in frames[0].columns
                 else ""
             )
             feat = _union_to_feature(frames, vcode, vname)
             if feat:
+                feat["properties"]["has_data"] = True
                 features.append(feat)
+
+        # LGD villages with no parquet data — null geometry, flagged for frontend
+        for vcode, vname in sorted(all_vlg_codes.items()):
+            if vcode not in by_vlg:
+                features.append(
+                    {
+                        "type": "Feature",
+                        "geometry": None,
+                        "properties": {
+                            "village_code": vcode,
+                            "village_name": vname,
+                            "has_data": False,
+                        },
+                    }
+                )
 
     return json.dumps({"type": "FeatureCollection", "features": features})
 
