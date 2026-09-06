@@ -39,7 +39,7 @@ _SWAP_XY = [0, 1, 1, 0, 0, 0]
 # Everest confirmed better alignment than wgs84 for pre-2000 Karnataka cadastral data.
 # Kalianpur adds ~59 m N / ~108 m W geocentric origin correction on top of everest.
 _DATUM = os.environ.get("CADASTRAL_DATUM", "wgs84").lower()
-_EVEREST_UTM43N   = "+proj=utm +zone=43 +a=6377276.345 +b=6356075.413 +units=m +no_defs"
+_EVEREST_UTM43N = "+proj=utm +zone=43 +a=6377276.345 +b=6356075.413 +units=m +no_defs"
 _KALIANPUR_UTM43N = "+proj=utm +zone=43 +a=6377309.613 +b=6356108.571 +towgs84=295,736,257,0,0,0,0 +units=m +no_defs"
 
 
@@ -117,6 +117,7 @@ def build_boundary(
 
     def _union_to_feature(frames: list, vcode: str, vname: str) -> dict:
         import shapely
+
         merged = pd.concat(frames, ignore_index=True)
         gdf = gpd.GeoDataFrame(merged, geometry="geometry", crs=4326)
         gdf["geometry"] = gdf.geometry.make_valid()
@@ -128,11 +129,15 @@ def build_boundary(
             if g.geom_type in ("Polygon", "MultiPolygon"):
                 polys.append(g)
             elif g.geom_type == "GeometryCollection":
-                polys.extend(s for s in g.geoms if s.geom_type in ("Polygon", "MultiPolygon"))
+                polys.extend(
+                    s for s in g.geoms if s.geom_type in ("Polygon", "MultiPolygon")
+                )
         if not polys:
             return None
         boundary = shapely.union_all(polys)
-        geom = json.loads(gpd.GeoSeries([boundary], crs=4326).to_json())["features"][0]["geometry"]
+        geom = json.loads(gpd.GeoSeries([boundary], crs=4326).to_json())["features"][0][
+            "geometry"
+        ]
         return {
             "type": "Feature",
             "geometry": geom,
@@ -142,7 +147,11 @@ def build_boundary(
     if vlg:
         frames = [g for p in paths if (g := load_village(p)) is not None]
         if frames:
-            vname = str(frames[0]["village_name"].iloc[0]) if "village_name" in frames[0].columns else ""
+            vname = (
+                str(frames[0]["village_name"].iloc[0])
+                if "village_name" in frames[0].columns
+                else ""
+            )
             feat = _union_to_feature(frames, vlg, vname)
             if feat:
                 features.append(feat)
@@ -156,7 +165,11 @@ def build_boundary(
             frames = [g for p in vpaths if (g := load_village(p)) is not None]
             if not frames:
                 continue
-            vname = str(frames[0]["village_name"].iloc[0]) if "village_name" in frames[0].columns else ""
+            vname = (
+                str(frames[0]["village_name"].iloc[0])
+                if "village_name" in frames[0].columns
+                else ""
+            )
             feat = _union_to_feature(frames, vcode, vname)
             if feat:
                 features.append(feat)
