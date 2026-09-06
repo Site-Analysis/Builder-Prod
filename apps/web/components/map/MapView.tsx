@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
-import type { Map as LeafletMap, Layer, GeoJSONOptions } from "leaflet";
+import L, { type Map as LeafletMap, type Layer, type GeoJSONOptions } from "leaflet";
 import { CadastralToolbar } from "./CadastralToolbar";
 import { fetchParcelData, type SearchResult } from "@/lib/api/cadastral_records";
 import { useIsMobile } from "@/lib/useIsMobile";
@@ -24,8 +24,10 @@ function ParcelLayer({ fc, onParcelClick }: { fc: GeoJSON.FeatureCollection; onP
   const map = useMap();
   const showPermanent = fc.features.length <= PERMANENT_LABEL_THRESHOLD;
   const showTooltips  = fc.features.length <= TOOLTIP_THRESHOLD;
+  const renderer = useMemo(() => L.canvas({ padding: 0.5 }), []);
 
-  const options: GeoJSONOptions = {
+  const options = {
+    renderer,
     style: () => ({
       color: "#306223",
       weight: 1,
@@ -33,7 +35,7 @@ function ParcelLayer({ fc, onParcelClick }: { fc: GeoJSON.FeatureCollection; onP
       fillColor: "#306223",
       fillOpacity: 0.08,
     }),
-    onEachFeature: (feature, layer: Layer) => {
+    onEachFeature: (feature: GeoJSON.Feature, layer: Layer) => {
       const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
       if (!surveyNo) return;
       if (showPermanent) {
@@ -97,7 +99,7 @@ function flyToBounds(map: LeafletMap, fc: GeoJSON.FeatureCollection, surveyNo?: 
   const lngs = coords.map((c) => c[0]);
   map.fitBounds(
     [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]],
-    { padding: [40, 40], maxZoom: surveyNo ? 18 : 16 },
+    { padding: [40, 40], maxZoom: surveyNo ? 20 : 16 },
   );
 }
 
@@ -105,12 +107,16 @@ const TILES = {
   base: {
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
+    maxZoom: 21,
+    maxNativeZoom: 19,
+    detectRetina: true,
   },
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution: "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics",
-    maxZoom: 18,
+    maxZoom: 21,
+    maxNativeZoom: 18,
+    detectRetina: false,
   },
 };
 
@@ -211,12 +217,7 @@ export function MapView() {
           style={{ height: "100%", width: "100%" }}
           ref={mapRef}
         >
-          <TileLayer
-            key={mapLayer}
-            url={TILES[mapLayer].url}
-            attribution={TILES[mapLayer].attribution}
-            maxZoom={TILES[mapLayer].maxZoom}
-          />
+          <TileLayer key={mapLayer} {...TILES[mapLayer]} />
           {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} onParcelClick={setClickedSurveyNo} />}
         </MapContainer>
       </div>
