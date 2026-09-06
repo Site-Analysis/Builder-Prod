@@ -95,3 +95,27 @@ export async function fetchParcelData(
     );
   } catch { return null; }
 }
+
+// ─── Village boundary overlays ───────────────────────────────────────────────
+
+export async function fetchVillageBoundary(
+  dist: string, taluk: string, hobli: string, vlg: string,
+  signal?: AbortSignal,
+): Promise<GeoJSON.FeatureCollection | null> {
+  try {
+    return await get<GeoJSON.FeatureCollection>(
+      `/boundary?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}&hobli=${encodeURIComponent(hobli)}&vlg=${encodeURIComponent(vlg)}`, signal,
+    );
+  } catch { return null; }
+}
+
+export async function fetchHobliBoundaries(
+  dist: string, taluk: string, hobli: string,
+  signal?: AbortSignal,
+): Promise<GeoJSON.FeatureCollection | null> {
+  try {
+    return await get<GeoJSON.FeatureCollection>(
+      `/boundaries?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}&hobli=${encodeURIComponent(hobli)}`, signal,
+    );
+  } catch { return null; }
+}

@@ -16,7 +16,7 @@ import { useIsMobile } from "@/lib/useIsMobile";
 interface VillageCoords { dist: string; taluk: string; hobli: string; vlg: string; }
 
 interface Props {
-  onLoad: (fc: GeoJSON.FeatureCollection | null, label: string) => void;
+  onLoad: (fc: GeoJSON.FeatureCollection | null, label: string, hier?: VillageCoords) => void;
   onSearch?: (result: SearchResult) => void;
   onHighlight?: (result: SearchResult) => void;
   onFlyTo?: (coords: { lat: number; lon: number }) => void;
@@ -249,7 +249,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
       : `${n} parcel(s) loaded`;
     setStatus(label);
     setLoadedVillage({ dist, taluk, hobli, vlg });
-    onLoad(fc, label);
+    onLoad(fc, label, { dist, taluk, hobli, vlg });
   }
 
   const mSel: React.CSSProperties = isMobile

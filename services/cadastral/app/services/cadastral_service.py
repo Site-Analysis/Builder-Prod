@@ -96,6 +96,74 @@ def build_geojson(
     return gpd.GeoDataFrame(merged, geometry="geometry", crs=4326).to_json()
 
 
+def build_boundary(
+    dist: str,
+    taluk: str,
+    hobli: str,
+    vlg: str | None = None,
+) -> str:
+    """Return GeoJSON FeatureCollection of village boundary polygon(s).
+
+    vlg=code  → one polygon for that village (for /boundary endpoint).
+    vlg=None  → one polygon per village in the hobli (for /boundaries endpoint).
+
+    Boundary is derived via union_all() of all parcel geometries — no separate
+    boundary dataset required.
+    """
+    import re
+
+    paths = find_paths(dist, taluk, hobli, vlg)
+    features: list[dict] = []
+
+    def _union_to_feature(frames: list, vcode: str, vname: str) -> dict:
+        import shapely
+        merged = pd.concat(frames, ignore_index=True)
+        gdf = gpd.GeoDataFrame(merged, geometry="geometry", crs=4326)
+        gdf["geometry"] = gdf.geometry.make_valid()
+        # make_valid may produce GeometryCollection; keep only polygon parts for Leaflet
+        polys = []
+        for g in gdf.geometry:
+            if g is None or g.is_empty:
+                continue
+            if g.geom_type in ("Polygon", "MultiPolygon"):
+                polys.append(g)
+            elif g.geom_type == "GeometryCollection":
+                polys.extend(s for s in g.geoms if s.geom_type in ("Polygon", "MultiPolygon"))
+        if not polys:
+            return None
+        boundary = shapely.union_all(polys)
+        geom = json.loads(gpd.GeoSeries([boundary], crs=4326).to_json())["features"][0]["geometry"]
+        return {
+            "type": "Feature",
+            "geometry": geom,
+            "properties": {"village_code": vcode, "village_name": vname},
+        }
+
+    if vlg:
+        frames = [g for p in paths if (g := load_village(p)) is not None]
+        if frames:
+            vname = str(frames[0]["village_name"].iloc[0]) if "village_name" in frames[0].columns else ""
+            feat = _union_to_feature(frames, vlg, vname)
+            if feat:
+                features.append(feat)
+    else:
+        by_vlg: dict[str, list] = {}
+        for p in paths:
+            m = re.search(r"vlg_(\w+)\.parquet$", p)
+            if m:
+                by_vlg.setdefault(m.group(1), []).append(p)
+        for vcode, vpaths in sorted(by_vlg.items()):
+            frames = [g for p in vpaths if (g := load_village(p)) is not None]
+            if not frames:
+                continue
+            vname = str(frames[0]["village_name"].iloc[0]) if "village_name" in frames[0].columns else ""
+            feat = _union_to_feature(frames, vcode, vname)
+            if feat:
+                features.append(feat)
+
+    return json.dumps({"type": "FeatureCollection", "features": features})
+
+
 def search_survey(q: str, limit: int = 25) -> list[dict[str, Any]]:
     q_norm = q.split("/")[0].strip()
     if len(q_norm) < 2:

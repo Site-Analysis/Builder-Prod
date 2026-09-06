@@ -25,6 +25,31 @@ def _require_flag() -> None:
         )
 
 
+@router.get("/boundary")
+def get_village_boundary(
+    dist: str = Query(...),
+    taluk: str = Query(...),
+    hobli: str = Query(...),
+    vlg: str = Query(...),
+) -> Response:
+    """Single village boundary polygon derived from union of all parcels."""
+    _require_flag()
+    geojson = cs.build_boundary(dist, taluk, hobli, vlg)
+    return Response(content=geojson, media_type="application/json")
+
+
+@router.get("/boundaries")
+def get_hobli_boundaries(
+    dist: str = Query(...),
+    taluk: str = Query(...),
+    hobli: str = Query(...),
+) -> Response:
+    """All village boundary polygons in a hobli (one polygon per village)."""
+    _require_flag()
+    geojson = cs.build_boundary(dist, taluk, hobli, vlg=None)
+    return Response(content=geojson, media_type="application/json")
+
+
 @router.get("/data")
 def get_parcel_data(
     dist: str | None = Query(None),
