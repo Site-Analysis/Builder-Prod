@@ -40,11 +40,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       if (account) {
         token.accessToken = account.access_token
         token.refreshToken = account.refresh_token
         token.expiresAt = account.expires_at ?? Math.floor(Date.now() / 1000) + 3600
+        // Pin sub to Keycloak's stable user UUID (profile.sub), not NextAuth's ephemeral user.id
+        if ((profile as { sub?: string })?.sub) token.sub = (profile as { sub?: string }).sub
       }
       if (typeof token.expiresAt === "number" && Date.now() / 1000 > token.expiresAt - 60) {
         if (token.refreshToken) {

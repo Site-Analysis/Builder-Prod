@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Map as LeafletMap, Layer, GeoJSONOptions } from "leaflet";
 import { CadastralToolbar } from "./CadastralToolbar";
@@ -17,10 +17,12 @@ const KA_CENTER: [number, number] = [15.3173, 75.7139];
 const KA_ZOOM = 7;
 
 const TOOLTIP_THRESHOLD = 500;
+const PERMANENT_LABEL_THRESHOLD = 1500;
 
-function ParcelLayer({ fc }: { fc: GeoJSON.FeatureCollection }) {
+function ParcelLayer({ fc, onParcelClick }: { fc: GeoJSON.FeatureCollection; onParcelClick: (no: string) => void }) {
   const map = useMap();
-  const showTooltips = fc.features.length <= TOOLTIP_THRESHOLD;
+  const showPermanent = fc.features.length <= PERMANENT_LABEL_THRESHOLD;
+  const showTooltips  = fc.features.length <= TOOLTIP_THRESHOLD;
 
   const options: GeoJSONOptions = {
     style: () => ({
@@ -33,13 +35,23 @@ function ParcelLayer({ fc }: { fc: GeoJSON.FeatureCollection }) {
     onEachFeature: (feature, layer: Layer) => {
       const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
       if (!surveyNo) return;
-      if (showTooltips) {
-        layer.bindTooltip(surveyNo, { permanent: false, sticky: true, className: "cadastral-tooltip" });
+      if (showPermanent) {
+        layer.bindTooltip(surveyNo, {
+          permanent: true,
+          direction: "center",
+          className: "cadastral-label",
+          offset: [0, 0],
+        });
+      } else if (showTooltips) {
+        layer.bindTooltip(surveyNo, {
+          permanent: false,
+          direction: "top",
+          sticky: true,
+          className: "cadastral-tooltip",
+          offset: [0, -4],
+        });
       }
-      layer.bindPopup(
-        `<span style="font-size:12px;font-family:inherit"><b>Survey No:</b> ${surveyNo}</span>`,
-        { closeButton: true, className: "cadastral-popup" },
-      );
+      layer.on("click", () => onParcelClick(surveyNo));
     },
   };
 
@@ -88,16 +100,52 @@ function flyToBounds(map: LeafletMap, fc: GeoJSON.FeatureCollection, surveyNo?: 
   );
 }
 
+const TILES = {
+  base: {
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics",
+    maxZoom: 18,
+  },
+};
+
 export function MapView() {
   const [parcelFc, setParcelFc] = useState<GeoJSON.FeatureCollection | null>(null);
   const [loadKey, setLoadKey] = useState(0);
+  const [clickedSurveyNo, setClickedSurveyNo] = useState<string | null>(null);
+  const [mapLayer, setMapLayer] = useState<"base" | "satellite">("base");
   const mapRef = useRef<LeafletMap | null>(null);
+
+  const loadedSurveyNos = useMemo<Set<string>>(() => {
+    if (!parcelFc) return new Set();
+    const s = new Set<string>();
+    for (const f of parcelFc.features) {
+      const no = (f.properties as Record<string, string>)?.survey_no;
+      if (no) s.add(no);
+    }
+    return s;
+  }, [parcelFc]);
+
+  function handleFlyTo(coords: { lat: number; lon: number }) {
+    mapRef.current?.setView([coords.lat, coords.lon], 16);
+  }
+
+  function handleHighlight(result: SearchResult) {
+    if (mapRef.current && parcelFc) {
+      flyToBounds(mapRef.current, parcelFc, result.survey_no);
+    }
+  }
 
   async function handleSearchResult(result: SearchResult) {
     const fc = await fetchParcelData(result.dist, result.taluk, result.hobli, result.vlg);
     if (!fc) return;
     setParcelFc(fc);
     setLoadKey((k) => k + 1);
+    setClickedSurveyNo(null);
     // fly happens after react-leaflet re-renders; small delay lets the layer mount
     setTimeout(() => {
       if (mapRef.current) flyToBounds(mapRef.current, fc, result.survey_no);
@@ -111,12 +159,50 @@ export function MapView() {
         onLoad={(fc) => {
           setParcelFc(fc);
           setLoadKey((k) => k + 1);
+          setClickedSurveyNo(null);
         }}
         onSearch={handleSearchResult}
+        onHighlight={handleHighlight}
+        onFlyTo={handleFlyTo}
+        loadedSurveyNos={loadedSurveyNos}
       />
 
       {/* Map fills remaining height */}
       <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
+        {/* Map layer toggle */}
+        <div style={{
+          position: "absolute", top: 10, right: 10, zIndex: 1000,
+          display: "flex", borderRadius: 6, overflow: "hidden",
+          border: "1px solid #CFD6C4",
+          boxShadow: "0 2px 8px rgba(58,63,59,0.14)",
+        }}>
+          {(["base", "satellite"] as const).map(layer => (
+            <button key={layer} onClick={() => setMapLayer(layer)} style={{
+              padding: "5px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer",
+              border: "none", fontFamily: "inherit",
+              background: mapLayer === layer ? "#306223" : "#FDFCFB",
+              color: mapLayer === layer ? "#FDFCFB" : "#7B8F83",
+            }}>
+              {layer === "base" ? "Map" : "Satellite"}
+            </button>
+          ))}
+        </div>
+
+        {clickedSurveyNo && (
+          <div style={{
+            position: "absolute", bottom: 48, left: 12, zIndex: 1000,
+            background: "rgba(48,98,35,0.9)", color: "#FDFCFB",
+            padding: "5px 10px 5px 12px", borderRadius: 6, fontSize: 12, fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 8,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.22)", letterSpacing: "0.01em",
+          }}>
+            Survey {clickedSurveyNo}
+            <span
+              onClick={() => setClickedSurveyNo(null)}
+              style={{ cursor: "pointer", opacity: 0.65, fontSize: 16, lineHeight: 1, fontWeight: 400 }}
+            >×</span>
+          </div>
+        )}
         <MapContainer
           center={KA_CENTER}
           zoom={KA_ZOOM}
@@ -124,11 +210,12 @@ export function MapView() {
           ref={mapRef}
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            maxZoom={19}
+            key={mapLayer}
+            url={TILES[mapLayer].url}
+            attribution={TILES[mapLayer].attribution}
+            maxZoom={TILES[mapLayer].maxZoom}
           />
-          {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} />}
+          {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} onParcelClick={setClickedSurveyNo} />}
         </MapContainer>
       </div>
 
@@ -157,6 +244,24 @@ export function MapView() {
         .leaflet-tooltip-left:before,
         .leaflet-tooltip-right:before {
           border-color: transparent;
+        }
+        .leaflet-interactive:focus {
+          outline: none;
+        }
+        .cadastral-label {
+          background: rgba(255,255,255,0.82) !important;
+          border: none !important;
+          box-shadow: none !important;
+          font-size: 9px;
+          font-weight: 700;
+          color: #306223;
+          padding: 1px 4px;
+          border-radius: 3px;
+          pointer-events: none;
+          white-space: nowrap;
+        }
+        .cadastral-label::before {
+          display: none !important;
         }
       `}</style>
     </div>

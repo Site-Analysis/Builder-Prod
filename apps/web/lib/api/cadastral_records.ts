@@ -80,8 +80,7 @@ export interface SearchResult {
 
 export async function searchBySurveyNo(q: string, signal?: AbortSignal): Promise<SearchResult[]> {
   if (q.length < 2) return [];
-  try { return await get<SearchResult[]>(`/search?q=${encodeURIComponent(q)}`, signal); }
-  catch { return []; }
+  return get<SearchResult[]>(`/search?q=${encodeURIComponent(q)}`, signal);
 }
 
 // ─── Parcel GeoJSON ──────────────────────────────────────────────────────────

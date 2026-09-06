@@ -4,7 +4,7 @@
 # Required env vars (set in .env at repo root):
 #   KEYCLOAK_ADMIN_PASSWORD  — Keycloak admin console password (set before first run)
 #   CADASTRAL_DATA_ROOT      — host path to dir containing cadastral_lake_v2/ + echawadi_village_list.json
-#   SURVEY_INDEX_PATH        — host path to a writable dir for survey_index.db
+# survey_index.db lives in Docker named volume (survey_index_vol) for fast WSL2 I/O.
 
 services:
   keycloak:
@@ -21,11 +21,11 @@ services:
       - ./infra/keycloak/sat-realm.json:/opt/keycloak/data/import/sat-realm.json:ro
       - keycloak_data:/opt/keycloak/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 10
-      start_period: 40s
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080' 2>/dev/null && echo ok || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     restart: unless-stopped
 
   cadastral:
@@ -34,7 +34,7 @@ services:
       - "8011:8011"
     environment:
       FLAGS: feature.cadastral.land-records
-      CADASTRAL_DATA_DIR: /data/cadastral_lake_v2
+      CADASTRAL_DATA_DIR: /data/cadastral_lake_v2/cadastral_lake_v2
       SURVEY_INDEX_DB: /survey_index/survey_index.db
       KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-sat}
@@ -42,10 +42,10 @@ services:
       # DEV_BYPASS_AUTH: "1"   # uncomment to skip JWT validation locally
     volumes:
       - ${CADASTRAL_DATA_ROOT}:/data:ro
-      - ${SURVEY_INDEX_PATH:-./data/survey_index}:/survey_index
+      - survey_index_vol:/survey_index
     depends_on:
       keycloak:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8011/health"]
@@ -55,3 +55,4 @@ services:
 
 volumes:
   keycloak_data:
+  survey_index_vol:
