@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
-import type { Map as LeafletMap, Layer, GeoJSONOptions } from "leaflet";
+import L, { type Map as LeafletMap, type Layer, type GeoJSONOptions } from "leaflet";
 import { CadastralToolbar } from "./CadastralToolbar";
 import { fetchParcelData, type SearchResult } from "@/lib/api/cadastral_records";
 import { useIsMobile } from "@/lib/useIsMobile";
@@ -20,20 +20,31 @@ const KA_ZOOM = 7;
 const TOOLTIP_THRESHOLD = 500;
 const PERMANENT_LABEL_THRESHOLD = 1500;
 
-function ParcelLayer({ fc, onParcelClick }: { fc: GeoJSON.FeatureCollection; onParcelClick: (no: string) => void }) {
+function ParcelLayer({
+  fc,
+  onParcelClick,
+  mapLayer,
+}: {
+  fc: GeoJSON.FeatureCollection;
+  onParcelClick: (no: string) => void;
+  mapLayer: "base" | "satellite";
+}) {
   const map = useMap();
   const showPermanent = fc.features.length <= PERMANENT_LABEL_THRESHOLD;
   const showTooltips  = fc.features.length <= TOOLTIP_THRESHOLD;
+  const renderer = useMemo(() => L.canvas({ padding: 0.5 }), []);
+  const isSat = mapLayer === "satellite";
 
-  const options: GeoJSONOptions = {
+  const options = {
+    renderer,
     style: () => ({
-      color: "#306223",
-      weight: 1,
-      opacity: 0.8,
-      fillColor: "#306223",
-      fillOpacity: 0.08,
+      color:       isSat ? "#FFFFFF" : "#306223",
+      weight:      isSat ? 1.5 : 1,
+      opacity:     0.9,
+      fillColor:   isSat ? "#FFFFFF" : "#306223",
+      fillOpacity: isSat ? 0.10 : 0.08,
     }),
-    onEachFeature: (feature, layer: Layer) => {
+    onEachFeature: (feature: GeoJSON.Feature, layer: Layer) => {
       const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
       if (!surveyNo) return;
       if (showPermanent) {
@@ -97,7 +108,7 @@ function flyToBounds(map: LeafletMap, fc: GeoJSON.FeatureCollection, surveyNo?: 
   const lngs = coords.map((c) => c[0]);
   map.fitBounds(
     [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]],
-    { padding: [40, 40], maxZoom: surveyNo ? 18 : 16 },
+    { padding: [40, 40], maxZoom: surveyNo ? 20 : 16 },
   );
 }
 
@@ -105,12 +116,16 @@ const TILES = {
   base: {
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
+    maxZoom: 21,
+    maxNativeZoom: 19,
+    detectRetina: true,
   },
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution: "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics",
-    maxZoom: 18,
+    maxZoom: 21,
+    maxNativeZoom: 18,
+    detectRetina: false,
   },
 };
 
@@ -211,13 +226,8 @@ export function MapView() {
           style={{ height: "100%", width: "100%" }}
           ref={mapRef}
         >
-          <TileLayer
-            key={mapLayer}
-            url={TILES[mapLayer].url}
-            attribution={TILES[mapLayer].attribution}
-            maxZoom={TILES[mapLayer].maxZoom}
-          />
-          {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} onParcelClick={setClickedSurveyNo} />}
+          <TileLayer key={mapLayer} {...TILES[mapLayer]} />
+          {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} onParcelClick={setClickedSurveyNo} mapLayer={mapLayer} />}
         </MapContainer>
       </div>
 

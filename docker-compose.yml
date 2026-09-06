@@ -36,6 +36,7 @@ services:
       FLAGS: feature.cadastral.land-records
       CADASTRAL_DATA_DIR: /data/cadastral_lake_v2/cadastral_lake_v2
       SURVEY_INDEX_DB: /survey_index/survey_index.db
+      CADASTRAL_DATUM: kalianpur
       KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-sat}
       CORS_ORIGINS: '["http://localhost:3000","https://builder.qnit.site"]'
