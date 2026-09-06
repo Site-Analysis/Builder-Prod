@@ -26,3 +26,8 @@
   --font-mono: var(--font-space-mono);
   --font-display: var(--font-space-grotesk);
 }
+
+@media (max-width: 639px) {
+  .cadastral-label { font-size: 8px; padding: 1px 3px; }
+  .cadastral-tooltip { font-size: 12px; }
+}

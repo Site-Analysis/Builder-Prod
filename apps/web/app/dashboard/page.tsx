@@ -11,6 +11,7 @@ import { signOut } from "next-auth/react";
 import { useProjectStore } from "@/lib/stores/project";
 import { getProjects } from "@/lib/api/projects";
 import type { Project } from "@/lib/stores/project";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -314,17 +315,17 @@ function GhostCard({ variant }: { variant: number }) {
 
 // ─── Building hero ────────────────────────────────────────────────────────────
 
-function BuildingHero() {
+function BuildingHero({ isMobile }: { isMobile: boolean }) {
   return (
     <div style={{
       position: "relative", overflow: "hidden",
       borderRadius: 16, border: "1px solid #CFD6C4",
-      display: "flex", marginBottom: 36,
+      display: "flex", flexDirection: isMobile ? "column" : "row", marginBottom: isMobile ? 20 : 36,
       boxShadow: "0 2px 12px rgba(48,98,35,0.07)",
     }}>
       {/* Left: text */}
       <div style={{
-        flex: "0 0 52%", padding: "32px 36px",
+        flex: isMobile ? "none" : "0 0 52%", padding: isMobile ? "20px 18px" : "32px 36px",
         background: "linear-gradient(135deg, #F5F0EB 0%, #EEE9E3 100%)",
         display: "flex", flexDirection: "column", justifyContent: "center", gap: 0,
       }}>
@@ -339,7 +340,7 @@ function BuildingHero() {
           Qnit Builders
         </div>
         <div style={{
-          fontSize: 22, fontWeight: 800, color: "#3A3F3B",
+          fontSize: isMobile ? 18 : 22, fontWeight: 800, color: "#3A3F3B",
           lineHeight: 1.2, letterSpacing: "-0.5px", marginBottom: 10,
           fontFamily: "var(--font-space-grotesk, inherit)",
         }}>
@@ -368,8 +369,8 @@ function BuildingHero() {
         </div>
       </div>
 
-      {/* Right: architectural building SVG */}
-      <div style={{ flex: 1, position: "relative", background: "#E8E3DC", overflow: "hidden" }}>
+      {/* Right: architectural building SVG (hidden on mobile) */}
+      {!isMobile && <div style={{ flex: 1, position: "relative", background: "#E8E3DC", overflow: "hidden" }}>
         <svg viewBox="0 0 420 180" xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="xMidYMid slice"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
@@ -480,22 +481,22 @@ function BuildingHero() {
           {/* Foreground ground line accent */}
           <line x1="0" y1="158" x2="420" y2="158" stroke="#B8B3AB" strokeWidth="0.4" opacity="0.5"/>
         </svg>
-      </div>
+      </div>}
     </div>
   );
 }
 
 // ─── Welcome hero (empty state) ───────────────────────────────────────────────
 
-function WelcomeHero() {
+function WelcomeHero({ isMobile }: { isMobile: boolean }) {
   return (
     <div style={{
-      display: "flex", borderRadius: 16, overflow: "hidden",
+      display: "flex", flexDirection: isMobile ? "column" : "row", borderRadius: 16, overflow: "hidden",
       border: "1px solid #CFD6C4", marginBottom: 28,
       boxShadow: "0 2px 12px rgba(48,98,35,0.07)",
     }}>
       <div style={{
-        flex: "0 0 58%", padding: "32px 36px",
+        flex: isMobile ? "none" : "0 0 58%", padding: isMobile ? "20px 18px" : "32px 36px",
         background: "linear-gradient(135deg, #F5F0EB 0%, #EEE9E3 100%)",
       }}>
         <div style={{
@@ -535,9 +536,9 @@ function WelcomeHero() {
           ))}
         </div>
       </div>
-      <div style={{ flex: 1, position: "relative", overflow: "hidden", background: "#EAE5DF" }}>
+      {!isMobile && <div style={{ flex: 1, position: "relative", overflow: "hidden", background: "#EAE5DF" }}>
         <CardMapSVG variant={0} />
-      </div>
+      </div>}
     </div>
   );
 }
@@ -574,6 +575,7 @@ export default function DashboardPage() {
     }
   }
 
+  const { isMobile } = useIsMobile();
   const initials = user ? getInitials({ email: user.email, name: user.name }) : "U";
   const isEmpty  = !loading && projects.length === 0;
 
@@ -583,7 +585,7 @@ export default function DashboardPage() {
       {/* Top nav */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 32px", height: 56,
+        padding: isMobile ? "0 16px" : "0 32px", height: 56,
         background: "rgba(253,252,251,0.90)",
         backdropFilter: "blur(14px)",
         borderBottom: "1px solid #CFD6C4",
@@ -599,7 +601,7 @@ export default function DashboardPage() {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 12, fontWeight: 700,
           }}>{initials}</div>
-          {user?.name && (
+          {user?.name && !isMobile && (
             <span style={{ fontSize: 12, color: "#7B8F83" }}>{user.name}</span>
           )}
           <button
@@ -612,13 +614,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 24px 60px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "20px 14px 40px" : "36px 24px 60px" }}>
 
         {/* Building hero */}
-        <BuildingHero />
+        <BuildingHero isMobile={isMobile} />
 
         {/* Welcome hero — only on first visit (empty state) */}
-        {isEmpty && <WelcomeHero />}
+        {isEmpty && <WelcomeHero isMobile={isMobile} />}
 
         {/* Section header */}
         <div style={{
@@ -638,7 +640,7 @@ export default function DashboardPage() {
                 Qnit Builders
               </span>
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: "#3A3F3B", letterSpacing: "-0.6px", lineHeight: 1, margin: 0 }}>
+            <h1 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: "#3A3F3B", letterSpacing: "-0.6px", lineHeight: 1, margin: 0 }}>
               Projects
             </h1>
             {!isEmpty && stats && (
@@ -655,20 +657,20 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-          <svg width="80" height="50" viewBox="0 0 80 50" fill="none" aria-hidden style={{ opacity: 0.50, flexShrink: 0 }}>
+          {!isMobile && <svg width="80" height="50" viewBox="0 0 80 50" fill="none" aria-hidden style={{ opacity: 0.50, flexShrink: 0 }}>
             <ellipse cx="40" cy="25" rx="39" ry="24" stroke="#CFD6C4" strokeWidth="0.8"/>
             <ellipse cx="40" cy="25" rx="28" ry="17" stroke="#CFD6C4" strokeWidth="0.8"/>
             <ellipse cx="40" cy="25" rx="17" ry="10" stroke="#CFD6C4" strokeWidth="0.8"/>
             <circle  cx="40" cy="25" r="4"            fill="#99CDD8"  opacity="0.7"/>
             <circle  cx="40" cy="25" r="1.5"          fill="#FDFCFB"/>
-          </svg>
+          </svg>}
         </div>
 
         {/* Project grid */}
         {loading ? (
           <div style={{ color: "#7B8F83", fontSize: 14 }}>Loading projects…</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 260 : 290}px, 1fr))`, gap: 16 }}>
             {projects.map((p: Project, i: number) => (
               <ProjectCard
                 key={p.id}

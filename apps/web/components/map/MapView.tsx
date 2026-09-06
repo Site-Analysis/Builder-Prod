@@ -10,6 +10,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Map as LeafletMap, Layer, GeoJSONOptions } from "leaflet";
 import { CadastralToolbar } from "./CadastralToolbar";
 import { fetchParcelData, type SearchResult } from "@/lib/api/cadastral_records";
+import { useIsMobile } from "@/lib/useIsMobile";
 import "leaflet/dist/leaflet.css";
 
 // Karnataka centroid — default map center
@@ -119,6 +120,7 @@ export function MapView() {
   const [clickedSurveyNo, setClickedSurveyNo] = useState<string | null>(null);
   const [mapLayer, setMapLayer] = useState<"base" | "satellite">("base");
   const mapRef = useRef<LeafletMap | null>(null);
+  const { isMobile } = useIsMobile();
 
   const loadedSurveyNos = useMemo<Set<string>>(() => {
     if (!parcelFc) return new Set();
@@ -178,7 +180,7 @@ export function MapView() {
         }}>
           {(["base", "satellite"] as const).map(layer => (
             <button key={layer} onClick={() => setMapLayer(layer)} style={{
-              padding: "5px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer",
+              padding: isMobile ? "9px 13px" : "5px 10px", fontSize: isMobile ? 12 : 11, fontWeight: 600, cursor: "pointer",
               border: "none", fontFamily: "inherit",
               background: mapLayer === layer ? "#306223" : "#FDFCFB",
               color: mapLayer === layer ? "#FDFCFB" : "#7B8F83",
@@ -190,9 +192,9 @@ export function MapView() {
 
         {clickedSurveyNo && (
           <div style={{
-            position: "absolute", bottom: 48, left: 12, zIndex: 1000,
+            position: "absolute", bottom: isMobile ? 12 : 48, left: 12, zIndex: 1000,
             background: "rgba(48,98,35,0.9)", color: "#FDFCFB",
-            padding: "5px 10px 5px 12px", borderRadius: 6, fontSize: 12, fontWeight: 700,
+            padding: isMobile ? "8px 12px 8px 14px" : "5px 10px 5px 12px", borderRadius: 6, fontSize: isMobile ? 13 : 12, fontWeight: 700,
             display: "flex", alignItems: "center", gap: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.22)", letterSpacing: "0.01em",
           }}>

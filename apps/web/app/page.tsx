@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useAuthStore } from "@/lib/stores/auth";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 function BuildingSVG() {
   return (
@@ -101,6 +102,7 @@ function BuildingSVG() {
 export default function Home() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isMobile, isTablet } = useIsMobile();
 
   useEffect(() => {
     if (isAuthenticated) router.replace("/dashboard");
@@ -108,15 +110,20 @@ export default function Home() {
 
   if (isAuthenticated) return null;
 
+  const panelFlex  = isMobile ? "1" : isTablet ? "0 0 340px" : "0 0 420px";
+  const panelPad   = isMobile ? "48px 24px" : isTablet ? "40px 36px" : "56px 52px";
+  const headingPx  = isMobile ? 22 : isTablet ? 26 : 28;
+  const btnPad     = isMobile ? "16px 0" : "14px 0";
+
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: "var(--font-inter)" }}>
 
       {/* Left — sign-in panel */}
       <div style={{
-        flex: "0 0 420px", display: "flex", flexDirection: "column",
-        justifyContent: "center", padding: "56px 52px",
+        flex: panelFlex, display: "flex", flexDirection: "column",
+        justifyContent: "center", padding: panelPad,
         background: "#FDFCFB",
-        borderRight: "1px solid #CFD6C4",
+        borderRight: isMobile ? "none" : "1px solid #CFD6C4",
       }}>
 
         {/* Logo */}
@@ -144,7 +151,7 @@ export default function Home() {
         {/* Heading */}
         <div style={{
           fontFamily: "var(--font-space-grotesk, inherit)",
-          fontSize: 28, fontWeight: 800, color: "#3A3F3B",
+          fontSize: headingPx, fontWeight: 800, color: "#3A3F3B",
           lineHeight: 1.18, letterSpacing: "-0.6px", marginBottom: 12,
         }}>
           Karnataka&apos;s land<br/>records, mapped.
@@ -179,7 +186,7 @@ export default function Home() {
           style={{
             background: "#306223", color: "#FDFCFB",
             border: "none", borderRadius: 10,
-            padding: "14px 0", fontWeight: 700,
+            padding: btnPad, fontWeight: 700,
             fontSize: 15, cursor: "pointer",
             letterSpacing: "0.02em", width: "100%",
             boxShadow: "0 4px 16px rgba(48,98,35,0.25)",
@@ -196,8 +203,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Right — building illustration */}
-      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+      {/* Right — building illustration (hidden on mobile) */}
+      {!isMobile && <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         <BuildingSVG />
         <div style={{
           position: "absolute", inset: 0, pointerEvents: "none",
@@ -209,7 +216,7 @@ export default function Home() {
         }}>
           Karnataka Cadastral Explorer
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
