@@ -11,6 +11,7 @@ import {
   searchBySurveyNo,
   type HierarchyItem, type SearchResult,
 } from "@/lib/api/cadastral_records";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 interface VillageCoords { dist: string; taluk: string; hobli: string; vlg: string; }
 
@@ -50,6 +51,7 @@ function SearchDropdown({ results, loadedSurveyNos, loadedVillage, onSelect }: {
   loadedVillage?: VillageCoords;
   onSelect: (r: SearchResult, isCurrent: boolean) => void;
 }) {
+  const { isMobile } = useIsMobile();
   const inCurrent = loadedSurveyNos?.size
     ? results.filter(r => {
         if (!loadedSurveyNos.has(r.survey_no)) return false;
@@ -95,7 +97,9 @@ function SearchDropdown({ results, loadedSurveyNos, loadedVillage, onSelect }: {
   const containerStyle: React.CSSProperties = {
     position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 9999,
     background: "#FDFCFB", border: "1px solid #CFD6C4", borderRadius: 5,
-    boxShadow: "0 4px 16px rgba(58,63,59,0.14)", minWidth: 240, maxHeight: 240, overflowY: "auto",
+    boxShadow: "0 4px 16px rgba(58,63,59,0.14)",
+    minWidth: 220, maxWidth: isMobile ? "calc(100vw - 24px)" : undefined,
+    maxHeight: 240, overflowY: "auto",
   };
 
   if (loadedSurveyNos?.size) {
@@ -141,6 +145,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
   const [loading, setLoading] = useState(false);
   const [status, setStatus]   = useState("");
   const [loadedVillage, setLoadedVillage] = useState<VillageCoords | null>(null);
+  const { isMobile } = useIsMobile();
 
   const [searchQ, setSearchQ]           = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -247,15 +252,22 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
     onLoad(fc, label);
   }
 
+  const mSel: React.CSSProperties = isMobile
+    ? { ...SEL_STYLE, minHeight: 36, fontSize: 13, padding: "5px 8px" }
+    : SEL_STYLE;
+  const mBtn: React.CSSProperties = isMobile
+    ? { ...BTN_STYLE, padding: "8px 16px", minHeight: 36 }
+    : BTN_STYLE;
+
   return (
     <div style={{
       position: "relative", zIndex: 10,
-      display: "flex", alignItems: "center", gap: 8, padding: "6px 14px",
+      display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "8px 10px" : "6px 14px",
       background: "rgba(253,252,251,0.55)",
       backdropFilter: "blur(14px) saturate(160%)",
       WebkitBackdropFilter: "blur(14px) saturate(160%)",
       borderBottom: "1px solid rgba(255,255,255,0.6)",
-      flexWrap: "wrap", minHeight: 42,
+      flexWrap: "wrap", minHeight: isMobile ? 48 : 42,
       boxShadow: "0 6px 26px rgba(58,63,59,0.18), inset 0 1px 0 rgba(255,255,255,0.45)",
     }}>
       <span style={{ color: "#306223", fontWeight: 800, fontSize: 13, whiteSpace: "nowrap", letterSpacing: "0.01em" }}>
@@ -263,27 +275,27 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
       </span>
       <span style={{ color: "#CFD6C4", fontSize: 16 }}>|</span>
 
-      <select value={dist} onChange={(e) => handleDistChange(e.target.value)} style={SEL_STYLE}>
+      <select value={dist} onChange={(e) => handleDistChange(e.target.value)} style={mSel}>
         <option value="">District</option>
         {districts.map((d) => <option key={d.code} value={d.code}>{d.name}</option>)}
       </select>
 
-      <select value={taluk} onChange={(e) => handleTalukChange(e.target.value)} style={{ ...SEL_STYLE, opacity: taluks.length ? 1 : 0.45 }}>
+      <select value={taluk} onChange={(e) => handleTalukChange(e.target.value)} style={{ ...mSel, opacity: taluks.length ? 1 : 0.45 }}>
         <option value="">{taluks.length ? "Taluk" : dist ? "Loading…" : "— Taluk —"}</option>
         {taluks.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
       </select>
 
-      <select value={hobli} onChange={(e) => handleHobliChange(e.target.value)} style={{ ...SEL_STYLE, opacity: hoblis.length ? 1 : 0.45 }}>
+      <select value={hobli} onChange={(e) => handleHobliChange(e.target.value)} style={{ ...mSel, opacity: hoblis.length ? 1 : 0.45 }}>
         <option value="">{hoblis.length ? "Hobli" : taluk ? "Loading…" : "— Hobli —"}</option>
         {hoblis.map((h) => <option key={h.code} value={h.code}>{h.name}</option>)}
       </select>
 
-      <select value={vlg} onChange={(e) => setVlg(e.target.value)} style={{ ...SEL_STYLE, opacity: villages.length ? 1 : 0.45 }}>
+      <select value={vlg} onChange={(e) => setVlg(e.target.value)} style={{ ...mSel, opacity: villages.length ? 1 : 0.45 }}>
         <option value="">{villages.length ? "All villages" : hobli ? "Loading…" : "— Village —"}</option>
         {villages.map((v) => <option key={v.code} value={v.code}>{v.name}</option>)}
       </select>
 
-      <button onClick={handleLoad} disabled={loading} style={BTN_STYLE}>
+      <button onClick={handleLoad} disabled={loading} style={mBtn}>
         {loading ? "Loading…" : "Load"}
       </button>
 
@@ -320,7 +332,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
                   style={{
                     padding: "1px 0", fontSize: 12, border: "none",
                     background: "transparent", outline: "none",
-                    width: 80, color: "#3A3F3B", fontFamily: "inherit",
+                    flex: 1, minWidth: 0, color: "#3A3F3B", fontFamily: "inherit",
                   }}
                 />
                 <span style={{ color: "#CFD6C4", fontSize: 13, lineHeight: 1 }}>,</span>
@@ -333,7 +345,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
                   style={{
                     padding: "1px 0", fontSize: 12, border: "none",
                     background: "transparent", outline: "none",
-                    width: 80, color: "#3A3F3B", fontFamily: "inherit",
+                    flex: 1, minWidth: 0, color: "#3A3F3B", fontFamily: "inherit",
                   }}
                 />
               </div>
@@ -360,7 +372,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
                   style={{
                     padding: "1px 0", fontSize: 12, border: "none",
                     background: "transparent", outline: "none",
-                    width: 160, color: "#3A3F3B", fontFamily: "inherit",
+                    flex: 1, minWidth: 0, maxWidth: 160, color: "#3A3F3B", fontFamily: "inherit",
                   }}
                 />
               </div>
@@ -379,7 +391,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
       )}
 
       {status && (
-        <span style={{ fontSize: 11, color: "#9EAD98", marginLeft: "auto", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 220 }}>
+        <span style={{ fontSize: 11, color: "#9EAD98", marginLeft: "auto", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: isMobile ? "100%" : 220 }}>
           {status}
         </span>
       )}
