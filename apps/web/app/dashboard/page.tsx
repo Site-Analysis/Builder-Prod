@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Plus } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/auth";
-import { signOut } from "next-auth/react";
+
 import { useProjectStore } from "@/lib/stores/project";
 import { getProjects } from "@/lib/api/projects";
 import type { Project } from "@/lib/stores/project";
@@ -603,7 +603,7 @@ export default function DashboardPage() {
             <span style={{ fontSize: 12, color: "#7B8F83" }}>{user.name}</span>
           )}
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => { window.location.href = "/api/auth/logout"; }}
             style={{
               background: "none", border: "1px solid #CFD6C4", borderRadius: 6,
               padding: "4px 12px", fontSize: 12, color: "#7B8F83", cursor: "pointer",

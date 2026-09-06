@@ -43,6 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, account, profile }) {
       if (account) {
         token.accessToken = account.access_token
+        token.idToken = account.id_token
         token.refreshToken = account.refresh_token
         token.expiresAt = account.expires_at ?? Math.floor(Date.now() / 1000) + 3600
         // Pin sub to Keycloak's stable user UUID (profile.sub), not NextAuth's ephemeral user.id
@@ -62,6 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken as string | undefined
+      session.idToken = token.idToken as string | undefined
       session.user.id = token.sub ?? ""
       return session
     },
@@ -71,6 +73,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 declare module "next-auth" {
   interface Session {
     accessToken?: string
+    idToken?: string
     user: {
       id: string
       name?: string | null
