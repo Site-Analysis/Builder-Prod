@@ -16,6 +16,7 @@ from __future__ import annotations
 import glob
 import json
 import logging
+import math
 import os
 import sqlite3
 import threading
@@ -29,22 +30,21 @@ logger = logging.getLogger(__name__)
 DATA_DIR = os.environ.get("CADASTRAL_DATA_DIR", "data/cadastral_lake_v2")
 _INDEX_DB = os.environ.get("SURVEY_INDEX_DB", "/app/survey_index.db")
 
-# Swap X↔Y: compensates for scraper building Polygon(Northing, Easting) instead of
-# Polygon(Easting, Northing) in EPSG:32643.
-_SWAP_XY = [0, 1, 1, 0, 0, 0]
+# Optional LGD boundary dataset (for /nearby endpoint). Graceful fallback if absent.
+_LGD_PARQUET = os.environ.get(
+    "LGD_PARQUET_PATH",
+    os.path.join(os.path.dirname(DATA_DIR), "lgd_villages.parquet"),
+)
+_VILLAGE_ROSTER_DB = os.environ.get(
+    "VILLAGE_ROSTER_DB",
+    os.path.join(os.path.dirname(DATA_DIR), "village_roster.db"),
+)
 
-# CADASTRAL_DATUM controls source ellipsoid assumption for reprojection.
-# Options: wgs84 (default), everest (Everest 1830 ellipsoid only),
-#          kalianpur (Everest ellipsoid + full 3-param Bursa-Wolf shift to WGS84).
-# Everest confirmed better alignment than wgs84 for pre-2000 Karnataka cadastral data.
-# Kalianpur adds ~59 m N / ~108 m W geocentric origin correction on top of everest.
-_DATUM = os.environ.get("CADASTRAL_DATUM", "wgs84").lower()
-_EVEREST_UTM43N = "+proj=utm +zone=43 +a=6377276.345 +b=6356075.413 +units=m +no_defs"
-_KALIANPUR_UTM43N = "+proj=utm +zone=43 +a=6377309.613 +b=6356108.571 +towgs84=295,736,257,0,0,0,0 +units=m +no_defs"
+_SWAP_XY = [0, 1, 1, 0, 0, 0]
 
 
 def load_village(path: str) -> gpd.GeoDataFrame | None:
-    """Read one vlg_*.parquet, fix swapped axes, reproject to WGS84. None if placeholder."""
+    """Read one vlg_*.parquet, fix swapped axes and reproject UTM→WGS84."""
     try:
         gdf = gpd.read_parquet(path)
     except Exception:  # noqa: BLE001
@@ -52,13 +52,7 @@ def load_village(path: str) -> gpd.GeoDataFrame | None:
     if gdf.empty or "geometry" not in gdf.columns:
         return None
     gdf["geometry"] = gdf.geometry.affine_transform(_SWAP_XY)
-    if _DATUM == "everest":
-        src_crs = _EVEREST_UTM43N
-    elif _DATUM == "kalianpur":
-        src_crs = _KALIANPUR_UTM43N
-    else:
-        src_crs = 32643
-    gdf = gdf.set_crs(src_crs, allow_override=True).to_crs(4326)
+    gdf = gdf.set_crs(32643, allow_override=True).to_crs(4326)
     return gdf
 
 
@@ -236,6 +230,27 @@ def search_survey(q: str, limit: int = 25) -> list[dict[str, Any]]:
     ]
 
 
+def search_villages(q: str, limit: int = 20) -> list[dict[str, Any]]:
+    """In-memory prefix search of villages with parquet data."""
+    q_lower = q.lower().strip()
+    if len(q_lower) < 2 or not _PARQUET_VLGS:
+        return []
+    results: list[dict[str, Any]] = []
+    seen: set[tuple] = set()
+    for key, name in _NAMES.items():
+        if len(key) == 4 and key in _PARQUET_VLGS and name.lower().startswith(q_lower):
+            if key not in seen:
+                seen.add(key)
+                results.append({
+                    "village_name": name,
+                    "dist": key[0], "taluk": key[1], "hobli": key[2], "vlg": key[3],
+                    "dist_name": _NAMES.get((key[0],), key[0]),
+                    "taluk_name": _NAMES.get((key[0], key[1]), key[1]),
+                })
+    results.sort(key=lambda x: x["village_name"])
+    return results[:limit]
+
+
 def _list_dir_codes(path: str, prefix: str) -> list[str]:
     if not os.path.isdir(path):
         return []
@@ -272,6 +287,15 @@ def _load_names() -> None:
 
 
 _load_names()
+
+# LGD nearby-search state — populated by _load_lgd_support() background thread.
+_LGD_CENTROIDS_READY = threading.Event()
+_LGD_CENTROID_DF: "pd.DataFrame | None" = None
+_LGD_CODES_WITH_DATA: set[int] = set()
+_LGD_TO_ECHADAWI: dict[int, tuple[str, str, str, str]] = {}
+_LGD_GEOM_CACHE: dict[int, "dict | None"] = {}
+_LGD_VILLAGE_NAMES: dict[int, str] = {}
+_PARQUET_VLGS: set[tuple[str, str, str, str]] = set()
 
 
 def _build_survey_index() -> None:
@@ -349,6 +373,128 @@ def _build_survey_index() -> None:
 threading.Thread(target=_build_survey_index, daemon=True).start()
 
 
+def _load_lgd_support() -> None:
+    """Load LGD village centroids + geometry for /nearby. Runs once at startup."""
+    global _LGD_CENTROID_DF, _LGD_CODES_WITH_DATA, _LGD_TO_ECHADAWI, _LGD_VILLAGE_NAMES  # noqa: PLW0603
+
+    if not os.path.isfile(_LGD_PARQUET):
+        logger.info("lgd_villages.parquet absent — /nearby will return empty")
+        _LGD_CENTROIDS_READY.set()
+        return
+
+    try:
+        gdf = gpd.read_parquet(_LGD_PARQUET)
+        # Filter Karnataka only (state_lgd==29) to keep memory/speed reasonable
+        if "state_lgd" in gdf.columns:
+            gdf = gdf[gdf["state_lgd"] == 29].reset_index(drop=True)
+    except Exception as e:
+        logger.warning("LGD parquet load failed: %s", e)
+        _LGD_CENTROIDS_READY.set()
+        return
+
+    # Pre-cache all village geometries as GeoJSON dicts
+    for _, row in gdf.iterrows():
+        try:
+            code = int(row["vil_lgd"])
+            geom_ser = gpd.GeoSeries([row.geometry], crs=gdf.crs)
+            _LGD_GEOM_CACHE[code] = json.loads(geom_ser.to_json())["features"][0]["geometry"]
+        except Exception:  # noqa: BLE001
+            pass
+
+    # Cache village names directly from LGD parquet
+    if "vilname11" in gdf.columns:
+        for _, row in gdf.iterrows():
+            try:
+                _LGD_VILLAGE_NAMES[int(row["vil_lgd"])] = str(row["vilname11"] or "")
+            except Exception:  # noqa: BLE001
+                pass
+
+    # Centroid table: vil_lgd, lat, lon
+    c = gdf.geometry.centroid
+    df = gdf[["vil_lgd"]].copy()
+    df = df.rename(columns={"vil_lgd": "lgd_code"})
+    df["lat"] = c.y
+    df["lon"] = c.x
+    _LGD_CENTROID_DF = df
+
+    # Build echadawi mapping from village_roster.db (lgd_code → dist,taluk,hobli,vlg)
+    if os.path.isfile(_VILLAGE_ROSTER_DB):
+        conn = sqlite3.connect(_VILLAGE_ROSTER_DB)
+        try:
+            rows = conn.execute(
+                "SELECT lgd_code, dist, taluk, hobli, vlg FROM village_roster"
+            ).fetchall()
+            for r in rows:
+                _LGD_TO_ECHADAWI[int(r[0])] = (str(r[1]), str(r[2]), str(r[3]), str(r[4]))
+        except Exception as e:
+            logger.warning("village_roster.db read failed: %s", e)
+        finally:
+            conn.close()
+
+    # Fallback: name-match LGD villages against echawadi names if roster.db absent
+    if not _LGD_TO_ECHADAWI and _NAMES and _LGD_VILLAGE_NAMES:
+        name_to_echadawi: dict[str, tuple] = {}
+        for key, vname in _NAMES.items():
+            if len(key) == 4:
+                norm = vname.lower().strip().replace(" ", "")
+                name_to_echadawi.setdefault(norm, key)
+        for lgd_code, vname_lgd in _LGD_VILLAGE_NAMES.items():
+            norm = vname_lgd.lower().strip().replace(" ", "")
+            if norm in name_to_echadawi:
+                _LGD_TO_ECHADAWI[lgd_code] = name_to_echadawi[norm]
+        logger.info("LGD: name-matched %d villages from echawadi", len(_LGD_TO_ECHADAWI))
+
+    # Which echadawi (dist,taluk,hobli,vlg) tuples have parquet data
+    parquet_vlgs: set[tuple[str, str, str, str]] = set()
+    for p in find_paths():
+        parts = p.replace("\\", "/").split("/")
+        try:
+            di = next(i for i, s in enumerate(parts) if s.startswith("dist_"))
+            parquet_vlgs.add((
+                parts[di].replace("dist_", ""),
+                parts[di + 1].replace("taluk_", ""),
+                parts[di + 2].replace("hobli_", ""),
+                os.path.splitext(parts[di + 3])[0].replace("vlg_", ""),
+            ))
+        except (StopIteration, IndexError):
+            continue
+
+    for lgd_code, echadawi in _LGD_TO_ECHADAWI.items():
+        if echadawi in parquet_vlgs:
+            _LGD_CODES_WITH_DATA.add(lgd_code)
+
+    _LGD_CENTROIDS_READY.set()
+    logger.info(
+        "LGD support loaded: %d villages, %d mapped, %d with parquet data",
+        len(df), len(_LGD_TO_ECHADAWI), len(_LGD_CODES_WITH_DATA),
+    )
+
+
+threading.Thread(target=_load_lgd_support, daemon=True).start()
+
+
+def _build_parquet_village_set() -> None:
+    global _PARQUET_VLGS  # noqa: PLW0603
+    vlgs: set[tuple[str, str, str, str]] = set()
+    for p in find_paths():
+        parts = p.replace("\\", "/").split("/")
+        try:
+            di = next(i for i, s in enumerate(parts) if s.startswith("dist_"))
+            vlgs.add((
+                parts[di].replace("dist_", ""),
+                parts[di + 1].replace("taluk_", ""),
+                parts[di + 2].replace("hobli_", ""),
+                os.path.splitext(parts[di + 3])[0].replace("vlg_", ""),
+            ))
+        except (StopIteration, IndexError):
+            continue
+    _PARQUET_VLGS = vlgs
+    logger.info("Village set built: %d villages with parquet data", len(vlgs))
+
+
+threading.Thread(target=_build_parquet_village_set, daemon=True).start()
+
+
 def list_districts() -> list[dict[str, str]]:
     codes = _list_dir_codes(DATA_DIR, "dist_")
     result = [{"code": c, "name": _NAMES.get((c,), c)} for c in codes]
@@ -376,3 +522,50 @@ def list_villages(dist: str, taluk: str, hobli: str) -> list[dict[str, str]]:
         {"code": c, "name": _NAMES.get((dist, taluk, hobli, c), c)} for c in codes
     ]
     return sorted(result, key=lambda x: x["name"])
+
+
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    )
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def build_nearby_boundaries(lat: float, lng: float, radius_km: float) -> str:
+    """LGD village polygons within radius_km of (lat, lng), sorted nearest-first.
+
+    Returns empty FeatureCollection if LGD data not loaded or lgd_villages.parquet absent.
+    Feature properties: lgd_code, village_name, has_data, dist/taluk/hobli/vlg (null if unmapped).
+    """
+    if not _LGD_CENTROIDS_READY.is_set() or _LGD_CENTROID_DF is None:
+        return '{"type":"FeatureCollection","features":[]}'
+
+    results: list[tuple[float, dict]] = []
+    for _, row in _LGD_CENTROID_DF.iterrows():
+        lgd_code = int(row["lgd_code"])
+        d = _haversine_km(lat, lng, float(row["lat"]), float(row["lon"]))
+        if d > radius_km:
+            continue
+        echadawi = _LGD_TO_ECHADAWI.get(lgd_code)
+        vname = _LGD_VILLAGE_NAMES.get(lgd_code) or (_NAMES.get(echadawi, "") if echadawi else "")
+        feat: dict = {
+            "type": "Feature",
+            "geometry": _LGD_GEOM_CACHE.get(lgd_code),
+            "properties": {
+                "lgd_code": lgd_code,
+                "village_name": vname,
+                "has_data": lgd_code in _LGD_CODES_WITH_DATA,
+                "dist": echadawi[0] if echadawi else None,
+                "taluk": echadawi[1] if echadawi else None,
+                "hobli": echadawi[2] if echadawi else None,
+                "vlg": echadawi[3] if echadawi else None,
+            },
+        }
+        results.append((d, feat))
+
+    results.sort(key=lambda x: x[0])
+    return json.dumps({"type": "FeatureCollection", "features": [f for _, f in results]})

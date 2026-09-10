@@ -28,7 +28,7 @@ function computeStats(projects: ProjectRow[]) {
   }
 }
 
-const DEV_USER_ID = "dev"
+const DEV_USER_ID = "f8b07c58-0a16-4b5f-8c3e-16016c2a16f6"
 
 export async function GET() {
   let userId: string

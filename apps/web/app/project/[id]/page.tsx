@@ -17,13 +17,14 @@ export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isBypass = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "1";
   const { isMobile } = useIsMobile();
   const { currentProject, setCurrentProject } = useProjectStore();
   const [loading, setLoading] = useState(!currentProject || currentProject.id !== id);
   const fetched = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated) { router.replace("/"); return; }
+    if (!isBypass && !isAuthenticated) { router.replace("/"); return; }
     if (fetched.current) return;
     if (currentProject?.id === id) { setLoading(false); return; }
     fetched.current = true;

@@ -175,16 +175,47 @@ paths:
         "403":
           description: Feature flag disabled
 
+  /nearby:
+    get:
+      operationId: getNearbyVillages
+      summary: LGD villages within a geographic radius of a point
+      description: >
+        Returns a GeoJSON FeatureCollection of all LGD villages whose centroid is within
+        `radius_km` of the given WGS84 point. Geometry from `lgd_villages.parquet`.
+        `has_data: true` = cadastral parcel data exists; `has_data: false` = LGD-only.
+        Feature properties include `lgd_code`, `village_name`, `has_data`, and when the
+        village is mapped to the e-Chawadi hierarchy: `dist`, `taluk`, `hobli`, `vlg`
+        (e-Chawadi string codes, null if unmapped). Use `dist`/`taluk`/`hobli`/`vlg`
+        to auto-load parcels after a coordinate search.
+        Centroid index built in background at startup — returns empty FeatureCollection if
+        not yet ready. Gated by `feature.cadastral.land-records`.
+      parameters:
+        - { name: lat,       in: query, required: true,  schema: { type: number } }
+        - { name: lng,       in: query, required: true,  schema: { type: number } }
+        - { name: radius_km, in: query, required: false, schema: { type: number, default: 5.0, minimum: 0.1, maximum: 50.0 } }
+      responses:
+        "200":
+          description: GeoJSON FeatureCollection — one polygon per nearby village
+          content:
+            application/json:
+              schema:
+                type: object
+                description: GeoJSON FeatureCollection
+        "403":
+          description: Feature flag disabled
+
   /boundaries:
     get:
       operationId: getHobliBoundaries
       summary: All village boundary polygons within a hobli (for nearby overlay)
       description: >
         Returns a GeoJSON FeatureCollection with one feature per LGD village in the hobli.
-        Villages with cadastral parquet data have a Polygon/MultiPolygon geometry and
-        `has_data: true`. Villages listed in the LGD directory but lacking cadastral data
-        have `geometry: null` and `has_data: false`. Properties always include
-        `village_code`, `village_name`, and `has_data`.
+        `has_data: true` = cadastral parcel data exists; `has_data: false` = LGD village only.
+        When `feature.cadastral.lgd-boundaries` is active and `lgd_villages.parquet` +
+        `village_roster.db` are present, geometry is sourced from the official LGD boundary
+        dataset for ALL villages (green and red). Fallback (flag off or files absent):
+        green villages use parcel union geometry, red villages have `geometry: null`.
+        Properties always include `village_code`, `village_name`, and `has_data`.
         Gated by `feature.cadastral.land-records`.
       parameters:
         - { name: dist,  in: query, required: true, schema: { type: string } }
@@ -198,6 +229,33 @@ paths:
               schema:
                 type: object
                 description: GeoJSON FeatureCollection
+        "403":
+          description: Feature flag disabled
+
+  /village-search:
+    get:
+      operationId: searchVillages
+      summary: Village name prefix search (cadastral data only)
+      description: >
+        In-memory prefix search across all villages that have cadastral parquet data.
+        Returns up to 20 matches sorted alphabetically. Case-insensitive.
+        Index built in background at startup (~5-10s) — returns empty array until ready.
+        Gated by `feature.cadastral.land-records`.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2 }
+          description: Village name prefix (case-insensitive)
+      responses:
+        "200":
+          description: Villages with parquet data matching prefix
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VillageSearchResult"
         "403":
           description: Feature flag disabled
 
@@ -220,3 +278,15 @@ components:
         taluk:        { type: string, example: "9" }
         hobli:        { type: string, example: "3" }
         vlg:          { type: string, example: "46" }
+
+    VillageSearchResult:
+      type: object
+      required: [village_name, dist, taluk, hobli, vlg, dist_name, taluk_name]
+      properties:
+        village_name: { type: string, example: "HEBBALA" }
+        dist:         { type: string, example: "20" }
+        taluk:        { type: string, example: "1" }
+        hobli:        { type: string, example: "2" }
+        vlg:          { type: string, example: "18" }
+        dist_name:    { type: string, example: "BENGALURU" }
+        taluk_name:   { type: string, example: "BANGALORE-NORTH" }

@@ -15,14 +15,19 @@ _JWKS_URI = f"{_KC_URL}/realms/{_KC_REALM}/protocol/openid-connect/certs"
 _jwks_cache: dict | None = None
 
 
-async def _get_jwks() -> dict:
+async def _get_jwks(force_refresh: bool = False) -> dict:
     global _jwks_cache
-    if _jwks_cache is None:
+    if _jwks_cache is None or force_refresh:
         try:
             async with httpx.AsyncClient() as client:
                 r = await client.get(_JWKS_URI, timeout=5)
                 r.raise_for_status()
-                _jwks_cache = r.json()
+                data = r.json()
+                if not data.get("keys"):
+                    raise ValueError("Empty JWKS — Keycloak not ready")
+                _jwks_cache = data
+        except HTTPException:
+            raise
         except Exception as exc:
             raise HTTPException(
                 status_code=401, detail=f"Auth service unreachable: {exc}"
@@ -41,9 +46,16 @@ async def verify_token(authorization: str | None = Header(default=None)) -> dict
     token = authorization.removeprefix("Bearer ")
     try:
         jwks = await _get_jwks()
-        payload = jwt.decode(
-            token, jwks, algorithms=["RS256"], options={"verify_aud": False}
-        )
+        try:
+            payload = jwt.decode(
+                token, jwks, algorithms=["RS256"], options={"verify_aud": False}
+            )
+        except JWTError:
+            # Keys may have rotated or cache was stale — refresh once and retry.
+            jwks = await _get_jwks(force_refresh=True)
+            payload = jwt.decode(
+                token, jwks, algorithms=["RS256"], options={"verify_aud": False}
+            )
         return payload
     except HTTPException:
         raise

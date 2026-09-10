@@ -11,7 +11,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L, { type Map as LeafletMap, type Layer, type GeoJSONOptions } from "leaflet";
 import { CadastralToolbar } from "./CadastralToolbar";
 import {
-  fetchParcelData, fetchVillageBoundary, fetchHobliBoundaries,
+  fetchParcelData, fetchVillageBoundary, fetchNearbyBoundaries,
   type SearchResult,
 } from "@/lib/api/cadastral_records";
 import { useIsMobile } from "@/lib/useIsMobile";
@@ -103,22 +103,25 @@ function VillageBoundaryLayer({
   colorFn,
   weight = 2,
   labelPermanent = false,
+  fillOpacity: fillOpacityProp,
 }: {
   fc: GeoJSON.FeatureCollection;
   color?: string;
   colorFn?: (feature: GeoJSON.Feature) => string;
   weight?: number;
   labelPermanent?: boolean;
+  fillOpacity?: number;
 }) {
   const options: GeoJSONOptions = {
     style: (feature) => {
       const c = colorFn ? colorFn(feature!) : (color ?? "#306223");
+      const fo = fillOpacityProp ?? (weight >= 3 ? 0.10 : 0.04);
       return {
         color: c,
         weight,
         opacity: 0.9,
         fillColor: c,
-        fillOpacity: weight >= 3 ? 0.10 : 0.04,
+        fillOpacity: fo,
         dashArray: weight < 3 ? "6 4" : undefined,
       };
     },
@@ -185,17 +188,21 @@ export function MapView() {
   const [showNearby, setShowNearby]         = useState(false);
   const [villageBoundaryKey, setVillageBoundaryKey] = useState(0);
   const [hobliBoundaryKey, setHobliBoundaryKey]     = useState(0);
+  const [autoSelect, setAutoSelect]                 = useState<VillageCoords | null>(null);
+  const [autoStatus, setAutoStatus]                 = useState<string>("");
   const mapRef        = useRef<LeafletMap | null>(null);
+
+  useEffect(() => {
+    if (!autoSelect) return;
+    fetchVillageBoundary(autoSelect.dist, autoSelect.taluk, autoSelect.hobli, autoSelect.vlg)
+      .then((bf) => {
+        if (bf && mapRef.current) flyToBounds(mapRef.current, bf);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSelect?.dist, autoSelect?.taluk, autoSelect?.hobli, autoSelect?.vlg]);
   const hobliKeyRef   = useRef<string | null>(null);
   const currentHierRef = useRef<VillageCoords | null>(null);
   const { isMobile }  = useIsMobile();
-
-  const missingVillages = useMemo<string[]>(() => {
-    if (!hobliBoundaryFc) return [];
-    return hobliBoundaryFc.features
-      .filter(f => !(f.properties as Record<string, unknown>)?.has_data)
-      .map(f => (f.properties as Record<string, string>)?.village_name || "Unknown");
-  }, [hobliBoundaryFc]);
 
   const loadedSurveyNos = useMemo<Set<string>>(() => {
     if (!parcelFc) return new Set();
@@ -212,19 +219,53 @@ export function MapView() {
     const bf = await fetchVillageBoundary(hier.dist, hier.taluk, hier.hobli, hier.vlg);
     setVillageBoundaryFc(bf);
     setVillageBoundaryKey((k) => k + 1);
-    if (nearby) {
-      const hkey = `${hier.dist}-${hier.taluk}-${hier.hobli}`;
-      if (hobliKeyRef.current !== hkey) {
-        hobliKeyRef.current = hkey;
-        const hb = await fetchHobliBoundaries(hier.dist, hier.taluk, hier.hobli);
-        setHobliBoundaryFc(hb);
-        setHobliBoundaryKey((k) => k + 1);
+    if (nearby && bf?.features?.length) {
+      const allCoords: number[][] = [];
+      for (const f of bf.features) {
+        const g = f.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon | null;
+        if (!g) continue;
+        if (g.type === "Polygon") allCoords.push(...g.coordinates.flat());
+        else if (g.type === "MultiPolygon") allCoords.push(...g.coordinates.flat(2));
+      }
+      if (allCoords.length) {
+        const lat = allCoords.reduce((s, c) => s + c[1], 0) / allCoords.length;
+        const lng = allCoords.reduce((s, c) => s + c[0], 0) / allCoords.length;
+        const nkey = `${lat.toFixed(2)}-${lng.toFixed(2)}`;
+        if (hobliKeyRef.current !== nkey) {
+          hobliKeyRef.current = nkey;
+          const hb = await fetchNearbyBoundaries(lat, lng, 10);
+          setHobliBoundaryFc(hb);
+          setHobliBoundaryKey((k) => k + 1);
+        }
       }
     }
   }
 
   function handleFlyTo(coords: { lat: number; lon: number }) {
     mapRef.current?.setView([coords.lat, coords.lon], 16);
+  }
+
+  function handleLocBounds(bbox: [[number, number], [number, number]]) {
+    mapRef.current?.fitBounds(bbox, { padding: [40, 40], maxZoom: 16 });
+  }
+
+  async function handleCoordGo(coords: { lat: number; lon: number }) {
+    mapRef.current?.setView([coords.lat, coords.lon], 16);
+    const fc = await fetchNearbyBoundaries(coords.lat, coords.lon, 5);
+    if (!fc?.features?.length) {
+      setAutoStatus("No cadastral data found near this location — select district manually");
+      return;
+    }
+    const nearest = fc.features.find((f) => f.properties?.has_data && f.properties?.dist)
+      ?? fc.features.find((f) => f.properties?.dist);
+    if (!nearest?.properties) {
+      setAutoStatus("No cadastral data found near this location — select district manually");
+      return;
+    }
+    setAutoStatus("");
+    const { dist, taluk, hobli, vlg } = nearest.properties as Record<string, string>;
+    setAutoSelect(null);
+    setTimeout(() => setAutoSelect({ dist, taluk, hobli, vlg }), 0);
   }
 
   function handleHighlight(result: SearchResult) {
@@ -249,15 +290,19 @@ export function MapView() {
   async function handleNearbyToggle() {
     const next = !showNearby;
     setShowNearby(next);
-    const h = currentHierRef.current;
-    if (next && h) {
-      const hkey = `${h.dist}-${h.taluk}-${h.hobli}`;
-      if (hobliKeyRef.current !== hkey) {
-        hobliKeyRef.current = hkey;
-        const hb = await fetchHobliBoundaries(h.dist, h.taluk, h.hobli);
-        setHobliBoundaryFc(hb);
-        setHobliBoundaryKey((k) => k + 1);
-      }
+    if (!next) {
+      setHobliBoundaryFc(null);
+      hobliKeyRef.current = null;
+      return;
+    }
+    const center = mapRef.current?.getCenter();
+    if (!center) return;
+    const nkey = `${center.lat.toFixed(2)}-${center.lng.toFixed(2)}`;
+    if (hobliKeyRef.current !== nkey) {
+      hobliKeyRef.current = nkey;
+      const fc = await fetchNearbyBoundaries(center.lat, center.lng, 10);
+      setHobliBoundaryFc(fc);
+      setHobliBoundaryKey((k) => k + 1);
     }
   }
 
@@ -274,11 +319,19 @@ export function MapView() {
         onSearch={handleSearchResult}
         onHighlight={handleHighlight}
         onFlyTo={handleFlyTo}
+        onLocBounds={handleLocBounds}
+        onCoordGo={handleCoordGo}
+        onVillageSelect={(hier) => {
+          setAutoSelect(null);
+          setTimeout(() => setAutoSelect(hier), 0);
+        }}
+        autoSelect={autoSelect}
+        autoStatus={autoStatus}
         loadedSurveyNos={loadedSurveyNos}
       />
 
       {/* Map fills remaining height */}
-      <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
+      <div style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
         {/* Map layer + nearby toggle */}
         <div style={{
           position: "absolute", top: 10, right: 10, zIndex: 1000,
@@ -307,29 +360,6 @@ export function MapView() {
           </button>
         </div>
 
-        {/* Missing LGD villages strip — visible when Nearby is on and some villages lack data */}
-        {showNearby && missingVillages.length > 0 && (
-          <div style={{
-            position: "absolute", top: isMobile ? 52 : 42, right: 10, zIndex: 999,
-            background: "rgba(253,252,251,0.95)", border: "1px solid #CFD6C4",
-            borderRadius: 6, padding: "5px 8px",
-            boxShadow: "0 2px 8px rgba(58,63,59,0.12)",
-            maxWidth: isMobile ? 280 : 320, display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center",
-          }}>
-            <span style={{ fontSize: 10, color: "#e53e3e", fontWeight: 700, whiteSpace: "nowrap" }}>
-              No data:
-            </span>
-            {missingVillages.map(name => (
-              <span key={name} style={{
-                fontSize: 10, color: "#e53e3e", background: "#fee2e2",
-                border: "1px solid #fca5a5", borderRadius: 4, padding: "1px 5px",
-                whiteSpace: "nowrap",
-              }}>
-                {name}
-              </span>
-            ))}
-          </div>
-        )}
 
         {clickedSurveyNo && (
           <div style={{
@@ -349,7 +379,7 @@ export function MapView() {
         <MapContainer
           center={KA_CENTER}
           zoom={KA_ZOOM}
-          style={{ height: "100%", width: "100%" }}
+          style={{ position: "absolute", inset: 0 }}
           ref={mapRef}
         >
           <TileLayer key={mapLayer} {...TILES[mapLayer]} />
@@ -358,8 +388,9 @@ export function MapView() {
             <VillageBoundaryLayer
               key={`hb-${hobliBoundaryKey}`}
               fc={hobliBoundaryFc}
-              colorFn={(f) => (f.properties as Record<string, unknown>)?.has_data ? "#16A34A" : "#e53e3e"}
-              weight={1.5}
+              colorFn={(f) => (f.properties as Record<string, unknown>)?.has_data ? "#4caf50" : "#ef5350"}
+              weight={2}
+              fillOpacity={0.10}
             />
           )}
           {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} onParcelClick={setClickedSurveyNo} mapLayer={mapLayer} />}

@@ -1,0 +1,16 @@
+[Unit]
+Description=Builder App Compose Up
+After=docker.service builder-fixkc.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/builder/app
+ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml down
+ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml up -d keycloak nginx
+ExecStart=/bin/bash -c 'for i in $(seq 1 120); do KC_IP=$(docker inspect app-keycloak-1 --format "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" 2>/dev/null); [ -n "$KC_IP" ] && curl -sf "http://$KC_IP:8080/health/ready" && echo KC_READY && break; echo "Try $i not ready"; sleep 5; done'
+ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml up -d
+
+[Install]
+WantedBy=multi-user.target
