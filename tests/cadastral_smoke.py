@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Qnit. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
-"""Cadastral service smoke tests — Phase 1B.
+"""Cadastral service smoke tests — Phase 1B/1D.
 
 Covers:
   (a) /health → {status: ok, service: cadastral}
@@ -13,6 +13,9 @@ Covers:
   (g) /search short query → 422
   (h) /data → GeoJSON FeatureCollection shell with flag (skipped without CADASTRAL_DATA_DIR)
   (i) /search → list (empty OK; shape checked if survey_index populated)
+  (j) /village-search short query → 422
+  (k) /village-search → list (empty OK without parquet data; shape checked if populated)
+  (l) /nearby → GeoJSON FeatureCollection (empty OK without LGD data)
 
 Run: pytest tests/cadastral_smoke.py
 Requires geopandas: cd services/cadastral && pip install -r requirements.txt
@@ -98,6 +101,8 @@ def test_b_flag_guard(client_no_flags):
         "/villages?dist=1&taluk=9&hobli=3",
         "/data",
         "/search?q=30",
+        "/village-search?q=Ha",
+        "/nearby?lat=12.9&lng=77.5",
     ]:
         r = client_no_flags.get(path)
         assert r.status_code == 403, f"Expected 403 for {path}, got {r.status_code}"
@@ -162,6 +167,31 @@ def test_i_search_returns_list(client):
     if results:
         required = {"survey_no", "village_name", "dist", "taluk", "hobli", "vlg"}
         assert required <= set(results[0].keys())
+
+
+def test_j_village_search_short_query(client):
+    """Single-char query → 422 (min_length=2)."""
+    r = client.get("/village-search?q=H")
+    assert r.status_code == 422
+
+
+def test_k_village_search_returns_list(client):
+    r = client.get("/village-search?q=Ha")
+    assert r.status_code == 200
+    results = r.json()
+    assert isinstance(results, list)
+    if results:
+        required = {"village_name", "dist", "taluk", "hobli", "vlg"}
+        assert required <= set(results[0].keys())
+
+
+def test_l_nearby_returns_geojson(client):
+    """Nearby always returns valid GeoJSON; features may be empty without LGD data."""
+    r = client.get("/nearby?lat=12.9716&lng=77.5946&radius_km=5")
+    assert r.status_code == 200
+    body = r.json()
+    assert body.get("type") == "FeatureCollection"
+    assert isinstance(body.get("features"), list)
 
 
 if __name__ == "__main__":
