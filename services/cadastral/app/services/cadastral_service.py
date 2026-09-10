@@ -31,6 +31,11 @@ DATA_DIR = os.environ.get("CADASTRAL_DATA_DIR", "data/cadastral_lake_v2")
 _INDEX_DB = os.environ.get("SURVEY_INDEX_DB", "/app/survey_index.db")
 
 # Optional LGD boundary dataset (for /nearby endpoint). Graceful fallback if absent.
+# Prefer lgd_index.db (SQLite, built by infra/scripts/build_lgd_index.py); parquet is fallback.
+_LGD_INDEX_DB = os.environ.get(
+    "LGD_INDEX_DB",
+    os.path.join(os.path.dirname(DATA_DIR), "lgd_index.db"),
+)
 _LGD_PARQUET = os.environ.get(
     "LGD_PARQUET_PATH",
     os.path.join(os.path.dirname(DATA_DIR), "lgd_villages.parquet"),
@@ -377,22 +382,61 @@ def _load_lgd_support() -> None:
     """Load LGD village centroids + geometry for /nearby. Runs once at startup."""
     global _LGD_CENTROID_DF, _LGD_CODES_WITH_DATA, _LGD_TO_ECHADAWI, _LGD_VILLAGE_NAMES  # noqa: PLW0603
 
-    if not os.path.isfile(_LGD_PARQUET):
-        logger.info("lgd_villages.parquet absent — /nearby will return empty")
+    if os.path.isfile(_LGD_INDEX_DB):
+        _load_lgd_from_sqlite()
+    elif os.path.isfile(_LGD_PARQUET):
+        _load_lgd_from_parquet()
+    else:
+        logger.info("No LGD data source found (lgd_index.db or lgd_villages.parquet) — /nearby returns empty")
         _LGD_CENTROIDS_READY.set()
         return
 
+    _finish_lgd_load()
+
+
+def _load_lgd_from_sqlite() -> None:
+    """Load LGD data from pre-built SQLite index (lgd_index.db)."""
+    global _LGD_CENTROID_DF, _LGD_VILLAGE_NAMES  # noqa: PLW0603
+    logger.info("Loading LGD data from SQLite: %s", _LGD_INDEX_DB)
+    try:
+        conn = sqlite3.connect(_LGD_INDEX_DB)
+        rows = conn.execute(
+            "SELECT lgd_code, village_name, centroid_lat, centroid_lng, geom_geojson FROM lgd_villages"
+        ).fetchall()
+        conn.close()
+    except Exception as e:
+        logger.warning("lgd_index.db read failed: %s", e)
+        return
+
+    codes, lats, lons = [], [], []
+    for lgd_code, name, clat, clng, geom_json in rows:
+        code = int(lgd_code)
+        _LGD_VILLAGE_NAMES[code] = str(name or "")
+        if geom_json:
+            try:
+                _LGD_GEOM_CACHE[code] = json.loads(geom_json)
+            except Exception:  # noqa: BLE001
+                pass
+        codes.append(code)
+        lats.append(clat)
+        lons.append(clng)
+
+    _LGD_CENTROID_DF = pd.DataFrame({"lgd_code": codes, "lat": lats, "lon": lons})
+    logger.info("LGD SQLite: loaded %d villages", len(rows))
+
+
+def _load_lgd_from_parquet() -> None:
+    """Load LGD data from lgd_villages.parquet (legacy fallback)."""
+    global _LGD_CENTROID_DF, _LGD_VILLAGE_NAMES  # noqa: PLW0603
+    logger.info("Loading LGD data from parquet: %s", _LGD_PARQUET)
     try:
         gdf = gpd.read_parquet(_LGD_PARQUET)
-        # Filter Karnataka only (state_lgd==29) to keep memory/speed reasonable
         if "state_lgd" in gdf.columns:
             gdf = gdf[gdf["state_lgd"] == 29].reset_index(drop=True)
     except Exception as e:
         logger.warning("LGD parquet load failed: %s", e)
-        _LGD_CENTROIDS_READY.set()
         return
 
-    # Pre-cache all village geometries as GeoJSON dicts
     for _, row in gdf.iterrows():
         try:
             code = int(row["vil_lgd"])
@@ -401,7 +445,6 @@ def _load_lgd_support() -> None:
         except Exception:  # noqa: BLE001
             pass
 
-    # Cache village names directly from LGD parquet
     if "vilname11" in gdf.columns:
         for _, row in gdf.iterrows():
             try:
@@ -409,13 +452,21 @@ def _load_lgd_support() -> None:
             except Exception:  # noqa: BLE001
                 pass
 
-    # Centroid table: vil_lgd, lat, lon
     c = gdf.geometry.centroid
     df = gdf[["vil_lgd"]].copy()
     df = df.rename(columns={"vil_lgd": "lgd_code"})
     df["lat"] = c.y
     df["lon"] = c.x
     _LGD_CENTROID_DF = df
+
+
+def _finish_lgd_load() -> None:
+    """Common post-load step: roster mapping, parquet-data flags, ready signal."""
+    global _LGD_CODES_WITH_DATA, _LGD_TO_ECHADAWI  # noqa: PLW0603
+
+    if _LGD_CENTROID_DF is None:
+        _LGD_CENTROIDS_READY.set()
+        return
 
     # Build echadawi mapping from village_roster.db (lgd_code → dist,taluk,hobli,vlg)
     if os.path.isfile(_VILLAGE_ROSTER_DB):
@@ -466,7 +517,7 @@ def _load_lgd_support() -> None:
     _LGD_CENTROIDS_READY.set()
     logger.info(
         "LGD support loaded: %d villages, %d mapped, %d with parquet data",
-        len(df), len(_LGD_TO_ECHADAWI), len(_LGD_CODES_WITH_DATA),
+        len(_LGD_CENTROID_DF), len(_LGD_TO_ECHADAWI), len(_LGD_CODES_WITH_DATA),
     )
 
 
