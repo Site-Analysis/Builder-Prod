@@ -18,7 +18,7 @@ router = APIRouter(tags=["parcels"])
 
 
 def _require_flag() -> None:
-    enabled = {f.strip() for f in os.getenv("FLAGS", "").split(",") if f.strip()}
+    enabled = set(os.getenv("FLAGS", "").split())
     if _LAND_FLAG not in enabled:
         raise HTTPException(
             status_code=403, detail=f"Feature flag disabled: {_LAND_FLAG}"
@@ -48,6 +48,17 @@ def get_hobli_boundaries(
     _require_flag()
     geojson = cs.build_boundary(dist, taluk, hobli, vlg=None)
     return Response(content=geojson, media_type="application/json")
+
+
+@router.get("/nearby")
+def get_nearby_villages(
+    lat: float = Query(...),
+    lng: float = Query(...),
+    radius_km: float = Query(default=5.0, ge=0.1, le=50.0),
+) -> Response:
+    """LGD village polygons within radius_km of (lat, lng). Green=has data, red=no data."""
+    _require_flag()
+    return Response(content=cs.build_nearby_boundaries(lat, lng, radius_km), media_type="application/json")
 
 
 @router.get("/data")

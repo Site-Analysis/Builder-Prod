@@ -8,9 +8,10 @@
 import { useEffect, useRef, useState } from "react";
 import {
   fetchDistricts, fetchTaluks, fetchHoblis, fetchVillages, fetchParcelData,
-  searchBySurveyNo,
-  type HierarchyItem, type SearchResult,
+  searchBySurveyNo, fetchVillageSearch,
+  type HierarchyItem, type SearchResult, type VillageSearchResult,
 } from "@/lib/api/cadastral_records";
+import { useAuthStore } from "@/lib/stores/auth";
 import { useIsMobile } from "@/lib/useIsMobile";
 
 interface VillageCoords { dist: string; taluk: string; hobli: string; vlg: string; }
@@ -20,6 +21,11 @@ interface Props {
   onSearch?: (result: SearchResult) => void;
   onHighlight?: (result: SearchResult) => void;
   onFlyTo?: (coords: { lat: number; lon: number }) => void;
+  onLocBounds?: (bbox: [[number, number], [number, number]]) => void;
+  onCoordGo?: (coords: { lat: number; lon: number }) => void;
+  onVillageSelect?: (hier: VillageCoords) => void;
+  autoSelect?: VillageCoords | null;
+  autoStatus?: string;
   loadedSurveyNos?: Set<string>;
 }
 
@@ -131,7 +137,7 @@ function SearchDropdown({ results, loadedSurveyNos, loadedVillage, onSelect }: {
   );
 }
 
-export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loadedSurveyNos }: Props) {
+export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, onLocBounds, onCoordGo, onVillageSelect, autoSelect, autoStatus, loadedSurveyNos }: Props) {
   const [districts, setDistricts] = useState<HierarchyItem[]>([]);
   const [taluks, setTaluks]       = useState<HierarchyItem[]>([]);
   const [hoblis, setHoblis]       = useState<HierarchyItem[]>([]);
@@ -146,6 +152,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
   const [status, setStatus]   = useState("");
   const [loadedVillage, setLoadedVillage] = useState<VillageCoords | null>(null);
   const { isMobile } = useIsMobile();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const [searchQ, setSearchQ]           = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -154,10 +161,21 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
   const [coordMode, setCoordMode]       = useState(false);
   const [latQ, setLatQ]                 = useState("");
   const [lonQ, setLonQ]                 = useState("");
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchWrapRef = useRef<HTMLDivElement | null>(null);
+  const [locQ, setLocQ]                 = useState("");
+  const [locResults, setLocResults]     = useState<VillageSearchResult[]>([]);
+  const [locLoading, setLocLoading]     = useState(false);
+  const [showLocResults, setShowLocResults] = useState(false);
+  const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const locDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchWrapRef  = useRef<HTMLDivElement | null>(null);
+  const locWrapRef     = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => { fetchDistricts().then(setDistricts); }, []);
+  const isBypass = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "1";
+  useEffect(() => {
+    if (isBypass || isAuthenticated) {
+      fetchDistricts().then(setDistricts);
+    }
+  }, [isAuthenticated, isBypass]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -202,10 +220,51 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
       if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) {
         setShowResults(false);
       }
+      if (locWrapRef.current && !locWrapRef.current.contains(e.target as Node)) {
+        setShowLocResults(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Location search — cadastral village name prefix search
+  useEffect(() => {
+    if (locDebounceRef.current) clearTimeout(locDebounceRef.current);
+    if (locQ.length < 2) { setLocResults([]); setShowLocResults(false); return; }
+    locDebounceRef.current = setTimeout(async () => {
+      setLocLoading(true);
+      const data = await fetchVillageSearch(locQ);
+      setLocResults(data);
+      setShowLocResults(true);
+      setLocLoading(false);
+    }, 300);
+    return () => { if (locDebounceRef.current) clearTimeout(locDebounceRef.current); };
+  }, [locQ]);
+
+  // autoSelect: when MapView sets this after coord-go + /nearby, auto-populate + load
+  useEffect(() => {
+    if (!autoSelect) return;
+    async function run() {
+      setDist(autoSelect!.dist);
+      setTaluk(autoSelect!.taluk);
+      setHobli(autoSelect!.hobli);
+      setVlg(autoSelect!.vlg);
+      const [t, h, v] = await Promise.all([
+        fetchTaluks(autoSelect!.dist),
+        fetchHoblis(autoSelect!.dist, autoSelect!.taluk),
+        fetchVillages(autoSelect!.dist, autoSelect!.taluk, autoSelect!.hobli),
+      ]);
+      setTaluks(t); setHoblis(h); setVillages(v);
+      setStatus("Village pre-selected — click Load");
+    }
+    run();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSelect?.dist, autoSelect?.taluk, autoSelect?.hobli, autoSelect?.vlg]);
+
+  useEffect(() => {
+    if (autoStatus) setStatus(autoStatus);
+  }, [autoStatus]);
 
   function handleDistChange(v: string) {
     setDist(v); setTaluk(""); setHobli(""); setVlg("");
@@ -227,7 +286,11 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
     const lon = parseFloat(lonQ);
     if (isNaN(lat) || isNaN(lon)) return;
     if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
-    onFlyTo?.({ lat, lon });
+    if (onCoordGo) {
+      onCoordGo({ lat, lon });
+    } else {
+      onFlyTo?.({ lat, lon });
+    }
   }
 
   function toggleCoordMode() {
@@ -275,6 +338,76 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
       </span>
       <span style={{ color: "#CFD6C4", fontSize: 16 }}>|</span>
 
+      {/* Location search — always visible */}
+      {onSearch && (
+        <div ref={locWrapRef} style={{ position: "relative" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "2px 7px", border: "1px solid #CFD6C4",
+            borderRadius: 5, background: "#FDFCFB",
+          }}>
+            <SearchIcon />
+            <input
+              type="text"
+              placeholder="Search location…"
+              value={locQ}
+              onChange={(e) => setLocQ(e.target.value)}
+              onFocus={() => locResults.length > 0 && setShowLocResults(true)}
+              style={{
+                padding: "1px 0", fontSize: 12, border: "none",
+                background: "transparent", outline: "none",
+                flex: 1, minWidth: 0, width: isMobile ? 120 : 160, color: "#3A3F3B", fontFamily: "inherit",
+              }}
+            />
+            {locLoading && <span style={{ fontSize: 10, color: "#9EAD98" }}>…</span>}
+          </div>
+          {showLocResults && locResults.length > 0 && (
+            <div style={{
+              position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 9999,
+              background: "#FDFCFB", border: "1px solid #CFD6C4", borderRadius: 5,
+              boxShadow: "0 4px 16px rgba(58,63,59,0.14)",
+              minWidth: 260, maxHeight: 220, overflowY: "auto",
+            }}>
+              {locResults.map((r, i) => (
+                <div
+                  key={`${r.dist}-${r.taluk}-${r.hobli}-${r.vlg}-${i}`}
+                  onMouseDown={() => {
+                    setShowLocResults(false);
+                    setLocQ(r.village_name);
+                    onVillageSelect?.({ dist: r.dist, taluk: r.taluk, hobli: r.hobli, vlg: r.vlg });
+                  }}
+                  style={{ padding: "6px 10px", fontSize: 12, cursor: "pointer", color: "#3A3F3B", borderBottom: "1px solid #EEE" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#F0EDE8"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontWeight: 600 }}>{r.village_name}</span>
+                    <span style={{ fontSize: 10, color: "#16A34A", fontWeight: 700, background: "#DCFCE7", borderRadius: 4, padding: "1px 5px" }}>
+                      cadastral
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#9EAD98", marginTop: 1 }}>
+                    {r.dist_name} · {r.taluk_name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {showLocResults && locResults.length === 0 && !locLoading && locQ.length >= 2 && (
+            <div style={{
+              position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 9999,
+              background: "#FDFCFB", border: "1px solid #CFD6C4", borderRadius: 5,
+              padding: "10px 12px", fontSize: 12, color: "#9EAD98",
+              boxShadow: "0 4px 16px rgba(58,63,59,0.14)", minWidth: 260,
+            }}>
+              No cadastral data found for &quot;{locQ}&quot;
+            </div>
+          )}
+        </div>
+      )}
+
+      <span style={{ color: "#CFD6C4", fontSize: 16 }}>|</span>
+
       <select value={dist} onChange={(e) => handleDistChange(e.target.value)} style={mSel}>
         <option value="">District</option>
         {districts.map((d) => <option key={d.code} value={d.code}>{d.name}</option>)}
@@ -303,7 +436,6 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
         <>
           <span style={{ color: "#CFD6C4", fontSize: 16 }}>|</span>
 
-          {/* Mode toggle */}
           <button onClick={toggleCoordMode} style={{
             padding: "3px 9px", border: "1px solid #CFD6C4", borderRadius: 9999,
             fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
@@ -311,7 +443,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, loade
             color: coordMode ? "#FDFCFB" : "#7B8F83",
             whiteSpace: "nowrap",
           }}>
-            Coordinates
+            Coords
           </button>
 
           {coordMode ? (

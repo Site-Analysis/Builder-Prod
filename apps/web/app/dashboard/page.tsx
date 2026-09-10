@@ -553,8 +553,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const hasFetched = useRef(false);
 
+  const isBypass = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "1";
   useEffect(() => {
-    if (!isAuthenticated) { router.replace("/"); return; }
+    if (!isBypass && !isAuthenticated) { router.replace("/"); return; }
     if (hasFetched.current) return;
     hasFetched.current = true;
     getProjects()

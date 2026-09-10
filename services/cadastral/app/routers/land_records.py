@@ -23,7 +23,7 @@ router = APIRouter(tags=["land-records"])
 
 
 def _require_flag() -> None:
-    enabled = {f.strip() for f in os.getenv("FLAGS", "").split(",") if f.strip()}
+    enabled = set(os.getenv("FLAGS", "").split())
     if _LAND_FLAG not in enabled:
         raise HTTPException(
             status_code=403, detail=f"Feature flag disabled: {_LAND_FLAG}"
@@ -35,6 +35,13 @@ def search_survey(q: str = Query(..., min_length=2)) -> list[dict[str, Any]]:
     """Survey number prefix search across all indexed Karnataka parcels (max 25 results)."""
     _require_flag()
     return cs.search_survey(q.strip())
+
+
+@router.get("/village-search")
+def search_villages_endpoint(q: str = Query(..., min_length=2)) -> list[dict[str, Any]]:
+    """Village name prefix search. Returns only villages with parquet data."""
+    _require_flag()
+    return cs.search_villages(q.strip())
 
 
 @router.get("/districts")

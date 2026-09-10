@@ -5,6 +5,7 @@
 // Survey search, RCCMS, mutations, overlays added in later phases.
 
 import { getSession } from "next-auth/react";
+import { useAuthStore } from "@/lib/stores/auth";
 
 const BASE = process.env.NEXT_PUBLIC_CADASTRAL_API_URL ?? "https://api.builder.qnit.site/cadastral";
 
@@ -13,6 +14,8 @@ const TIMEOUT_MS = 20_000;
 async function getToken(): Promise<string | null> {
   if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "1") return null;
   for (let i = 0; i < 8; i++) {
+    const storeToken = useAuthStore.getState().accessToken;
+    if (storeToken) return storeToken;
     const session = await getSession();
     if (session?.accessToken) return session.accessToken as string;
     await new Promise((r) => setTimeout(r, 250));
@@ -83,6 +86,22 @@ export async function searchBySurveyNo(q: string, signal?: AbortSignal): Promise
   return get<SearchResult[]>(`/search?q=${encodeURIComponent(q)}`, signal);
 }
 
+export type VillageSearchResult = {
+  village_name: string;
+  dist: string; taluk: string; hobli: string; vlg: string;
+  dist_name: string; taluk_name: string;
+};
+
+export async function fetchVillageSearch(
+  q: string, signal?: AbortSignal,
+): Promise<VillageSearchResult[]> {
+  try {
+    return await get<VillageSearchResult[]>(
+      `/village-search?q=${encodeURIComponent(q)}`, signal,
+    );
+  } catch { return []; }
+}
+
 // ─── Parcel GeoJSON ──────────────────────────────────────────────────────────
 
 export async function fetchParcelData(
@@ -116,6 +135,17 @@ export async function fetchHobliBoundaries(
   try {
     return await get<GeoJSON.FeatureCollection>(
       `/boundaries?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}&hobli=${encodeURIComponent(hobli)}`, signal,
+    );
+  } catch { return null; }
+}
+
+export async function fetchNearbyBoundaries(
+  lat: number, lng: number, radiusKm: number = 5,
+  signal?: AbortSignal,
+): Promise<GeoJSON.FeatureCollection | null> {
+  try {
+    return await get<GeoJSON.FeatureCollection>(
+      `/nearby?lat=${lat}&lng=${lng}&radius_km=${radiusKm}`, signal,
     );
   } catch { return null; }
 }
