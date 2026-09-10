@@ -243,10 +243,9 @@ def search_villages(q: str, limit: int = 20) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     seen: set[tuple] = set()
     for key, name in _NAMES.items():
-        if len(key) == 4 and key in _PARQUET_VLGS and name.lower().startswith(q_lower):
-            if key not in seen:
-                seen.add(key)
-                results.append({
+        if len(key) == 4 and key in _PARQUET_VLGS and name.lower().startswith(q_lower) and key not in seen:
+            seen.add(key)
+            results.append({
                     "village_name": name,
                     "dist": key[0], "taluk": key[1], "hobli": key[2], "vlg": key[3],
                     "dist_name": _NAMES.get((key[0],), key[0]),
@@ -295,10 +294,10 @@ _load_names()
 
 # LGD nearby-search state — populated by _load_lgd_support() background thread.
 _LGD_CENTROIDS_READY = threading.Event()
-_LGD_CENTROID_DF: "pd.DataFrame | None" = None
+_LGD_CENTROID_DF: pd.DataFrame | None = None
 _LGD_CODES_WITH_DATA: set[int] = set()
 _LGD_TO_ECHADAWI: dict[int, tuple[str, str, str, str]] = {}
-_LGD_GEOM_CACHE: dict[int, "dict | None"] = {}
+_LGD_GEOM_CACHE: dict[int, dict | None] = {}
 _LGD_VILLAGE_NAMES: dict[int, str] = {}
 _PARQUET_VLGS: set[tuple[str, str, str, str]] = set()
 
@@ -380,8 +379,6 @@ threading.Thread(target=_build_survey_index, daemon=True).start()
 
 def _load_lgd_support() -> None:
     """Load LGD village centroids + geometry for /nearby. Runs once at startup."""
-    global _LGD_CENTROID_DF, _LGD_CODES_WITH_DATA, _LGD_TO_ECHADAWI, _LGD_VILLAGE_NAMES  # noqa: PLW0603
-
     if os.path.isfile(_LGD_INDEX_DB):
         _load_lgd_from_sqlite()
     elif os.path.isfile(_LGD_PARQUET):
@@ -396,7 +393,7 @@ def _load_lgd_support() -> None:
 
 def _load_lgd_from_sqlite() -> None:
     """Load LGD data from pre-built SQLite index (lgd_index.db)."""
-    global _LGD_CENTROID_DF, _LGD_VILLAGE_NAMES  # noqa: PLW0603
+    global _LGD_CENTROID_DF
     logger.info("Loading LGD data from SQLite: %s", _LGD_INDEX_DB)
     try:
         conn = sqlite3.connect(_LGD_INDEX_DB)
@@ -404,7 +401,7 @@ def _load_lgd_from_sqlite() -> None:
             "SELECT lgd_code, village_name, centroid_lat, centroid_lng, geom_geojson FROM lgd_villages"
         ).fetchall()
         conn.close()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("lgd_index.db read failed: %s", e)
         return
 
@@ -415,7 +412,7 @@ def _load_lgd_from_sqlite() -> None:
         if geom_json:
             try:
                 _LGD_GEOM_CACHE[code] = json.loads(geom_json)
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S110
                 pass
         codes.append(code)
         lats.append(clat)
@@ -427,13 +424,13 @@ def _load_lgd_from_sqlite() -> None:
 
 def _load_lgd_from_parquet() -> None:
     """Load LGD data from lgd_villages.parquet (legacy fallback)."""
-    global _LGD_CENTROID_DF, _LGD_VILLAGE_NAMES  # noqa: PLW0603
+    global _LGD_CENTROID_DF
     logger.info("Loading LGD data from parquet: %s", _LGD_PARQUET)
     try:
         gdf = gpd.read_parquet(_LGD_PARQUET)
         if "state_lgd" in gdf.columns:
             gdf = gdf[gdf["state_lgd"] == 29].reset_index(drop=True)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("LGD parquet load failed: %s", e)
         return
 
@@ -442,14 +439,14 @@ def _load_lgd_from_parquet() -> None:
             code = int(row["vil_lgd"])
             geom_ser = gpd.GeoSeries([row.geometry], crs=gdf.crs)
             _LGD_GEOM_CACHE[code] = json.loads(geom_ser.to_json())["features"][0]["geometry"]
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             pass
 
     if "vilname11" in gdf.columns:
         for _, row in gdf.iterrows():
             try:
                 _LGD_VILLAGE_NAMES[int(row["vil_lgd"])] = str(row["vilname11"] or "")
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, S110
                 pass
 
     c = gdf.geometry.centroid
@@ -462,8 +459,6 @@ def _load_lgd_from_parquet() -> None:
 
 def _finish_lgd_load() -> None:
     """Common post-load step: roster mapping, parquet-data flags, ready signal."""
-    global _LGD_CODES_WITH_DATA, _LGD_TO_ECHADAWI  # noqa: PLW0603
-
     if _LGD_CENTROID_DF is None:
         _LGD_CENTROIDS_READY.set()
         return
@@ -477,7 +472,7 @@ def _finish_lgd_load() -> None:
             ).fetchall()
             for r in rows:
                 _LGD_TO_ECHADAWI[int(r[0])] = (str(r[1]), str(r[2]), str(r[3]), str(r[4]))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning("village_roster.db read failed: %s", e)
         finally:
             conn.close()
@@ -525,7 +520,7 @@ threading.Thread(target=_load_lgd_support, daemon=True).start()
 
 
 def _build_parquet_village_set() -> None:
-    global _PARQUET_VLGS  # noqa: PLW0603
+    global _PARQUET_VLGS
     vlgs: set[tuple[str, str, str, str]] = set()
     for p in find_paths():
         parts = p.replace("\\", "/").split("/")
