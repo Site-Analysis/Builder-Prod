@@ -49,7 +49,24 @@ No external database for parcel data. Pure filesystem:
 
 Every parquet stores `Polygon(Northing, Easting)` instead of `Polygon(Easting, Northing)` — upstream scraper bug. `load_village()` in `cadastral_service.py` fixes this with `affine_transform([0,1,1,0,0,0])` before reprojecting to WGS84. Never read parquets directly without this fix.
 
-**Datum**: Source data is in Kalianpur 1975 datum (Everest ellipsoid + 3-param Bursa-Wolf shift: towgs84=295,736,257). Set `CADASTRAL_DATUM=kalianpur` (confirmed via visual alignment test — parcels match satellite boundaries). Default in docker-compose and `.env.example`. Do NOT use `wgs84` (shifts parcels ~60 m S / ~108 m E).
+**Datum**: plain EPSG:32643 → WGS84, no additional shift. `load_village()` no longer
+branches on a datum choice — this note previously claimed a Kalianpur 1975 / Everest
+ellipsoid correction was needed and "confirmed via visual alignment test," which was
+never measured against an independent source and turned out to be backwards. Tested
+against two ground truths outside this repo (KGIS's named "Bellandur Lake" polygon,
+and an independent LGD village centroid — see `Pranav-error/karnataka-geodata-audit`
+`FINDINGS.md` #16-#17 for the full method):
+
+| datum | Bellandur Lake overlap | distance from independent LGD centroid |
+|---|---:|---:|
+| **plain wgs84 (current)** | **92.8%** | **1,145 m** |
+| everest | 86.0% | 1,191 m |
+| kalianpur | 74.9% | 1,323 m |
+
+Plain wgs84 wins both tests, and each "correction" made it measurably worse. The
+`CADASTRAL_DATUM` env var and the Everest/Kalianpur code path are gone from
+`load_village()`; `.env.example`'s leftover `CADASTRAL_DATUM=kalianpur` line is dead
+and does nothing — removed in the same change as this note.
 
 ### Request flow
 
