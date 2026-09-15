@@ -108,21 +108,6 @@ function SearchDropdown({ results, loadedSurveyNos, loadedVillage, onSelect }: {
     maxHeight: 240, overflowY: "auto",
   };
 
-  if (loadedSurveyNos?.size) {
-    if (inCurrentDeduped.length === 0) {
-      return (
-        <div style={containerStyle}>
-          <div style={{ padding: "8px 10px", fontSize: 11, color: "#9EAD98" }}>Not found in loaded area</div>
-        </div>
-      );
-    }
-    return (
-      <div style={containerStyle}>
-        {inCurrentDeduped.map((r, i) => <Row key={i} r={r} highlight={true} />)}
-      </div>
-    );
-  }
-
   const seenAll = new Set<string>();
   const allDeduped = results.filter(r => {
     const key = r.survey_no + r.dist + r.taluk + r.hobli + r.vlg;
@@ -132,7 +117,10 @@ function SearchDropdown({ results, loadedSurveyNos, loadedVillage, onSelect }: {
   });
   return (
     <div style={containerStyle}>
-      {allDeduped.map((r, i) => <Row key={i} r={r} highlight={false} />)}
+      {allDeduped.map((r, i) => {
+        const key = r.survey_no + r.dist + r.taluk + r.hobli + r.vlg;
+        return <Row key={i} r={r} highlight={inCurrentKeys.has(key)} />;
+      })}
     </div>
   );
 }

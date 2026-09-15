@@ -44,8 +44,14 @@ function ParcelLayer({
   mapLayer: "base" | "satellite";
 }) {
   const map = useMap();
-  const showPermanent = fc.features.length <= PERMANENT_LABEL_THRESHOLD;
-  const showTooltips  = fc.features.length <= TOOLTIP_THRESHOLD;
+  const filteredFc: GeoJSON.FeatureCollection = {
+    ...fc,
+    features: fc.features.filter(
+      (f) => f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon",
+    ),
+  };
+  const showPermanent = filteredFc.features.length <= PERMANENT_LABEL_THRESHOLD;
+  const showTooltips  = filteredFc.features.length <= TOOLTIP_THRESHOLD;
   const isSat = mapLayer === "satellite";
 
   const options = {
@@ -82,7 +88,7 @@ function ParcelLayer({
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        const coords = fc.features.flatMap((f) => {
+        const coords = filteredFc.features.flatMap((f) => {
           if (f.geometry.type === "Polygon") return f.geometry.coordinates[0];
           if (f.geometry.type === "MultiPolygon") return f.geometry.coordinates.flatMap((r) => r[0]);
           return [];
@@ -103,7 +109,7 @@ function ParcelLayer({
 
   return (
     <GeoJSON
-      data={fc}
+      data={filteredFc}
       style={options.style}
       onEachFeature={options.onEachFeature}
     />
@@ -174,12 +180,14 @@ function MapClickHandler({
   onParcelClick,
 }: {
   parcelFc: GeoJSON.FeatureCollection;
-  onParcelClick: (props: Record<string, unknown>, pos: { x: number; y: number }) => void;
+  onParcelClick: (props: Record<string, unknown>, pos: { x: number; y: number }, latlng: { lat: number; lng: number }) => void;
 }) {
   const map = useMap();
   useMapEvents({
     click(e) {
       const { lat, lng } = e.latlng;
+      let bestFeature: GeoJSON.Feature | null = null;
+      let bestArea = Infinity;
       for (const feature of parcelFc.features) {
         const g = feature.geometry;
         let hit = false;
@@ -189,15 +197,23 @@ function MapClickHandler({
           hit = (g.coordinates as number[][][][]).some((poly) => pipRing(lat, lng, poly[0]));
         }
         if (hit) {
-          const { x, y } = e.containerPoint;
-          const size = map.getSize();
-          const cardW = 284;
-          const cardH = 220;
-          const left = x + cardW > size.x ? Math.max(4, x - cardW) : x + 14;
-          const top  = y + cardH > size.y ? Math.max(4, y - cardH) : y + 14;
-          onParcelClick((feature.properties ?? {}) as Record<string, unknown>, { x: left, y: top });
-          return;
+          const coords: number[][] = g.type === "Polygon"
+            ? (g as GeoJSON.Polygon).coordinates[0]
+            : (g as GeoJSON.MultiPolygon).coordinates.flat(2);
+          const lngs = coords.map((c) => c[0]);
+          const lats = coords.map((c) => c[1]);
+          const area = (Math.max(...lngs) - Math.min(...lngs)) * (Math.max(...lats) - Math.min(...lats));
+          if (area < bestArea) { bestArea = area; bestFeature = feature; }
         }
+      }
+      if (bestFeature) {
+        const { x, y } = e.containerPoint;
+        const size = map.getSize();
+        const cardW = 284;
+        const cardH = 220;
+        const left = x + cardW > size.x ? Math.max(4, x - cardW) : x + 14;
+        const top  = y + cardH > size.y ? Math.max(4, y - cardH) : y + 14;
+        onParcelClick((bestFeature.properties ?? {}) as Record<string, unknown>, { x: left, y: top }, e.latlng);
       }
     },
   });
@@ -231,7 +247,7 @@ function ZoomLabelController() {
 
 function flyToBounds(map: LeafletMap, fc: GeoJSON.FeatureCollection, surveyNo?: string) {
   const target = surveyNo
-    ? fc.features.find((f) => (f.properties as Record<string, string>)?.survey_no === surveyNo)
+    ? fc.features.find((f) => (f.properties as Record<string, string>)?.survey_no?.split("/")[0] === surveyNo.split("/")[0])
     : null;
   const features = target ? [target] : fc.features;
   const coords = features.flatMap((f) => {
@@ -283,6 +299,7 @@ export function MapView() {
   const [autoStatus, setAutoStatus]                 = useState<string>("");
   const [loadedVillage, setLoadedVillage]           = useState<VillageCoords | null>(null);
   const [rtcData, setRtcData]                       = useState<RtcData | null | "loading">(null);
+  const [clickedLatLng, setClickedLatLng]           = useState<{ lat: number; lng: number } | null>(null);
   const mapRef        = useRef<LeafletMap | null>(null);
 
   useEffect(() => {
@@ -304,7 +321,7 @@ export function MapView() {
     const s = new Set<string>();
     for (const f of parcelFc.features) {
       const no = (f.properties as Record<string, string>)?.survey_no;
-      if (no) s.add(no);
+      if (no) s.add(no.split("/")[0]);
     }
     return s;
   }, [parcelFc]);
@@ -375,7 +392,7 @@ export function MapView() {
     if (!fc) return;
     setParcelFc(fc);
     setLoadKey((k) => k + 1);
-    setClickedParcelProps(null); setClickPos(null); setRtcData(null);
+    setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null);
     setHighlightedSurveyNo(result.survey_no);
     setLoadedVillage({ dist: result.dist, taluk: result.taluk, hobli: result.hobli, vlg: result.vlg });
     loadBoundaries({ dist: result.dist, taluk: result.taluk, hobli: result.hobli, vlg: result.vlg }, showNearby);
@@ -410,7 +427,7 @@ export function MapView() {
         onLoad={(fc, _label, hier) => {
           setParcelFc(fc);
           setLoadKey((k) => k + 1);
-          setClickedParcelProps(null); setClickPos(null); setRtcData(null);
+          setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null);
           setHighlightedSurveyNo(null);
           if (fc && hier) { loadBoundaries(hier, showNearby); setLoadedVillage(hier); }
         }}
@@ -488,10 +505,10 @@ export function MapView() {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontWeight: 800, fontSize: 13, color: "#306223" }}>
-                Survey {String(clickedParcelProps.survey_no ?? "—")}
+                {String(clickedParcelProps.village_name ?? "—")} · {String(clickedParcelProps.survey_no ?? "—")}
               </span>
               <span
-                onClick={() => { setClickedParcelProps(null); setClickPos(null); setRtcData(null); }}
+                onClick={() => { setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null); }}
                 style={{ cursor: "pointer", opacity: 0.45, fontSize: 18, lineHeight: 1, fontWeight: 300, marginLeft: 12 }}
               >×</span>
             </div>
@@ -511,12 +528,24 @@ export function MapView() {
                   ))}
               </tbody>
             </table>
+            {clickedLatLng && (
+              <div style={{ marginTop: 6, fontSize: 11 }}>
+                <span style={{ color: "#7B8F83" }}>{clickedLatLng.lat.toFixed(6)}, {clickedLatLng.lng.toFixed(6)}</span>
+                {" · "}
+                <a
+                  href={`https://www.google.com/maps?q=${clickedLatLng.lat},${clickedLatLng.lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "#1A73E8", fontWeight: 700 }}
+                >Google Maps</a>
+              </div>
+            )}
             {rtcData === "loading" && (
-              <div style={{ marginTop: 8, color: "#7B8F83", fontSize: 11 }}>Loading ownership…</div>
+              <div style={{ marginTop: 8, color: "#7B8F83", fontSize: 11 }}>Loading court cases…</div>
             )}
             {rtcData && rtcData !== "loading" && (
               <div style={{ marginTop: 8, borderTop: "1px solid #E8EEE4", paddingTop: 8 }}>
-                <div style={{ fontWeight: 700, fontSize: 11, color: "#306223", marginBottom: 4 }}>Ownership (RCCMS)</div>
+                <div style={{ fontWeight: 700, fontSize: 11, color: "#306223", marginBottom: 4 }}>Active Court Cases (RCCMS)</div>
                 {rtcData.owners.length === 0
                   ? <div style={{ color: "#7B8F83", fontSize: 11 }}>No active cases</div>
                   : rtcData.owners.map((o, i) => (
@@ -554,7 +583,12 @@ export function MapView() {
           {showNearby && hobliBoundaryFc && (
             <VillageBoundaryLayer
               key={`hb-${hobliBoundaryKey}`}
-              fc={hobliBoundaryFc}
+              fc={loadedVillage ? {
+                ...hobliBoundaryFc,
+                features: hobliBoundaryFc.features.filter(
+                  (f) => !(f.properties?.dist === loadedVillage.dist && f.properties?.vlg === loadedVillage.vlg),
+                ),
+              } : hobliBoundaryFc}
               colorFn={(f) => (f.properties as Record<string, unknown>)?.has_data ? "#4caf50" : "#ef5350"}
               weight={2}
               fillOpacity={0.10}
@@ -563,8 +597,8 @@ export function MapView() {
           {parcelFc && (
             <>
               <ParcelLayer key={loadKey} fc={parcelFc} mapLayer={mapLayer} />
-              <MapClickHandler parcelFc={parcelFc} onParcelClick={(props, pos) => {
-                setClickedParcelProps(props); setClickPos(pos);
+              <MapClickHandler parcelFc={parcelFc} onParcelClick={(props, pos, latlng) => {
+                setClickedParcelProps(props); setClickPos(pos); setClickedLatLng(latlng);
                 setRtcData("loading");
                 if (loadedVillage) {
                   fetchRtcData(
@@ -577,7 +611,7 @@ export function MapView() {
                 const hlFc: GeoJSON.FeatureCollection = {
                   type: "FeatureCollection",
                   features: parcelFc.features.filter(
-                    (f) => (f.properties as Record<string, string>)?.survey_no === highlightedSurveyNo,
+                    (f) => (f.properties as Record<string, string>)?.survey_no?.split("/")[0] === highlightedSurveyNo?.split("/")[0],
                   ),
                 };
                 if (!hlFc.features.length) return null;
