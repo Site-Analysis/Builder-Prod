@@ -79,3 +79,27 @@ def list_villages(
     """Villages with names for a given district + taluk + hobli."""
     _require_flag()
     return cs.list_villages(dist, taluk, hobli)
+
+
+@router.get("/rtc")
+async def get_rtc(
+    dist: str = Query(...),
+    taluk: str = Query(...),
+    hobli: str = Query(...),
+    vlg: str = Query(...),
+    village_code: str = Query(...),
+    survey_no: str | None = Query(None),
+) -> dict[str, Any]:
+    """Live RCCMS cases + mutations from eChhawadi for a survey parcel. Village-level cache TTL 300s."""
+    _require_flag()
+    try:
+        data = await cs.fetch_rtc_village(dist, taluk, hobli, vlg, village_code)
+    except Exception as exc:
+        raise HTTPException(502, "eChhawadi upstream unreachable") from exc
+    if survey_no:
+        base = survey_no.split("/")[0].strip()
+        return {
+            "owners":    [o for o in data["owners"]    if o["survey_no"].split("/")[0] == base],
+            "mutations": [m for m in data["mutations"] if base in (m.get("survey_numbers") or "")],
+        }
+    return data

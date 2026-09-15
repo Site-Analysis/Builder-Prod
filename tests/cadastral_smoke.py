@@ -194,5 +194,14 @@ def test_l_nearby_returns_geojson(client):
     assert isinstance(body.get("features"), list)
 
 
+@pytest.mark.skipif(not os.environ.get("RTC_SMOKE"), reason="set RTC_SMOKE=1 to hit live eChhawadi")
+def test_m_rtc_shape(client):
+    r = client.get("/rtc?dist=1&taluk=9&hobli=3&vlg=46&village_code=603735")
+    assert r.status_code == 200
+    body = r.json()
+    assert isinstance(body.get("owners"), list)
+    assert isinstance(body.get("mutations"), list)
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))

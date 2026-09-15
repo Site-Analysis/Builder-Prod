@@ -7,12 +7,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
-import L, { type Map as LeafletMap, type Layer, type GeoJSONOptions } from "leaflet";
+import { MapContainer, TileLayer, GeoJSON, useMap, useMapEvents } from "react-leaflet";
+import { type Map as LeafletMap, type Layer, type GeoJSONOptions } from "leaflet";
 import { CadastralToolbar } from "./CadastralToolbar";
 import {
   fetchParcelData, fetchVillageBoundary, fetchNearbyBoundaries,
-  type SearchResult,
+  fetchRtcData, type SearchResult, type RtcData,
 } from "@/lib/api/cadastral_records";
 import { useIsMobile } from "@/lib/useIsMobile";
 import "leaflet/dist/leaflet.css";
@@ -24,23 +24,31 @@ const KA_ZOOM = 7;
 const TOOLTIP_THRESHOLD = 500;
 const PERMANENT_LABEL_THRESHOLD = 1500;
 
+const PROP_LABELS: Record<string, string> = {
+  owner_name:     "Owner",
+  khatedar_name:  "Owner",
+  extent:         "Extent",
+  area:           "Area",
+  classification: "Type",
+  land_type:      "Land Type",
+  village_name:   "Village",
+  taluk:          "Taluk",
+  hobli:          "Hobli",
+};
+
 function ParcelLayer({
   fc,
-  onParcelClick,
   mapLayer,
 }: {
   fc: GeoJSON.FeatureCollection;
-  onParcelClick: (no: string) => void;
   mapLayer: "base" | "satellite";
 }) {
   const map = useMap();
   const showPermanent = fc.features.length <= PERMANENT_LABEL_THRESHOLD;
   const showTooltips  = fc.features.length <= TOOLTIP_THRESHOLD;
-  const renderer = useMemo(() => L.canvas({ padding: 0.5 }), []);
   const isSat = mapLayer === "satellite";
 
   const options = {
-    renderer,
     style: () => ({
       color:       isSat ? "#FFFFFF" : "#306223",
       weight:      isSat ? 1.5 : 1,
@@ -67,7 +75,6 @@ function ParcelLayer({
           offset: [0, -4],
         });
       }
-      layer.on("click", () => onParcelClick(surveyNo));
     },
   };
 
@@ -94,7 +101,13 @@ function ParcelLayer({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <GeoJSON data={fc} {...options} />;
+  return (
+    <GeoJSON
+      data={fc}
+      style={options.style}
+      onEachFeature={options.onEachFeature}
+    />
+  );
 }
 
 function VillageBoundaryLayer({
@@ -104,6 +117,7 @@ function VillageBoundaryLayer({
   weight = 2,
   labelPermanent = false,
   fillOpacity: fillOpacityProp,
+  showLabel = true,
 }: {
   fc: GeoJSON.FeatureCollection;
   color?: string;
@@ -111,6 +125,7 @@ function VillageBoundaryLayer({
   weight?: number;
   labelPermanent?: boolean;
   fillOpacity?: number;
+  showLabel?: boolean;
 }) {
   const options: GeoJSONOptions = {
     style: (feature) => {
@@ -126,11 +141,12 @@ function VillageBoundaryLayer({
       };
     },
     onEachFeature: (feature: GeoJSON.Feature, layer: Layer) => {
+      if (!showLabel) return;
       const name = (feature.properties as Record<string, string>)?.village_name;
       if (name) {
         layer.bindTooltip(name, {
           permanent: labelPermanent,
-          sticky: !labelPermanent,
+          sticky: false,
           direction: "center",
           className: labelPermanent ? "village-boundary-label" : "cadastral-tooltip",
         });
@@ -138,6 +154,79 @@ function VillageBoundaryLayer({
     },
   };
   return <GeoJSON data={fc} {...options} />;
+}
+
+// Ray-cast point-in-polygon for one GeoJSON ring ([lng, lat][] pairs).
+function pipRing(lat: number, lng: number, ring: number[][]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+    if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function MapClickHandler({
+  parcelFc,
+  onParcelClick,
+}: {
+  parcelFc: GeoJSON.FeatureCollection;
+  onParcelClick: (props: Record<string, unknown>, pos: { x: number; y: number }) => void;
+}) {
+  const map = useMap();
+  useMapEvents({
+    click(e) {
+      const { lat, lng } = e.latlng;
+      for (const feature of parcelFc.features) {
+        const g = feature.geometry;
+        let hit = false;
+        if (g.type === "Polygon") {
+          hit = pipRing(lat, lng, g.coordinates[0] as number[][]);
+        } else if (g.type === "MultiPolygon") {
+          hit = (g.coordinates as number[][][][]).some((poly) => pipRing(lat, lng, poly[0]));
+        }
+        if (hit) {
+          const { x, y } = e.containerPoint;
+          const size = map.getSize();
+          const cardW = 284;
+          const cardH = 220;
+          const left = x + cardW > size.x ? Math.max(4, x - cardW) : x + 14;
+          const top  = y + cardH > size.y ? Math.max(4, y - cardH) : y + 14;
+          onParcelClick((feature.properties ?? {}) as Record<string, unknown>, { x: left, y: top });
+          return;
+        }
+      }
+    },
+  });
+  return null;
+}
+
+function ZoomLabelController() {
+  const map = useMap();
+  useEffect(() => {
+    function update() {
+      const z = map.getZoom();
+      let el = document.getElementById("zoom-label-ctrl") as HTMLStyleElement | null;
+      if (!el) {
+        el = document.createElement("style");
+        el.id = "zoom-label-ctrl";
+        document.head.appendChild(el);
+      }
+      if (z < 14)      el.textContent = ".cadastral-label { display: none !important; }";
+      else if (z < 16) el.textContent = ".cadastral-label { opacity: 0.3 !important; font-size: 7px !important; }";
+      else             el.textContent = "";
+    }
+    update();
+    map.on("zoomend", update);
+    return () => {
+      map.off("zoomend", update);
+      document.getElementById("zoom-label-ctrl")?.remove();
+    };
+  }, [map]);
+  return null;
 }
 
 function flyToBounds(map: LeafletMap, fc: GeoJSON.FeatureCollection, surveyNo?: string) {
@@ -181,7 +270,9 @@ interface VillageCoords { dist: string; taluk: string; hobli: string; vlg: strin
 export function MapView() {
   const [parcelFc, setParcelFc]             = useState<GeoJSON.FeatureCollection | null>(null);
   const [loadKey, setLoadKey]               = useState(0);
-  const [clickedSurveyNo, setClickedSurveyNo] = useState<string | null>(null);
+  const [clickedParcelProps, setClickedParcelProps] = useState<Record<string, unknown> | null>(null);
+  const [clickPos, setClickPos] = useState<{ x: number; y: number } | null>(null);
+  const [highlightedSurveyNo, setHighlightedSurveyNo] = useState<string | null>(null);
   const [mapLayer, setMapLayer]             = useState<"base" | "satellite">("base");
   const [villageBoundaryFc, setVillageBoundaryFc] = useState<GeoJSON.FeatureCollection | null>(null);
   const [hobliBoundaryFc, setHobliBoundaryFc]     = useState<GeoJSON.FeatureCollection | null>(null);
@@ -190,14 +281,18 @@ export function MapView() {
   const [hobliBoundaryKey, setHobliBoundaryKey]     = useState(0);
   const [autoSelect, setAutoSelect]                 = useState<VillageCoords | null>(null);
   const [autoStatus, setAutoStatus]                 = useState<string>("");
+  const [loadedVillage, setLoadedVillage]           = useState<VillageCoords | null>(null);
+  const [rtcData, setRtcData]                       = useState<RtcData | null | "loading">(null);
   const mapRef        = useRef<LeafletMap | null>(null);
 
   useEffect(() => {
     if (!autoSelect) return;
-    fetchVillageBoundary(autoSelect.dist, autoSelect.taluk, autoSelect.hobli, autoSelect.vlg)
+    const ctrl = new AbortController();
+    fetchVillageBoundary(autoSelect.dist, autoSelect.taluk, autoSelect.hobli, autoSelect.vlg, ctrl.signal)
       .then((bf) => {
         if (bf && mapRef.current) flyToBounds(mapRef.current, bf);
       });
+    return () => ctrl.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSelect?.dist, autoSelect?.taluk, autoSelect?.hobli, autoSelect?.vlg]);
   const hobliKeyRef   = useRef<string | null>(null);
@@ -269,6 +364,7 @@ export function MapView() {
   }
 
   function handleHighlight(result: SearchResult) {
+    setHighlightedSurveyNo(result.survey_no);
     if (mapRef.current && parcelFc) {
       flyToBounds(mapRef.current, parcelFc, result.survey_no);
     }
@@ -279,9 +375,10 @@ export function MapView() {
     if (!fc) return;
     setParcelFc(fc);
     setLoadKey((k) => k + 1);
-    setClickedSurveyNo(null);
+    setClickedParcelProps(null); setClickPos(null); setRtcData(null);
+    setHighlightedSurveyNo(result.survey_no);
+    setLoadedVillage({ dist: result.dist, taluk: result.taluk, hobli: result.hobli, vlg: result.vlg });
     loadBoundaries({ dist: result.dist, taluk: result.taluk, hobli: result.hobli, vlg: result.vlg }, showNearby);
-    // fly happens after react-leaflet re-renders; small delay lets the layer mount
     setTimeout(() => {
       if (mapRef.current) flyToBounds(mapRef.current, fc, result.survey_no);
     }, 80);
@@ -313,8 +410,9 @@ export function MapView() {
         onLoad={(fc, _label, hier) => {
           setParcelFc(fc);
           setLoadKey((k) => k + 1);
-          setClickedSurveyNo(null);
-          if (fc && hier) loadBoundaries(hier, showNearby);
+          setClickedParcelProps(null); setClickPos(null); setRtcData(null);
+          setHighlightedSurveyNo(null);
+          if (fc && hier) { loadBoundaries(hier, showNearby); setLoadedVillage(hier); }
         }}
         onSearch={handleSearchResult}
         onHighlight={handleHighlight}
@@ -350,7 +448,7 @@ export function MapView() {
             </button>
           ))}
           <div style={{ width: 1, background: "#CFD6C4", alignSelf: "stretch" }} />
-          <button onClick={handleNearbyToggle} style={{
+          <button onClick={handleNearbyToggle} title="LGD village boundaries — approximate administrative boundaries, may not align exactly with survey parcel edges" style={{
             padding: isMobile ? "9px 13px" : "5px 10px", fontSize: isMobile ? 12 : 11, fontWeight: 600, cursor: "pointer",
             border: "none", fontFamily: "inherit",
             background: showNearby ? "#7B8F83" : "#FDFCFB",
@@ -361,19 +459,87 @@ export function MapView() {
         </div>
 
 
-        {clickedSurveyNo && (
+        {/* Compass */}
+        <div style={{
+          position: "absolute", top: 58, right: 10, zIndex: 1000,
+          background: "rgba(253,252,251,0.92)", borderRadius: "50%",
+          width: 44, height: 44, boxShadow: "0 2px 8px rgba(58,63,59,0.18)",
+          border: "1px solid #CFD6C4", display: "flex", alignItems: "center",
+          justifyContent: "center", pointerEvents: "none", userSelect: "none",
+        }}>
+          <div style={{ position: "relative", width: 32, height: 32, fontSize: 8, fontWeight: 700, color: "#3A3F3B" }}>
+            <span style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", color: "#306223" }}>N</span>
+            <span style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)" }}>S</span>
+            <span style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)" }}>W</span>
+            <span style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)" }}>E</span>
+            <div style={{ position: "absolute", left: "50%", top: 8, bottom: 8, width: 1, background: "#CFD6C4", transform: "translateX(-50%)" }} />
+            <div style={{ position: "absolute", top: "50%", left: 8, right: 8, height: 1, background: "#CFD6C4", transform: "translateY(-50%)" }} />
+          </div>
+        </div>
+
+        {/* Parcel info card — appears near click cursor */}
+        {clickedParcelProps && clickPos && (
           <div style={{
-            position: "absolute", bottom: isMobile ? 12 : 48, left: 12, zIndex: 1000,
-            background: "rgba(48,98,35,0.9)", color: "#FDFCFB",
-            padding: isMobile ? "8px 12px 8px 14px" : "5px 10px 5px 12px", borderRadius: 6, fontSize: isMobile ? 13 : 12, fontWeight: 700,
-            display: "flex", alignItems: "center", gap: 8,
-            boxShadow: "0 2px 10px rgba(0,0,0,0.22)", letterSpacing: "0.01em",
+            position: "absolute", left: clickPos.x, top: clickPos.y, zIndex: 1000,
+            background: "rgba(253,252,251,0.97)", color: "#3A3F3B",
+            padding: "10px 14px", borderRadius: 8, fontSize: 12,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.18)", border: "1px solid #CFD6C4",
+            minWidth: 180, maxWidth: 260,
           }}>
-            Survey {clickedSurveyNo}
-            <span
-              onClick={() => setClickedSurveyNo(null)}
-              style={{ cursor: "pointer", opacity: 0.65, fontSize: 16, lineHeight: 1, fontWeight: 400 }}
-            >×</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontWeight: 800, fontSize: 13, color: "#306223" }}>
+                Survey {String(clickedParcelProps.survey_no ?? "—")}
+              </span>
+              <span
+                onClick={() => { setClickedParcelProps(null); setClickPos(null); setRtcData(null); }}
+                style={{ cursor: "pointer", opacity: 0.45, fontSize: 18, lineHeight: 1, fontWeight: 300, marginLeft: 12 }}
+              >×</span>
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <tbody>
+                {Object.entries(clickedParcelProps)
+                  .filter(([k, v]) => k !== "survey_no" && k !== "geometry" && v != null && String(v).trim() !== "" && String(v) !== "nan")
+                  .map(([k, v]) => (
+                    <tr key={k}>
+                      <td style={{ color: "#7B8F83", paddingRight: 8, paddingBottom: 3, fontWeight: 500, whiteSpace: "nowrap", verticalAlign: "top", fontSize: 11 }}>
+                        {PROP_LABELS[k] ?? k.replace(/_/g, " ")}
+                      </td>
+                      <td style={{ fontWeight: 600, paddingBottom: 3, wordBreak: "break-word", fontSize: 11 }}>
+                        {String(v)}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+            {rtcData === "loading" && (
+              <div style={{ marginTop: 8, color: "#7B8F83", fontSize: 11 }}>Loading ownership…</div>
+            )}
+            {rtcData && rtcData !== "loading" && (
+              <div style={{ marginTop: 8, borderTop: "1px solid #E8EEE4", paddingTop: 8 }}>
+                <div style={{ fontWeight: 700, fontSize: 11, color: "#306223", marginBottom: 4 }}>Ownership (RCCMS)</div>
+                {rtcData.owners.length === 0
+                  ? <div style={{ color: "#7B8F83", fontSize: 11 }}>No active cases</div>
+                  : rtcData.owners.map((o, i) => (
+                      <div key={i} style={{ marginBottom: 3, fontSize: 11 }}>
+                        <span style={{ fontWeight: 600 }}>{o.owner_name || "—"}</span>
+                        {o.case_status && <span style={{ color: "#7B8F83", marginLeft: 6 }}>{o.case_status}</span>}
+                      </div>
+                    ))
+                }
+                {rtcData.mutations.length > 0 && (
+                  <>
+                    <div style={{ fontWeight: 700, fontSize: 11, color: "#306223", marginTop: 6, marginBottom: 3 }}>Mutations</div>
+                    {rtcData.mutations.map((m, i) => (
+                      <div key={i} style={{ fontSize: 11, marginBottom: 3 }}>
+                        <span style={{ fontWeight: 600 }}>{m.transaction_type || "—"}</span>
+                        {m.mr_number && <span style={{ color: "#7B8F83", marginLeft: 6 }}>MR {m.mr_number}</span>}
+                        {m.status && <span style={{ color: "#7B8F83", marginLeft: 6 }}>{m.status}</span>}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
         <MapContainer
@@ -382,6 +548,7 @@ export function MapView() {
           style={{ position: "absolute", inset: 0 }}
           ref={mapRef}
         >
+          <ZoomLabelController />
           <TileLayer key={mapLayer} {...TILES[mapLayer]} />
           {/* Nearby hobli boundaries — green if LGD name exists, red if not */}
           {showNearby && hobliBoundaryFc && (
@@ -393,10 +560,41 @@ export function MapView() {
               fillOpacity={0.10}
             />
           )}
-          {parcelFc && <ParcelLayer key={loadKey} fc={parcelFc} onParcelClick={setClickedSurveyNo} mapLayer={mapLayer} />}
-          {/* Loaded village boundary — blue, distinct from nearby, hover tooltip */}
+          {parcelFc && (
+            <>
+              <ParcelLayer key={loadKey} fc={parcelFc} mapLayer={mapLayer} />
+              <MapClickHandler parcelFc={parcelFc} onParcelClick={(props, pos) => {
+                setClickedParcelProps(props); setClickPos(pos);
+                setRtcData("loading");
+                if (loadedVillage) {
+                  fetchRtcData(
+                    loadedVillage.dist, loadedVillage.taluk, loadedVillage.hobli, loadedVillage.vlg,
+                    String(props.village_code ?? ""), String(props.survey_no ?? ""),
+                  ).then(setRtcData);
+                }
+              }} />
+              {highlightedSurveyNo && (() => {
+                const hlFc: GeoJSON.FeatureCollection = {
+                  type: "FeatureCollection",
+                  features: parcelFc.features.filter(
+                    (f) => (f.properties as Record<string, string>)?.survey_no === highlightedSurveyNo,
+                  ),
+                };
+                if (!hlFc.features.length) return null;
+                return (
+                  <GeoJSON
+                    key={`hl-${highlightedSurveyNo}`}
+                    data={hlFc}
+                    style={() => ({ color: "#F59E0B", weight: 2.5, fillColor: "#FBBF24", fillOpacity: 0.65, opacity: 1 })}
+                    onEachFeature={(_f, layer) => { layer.off(); }}
+                  />
+                );
+              })()}
+            </>
+          )}
+          {/* Loaded village boundary — blue, no label (label followed cursor, removed per SME feedback) */}
           {villageBoundaryFc && (
-            <VillageBoundaryLayer key={`vb-${villageBoundaryKey}`} fc={villageBoundaryFc} color="#2563EB" weight={3} />
+            <VillageBoundaryLayer key={`vb-${villageBoundaryKey}`} fc={villageBoundaryFc} color="#2563EB" weight={3} showLabel={false} />
           )}
         </MapContainer>
       </div>

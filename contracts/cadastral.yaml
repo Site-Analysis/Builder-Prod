@@ -232,6 +232,30 @@ paths:
         "403":
           description: Feature flag disabled
 
+  /rtc:
+    get:
+      operationId: fetchRtc
+      summary: Live RCCMS cases + mutations for a survey parcel
+      description: >
+        Proxies to eChhawadi GetActiveRCCMS + GetActiveCasesofMutationStatus.
+        Village-level cache TTL 300s. Filter by survey_no if provided.
+        Gated by `feature.cadastral.land-records`.
+      parameters:
+        - { name: dist,         in: query, required: true,  schema: { type: string } }
+        - { name: taluk,        in: query, required: true,  schema: { type: string } }
+        - { name: hobli,        in: query, required: true,  schema: { type: string } }
+        - { name: vlg,          in: query, required: true,  schema: { type: string } }
+        - { name: village_code, in: query, required: true,  schema: { type: string } }
+        - { name: survey_no,    in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: RTC data (owners and mutations)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RTCResponse" }
+        "403": { description: Feature flag disabled }
+        "502": { description: eChhawadi upstream unreachable }
+
   /village-search:
     get:
       operationId: searchVillages
@@ -290,3 +314,26 @@ components:
         vlg:          { type: string, example: "18" }
         dist_name:    { type: string, example: "BENGALURU" }
         taluk_name:   { type: string, example: "BANGALORE-NORTH" }
+
+    RTCResponse:
+      type: object
+      properties:
+        owners:
+          type: array
+          items:
+            type: object
+            properties:
+              survey_no:   { type: string }
+              owner_name:  { type: string }
+              case_status: { type: string }
+              ack_no:      { type: string }
+        mutations:
+          type: array
+          items:
+            type: object
+            properties:
+              mr_number:        { type: string }
+              transaction_type: { type: string }
+              survey_numbers:   { type: string }
+              status:           { type: string }
+              applicant:        { type: string }
