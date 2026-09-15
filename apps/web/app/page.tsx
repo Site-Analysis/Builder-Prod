@@ -195,7 +195,7 @@ export default function Home() {
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.88"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
         >
-          Sign in with SSO →
+          Sign In →
         </button>
 
         <div style={{ marginTop: 20, fontSize: 11, color: "#B8C4BB", textAlign: "center" }}>
