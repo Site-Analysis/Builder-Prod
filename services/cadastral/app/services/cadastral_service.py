@@ -13,6 +13,7 @@ SQLite (optional): SURVEY_INDEX_DB  (survey_index table — built once at startu
 
 from __future__ import annotations
 
+import asyncio
 import glob
 import json
 import logging
@@ -20,9 +21,11 @@ import math
 import os
 import sqlite3
 import threading
+import time
 from typing import Any
 
 import geopandas as gpd
+import httpx
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -92,7 +95,9 @@ def build_geojson(
     merged = pd.concat(frames, ignore_index=True)
     if survey and "survey_no" in merged.columns:
         merged = merged[merged["survey_no"] == survey]
-    return gpd.GeoDataFrame(merged, geometry="geometry", crs=4326).to_json()
+    gdf = gpd.GeoDataFrame(merged, geometry="geometry", crs=4326)
+    gdf = gdf[gdf.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
+    return gdf.to_json()
 
 
 def build_boundary(
@@ -615,3 +620,90 @@ def build_nearby_boundaries(lat: float, lng: float, radius_km: float) -> str:
 
     results.sort(key=lambda x: x[0])
     return json.dumps({"type": "FeatureCollection", "features": [f for _, f in results]})
+
+
+# ─── Live RCCMS / RTC proxy ──────────────────────────────────────────────────
+
+_ECHAWADI_BASE = "https://rdservices.karnataka.gov.in/echawadi/Home"
+_ECHAWADI_HEADERS = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (compatible; CadastralExplorer/1.0)",
+}
+_rtc_cache: dict[str, tuple[float, dict]] = {}
+_RTC_TTL = 300.0
+
+
+async def _echawadi_post(client: httpx.AsyncClient, endpoint: str, payload: dict) -> list[dict]:
+    """POST to one eChhawadi endpoint; return list of records or []."""
+    try:
+        r = await client.post(f"{_ECHAWADI_BASE}/{endpoint}", json=payload, timeout=15)
+        if r.status_code != 200:
+            return []
+        text = r.text.strip()
+        if not text or text.lower() in ('"nodata"', "nodata"):
+            return []
+        data = r.json()
+        if isinstance(data, str):
+            if not data.strip() or data.strip().lower() == "nodata":
+                return []
+            data = json.loads(data)
+        if isinstance(data, dict):
+            records = data.get("data")
+            return records if isinstance(records, list) else []
+        return []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+async def fetch_rtc_village(
+    dist: str, taluk: str, hobli: str, vlg: str, village_code: str
+) -> dict:
+    """Fetch RCCMS cases + mutations for a village from eChhawadi. Village-level cached."""
+    village_key = f"{village_code}_{vlg}"
+    cached = _rtc_cache.get(village_key)
+    if cached and time.monotonic() - cached[0] < _RTC_TTL:
+        return cached[1]
+
+    parcel_data = {"Dist": dist, "Taluk": taluk, "Hobli": hobli, "Village": village_key}
+
+    async with httpx.AsyncClient(headers=_ECHAWADI_HEADERS) as client:
+        rccms_p, rccms_d, mutations_raw = await asyncio.gather(
+            _echawadi_post(client, "GetActiveRCCMS", {"paramObj": {**parcel_data, "RCCMSSearchtype": "P"}}),
+            _echawadi_post(client, "GetActiveRCCMS", {"paramObj": {**parcel_data, "RCCMSSearchtype": "D"}}),
+            _echawadi_post(client, "GetActiveCasesofMutationStatus", {"paramObj": parcel_data}),
+        )
+
+    # Merge RCCMS P + D, deduplicate by ack_no
+    seen_ack: set[str] = set()
+    owners: list[dict] = []
+    for rec in rccms_p + rccms_d:
+        ack = str(rec.get("Ack_No", ""))
+        if ack and ack in seen_ack:
+            continue
+        if ack:
+            seen_ack.add(ack)
+        sno = str(rec.get("Survey_no", ""))
+        surnoc = str(rec.get("surnoc") or "-")
+        hissa = str(rec.get("hissano") or "-")
+        owners.append({
+            "survey_no":   f"{sno}/{surnoc}/{hissa}",
+            "owner_name":  str(rec.get("ownername") or ""),
+            "case_status": str(rec.get("Case_Status") or ""),
+            "ack_no":      ack,
+        })
+
+    mutations: list[dict] = [
+        {
+            "mr_number":        str(rec.get("MRNumber") or ""),
+            "transaction_type": str(rec.get("TypeofTransaction") or ""),
+            "survey_numbers":   str(rec.get("SurveyNumbers") or ""),
+            "status":           str(rec.get("status") or ""),
+            "applicant":        str(rec.get("applicant") or ""),
+        }
+        for rec in mutations_raw
+    ]
+
+    result = {"owners": owners, "mutations": mutations}
+    _rtc_cache[village_key] = (time.monotonic(), result)
+    return result

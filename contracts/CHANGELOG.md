@@ -4,6 +4,21 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.7.0 — 2026-09-15 — cadastral
+
+**New endpoint `GET /rtc`:** Live RCCMS (Records of Rights) + mutations proxy for a survey parcel.
+Calls eChhawadi `GetActiveRCCMS` (types P + D) and `GetActiveCasesofMutationStatus` for the
+village, then filters by `survey_no` base. Village-level cache TTL 300s. Returns
+`{owners: [{survey_no, owner_name, case_status, ack_no}], mutations: [{mr_number, transaction_type, survey_numbers, status, applicant}]}`.
+
+**Frontend:**
+- Parcel click card now shows live RCCMS ownership data
+- Card shows "Loading ownership…" while fetching, then owner name(s) + case status
+- Mutations section appears if any pending transactions found
+- `loadedVillage` state in MapView tracks current village context for RTC calls
+
+---
+
 ## 1.6.0 — 2026-09-10 — cadastral
 
 **New endpoint `GET /village-search?q=<prefix>`:** In-memory prefix search across all villages

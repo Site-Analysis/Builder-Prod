@@ -4,8 +4,10 @@
 // Phase 1A — district / taluk / hobli / village cascade + parcel GeoJSON fetch.
 // Survey search, RCCMS, mutations, overlays added in later phases.
 
-import { getSession } from "next-auth/react";
+import { getSession, signOut } from "next-auth/react";
 import { useAuthStore } from "@/lib/stores/auth";
+
+const _parcelCache = new Map<string, GeoJSON.FeatureCollection>();
 
 const BASE = process.env.NEXT_PUBLIC_CADASTRAL_API_URL ?? "https://api.builder.qnit.site/cadastral";
 
@@ -35,6 +37,10 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
       headers: { ...authHeader },
       signal: ctrl.signal,
     });
+    if (res.status === 401) {
+      signOut({ redirect: true, callbackUrl: "/" });
+      throw new Error("Session expired — signing out");
+    }
     if (!res.ok) {
       const detail = await res.json().then((b) => b?.detail ?? `HTTP ${res.status}`).catch(() => `HTTP ${res.status}`);
       throw new Error(String(detail));
@@ -102,16 +108,40 @@ export async function fetchVillageSearch(
   } catch { return []; }
 }
 
+// ─── RTC / RCCMS ownership ───────────────────────────────────────────────────
+
+export interface RtcOwner { survey_no: string; owner_name: string; case_status: string; ack_no: string; }
+export interface RtcMutation { mr_number: string; transaction_type: string; survey_numbers: string; status: string; applicant: string; }
+export interface RtcData { owners: RtcOwner[]; mutations: RtcMutation[]; }
+
+export async function fetchRtcData(
+  dist: string, taluk: string, hobli: string, vlg: string,
+  villageCode: string, surveyNo: string,
+  signal?: AbortSignal,
+): Promise<RtcData | null> {
+  try {
+    return await get<RtcData>(
+      `/rtc?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}&hobli=${encodeURIComponent(hobli)}&vlg=${encodeURIComponent(vlg)}&village_code=${encodeURIComponent(villageCode)}&survey_no=${encodeURIComponent(surveyNo)}`,
+      signal,
+    );
+  } catch { return null; }
+}
+
 // ─── Parcel GeoJSON ──────────────────────────────────────────────────────────
 
 export async function fetchParcelData(
   dist: string, taluk: string, hobli: string, vlg: string,
   signal?: AbortSignal,
 ): Promise<GeoJSON.FeatureCollection | null> {
+  const key = `${dist}:${taluk}:${hobli}:${vlg}`;
+  const cached = _parcelCache.get(key);
+  if (cached) return cached;
   try {
-    return await get<GeoJSON.FeatureCollection>(
+    const data = await get<GeoJSON.FeatureCollection>(
       `/data?dist=${encodeURIComponent(dist)}&taluk=${encodeURIComponent(taluk)}&hobli=${encodeURIComponent(hobli)}&vlg=${encodeURIComponent(vlg)}`, signal,
     );
+    if (data) _parcelCache.set(key, data);
+    return data ?? null;
   } catch { return null; }
 }
 

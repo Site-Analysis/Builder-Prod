@@ -312,6 +312,7 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, onLoc
       : `${n} parcel(s) loaded`;
     setStatus(label);
     setLoadedVillage({ dist, taluk, hobli, vlg });
+    setSearchQ(""); setSearchResults([]); setShowResults(false);
     onLoad(fc, label, { dist, taluk, hobli, vlg });
   }
 
@@ -516,7 +517,22 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, onLoc
                   {searchErr}
                 </div>
               )}
-              {showResults && <SearchDropdown results={searchResults} loadedSurveyNos={loadedSurveyNos} loadedVillage={loadedVillage ?? undefined} onSelect={(r, isCurrent) => { setShowResults(false); setSearchQ(r.survey_no); if (isCurrent) { onHighlight?.(r); } else { onSearch?.(r); } }} />}
+              {showResults && <SearchDropdown results={searchResults} loadedSurveyNos={loadedSurveyNos} loadedVillage={loadedVillage ?? undefined} onSelect={(r, isCurrent) => {
+                setShowResults(false);
+                setSearchQ(r.survey_no);
+                if (isCurrent) {
+                  onHighlight?.(r);
+                } else {
+                  setDist(r.dist); setTaluk(r.taluk); setHobli(r.hobli); setVlg(r.vlg);
+                  setLoadedVillage({ dist: r.dist, taluk: r.taluk, hobli: r.hobli, vlg: r.vlg });
+                  Promise.all([
+                    fetchTaluks(r.dist),
+                    fetchHoblis(r.dist, r.taluk),
+                    fetchVillages(r.dist, r.taluk, r.hobli),
+                  ]).then(([t, h, v]) => { setTaluks(t); setHoblis(h); setVillages(v); });
+                  onSearch?.(r);
+                }
+              }} />}
             </div>
           )}
         </>
