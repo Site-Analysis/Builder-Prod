@@ -99,7 +99,11 @@ async def get_rtc(
     if survey_no:
         base = survey_no.split("/")[0].strip()
         return {
-            "owners":    [o for o in data["owners"]    if o["survey_no"].split("/")[0] == base],
-            "mutations": [m for m in data["mutations"] if base in (m.get("survey_numbers") or "")],
+            "owners": [
+                o for o in data["owners"] if o["survey_no"].split("/")[0] == base
+            ],
+            "mutations": [
+                m for m in data["mutations"] if base in (m.get("survey_numbers") or "")
+            ],
         }
     return data
