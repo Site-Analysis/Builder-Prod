@@ -1,0 +1,15 @@
+.git/
+node_modules/
+apps/web/.next/
+apps/web/node_modules/
+services/cadastral/.venv/
+services/cadastral/__pycache__/
+services/cadastral/.ruff_cache/
+.env
+.env.local
+.env.builders
+*.local.*
+infra/
+contracts/
+tests/
+*.md

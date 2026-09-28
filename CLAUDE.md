@@ -49,7 +49,7 @@ No external database for parcel data. Pure filesystem:
 
 Every parquet stores `Polygon(Northing, Easting)` instead of `Polygon(Easting, Northing)` — upstream scraper bug. `load_village()` in `cadastral_service.py` fixes this with `affine_transform([0,1,1,0,0,0])` before reprojecting to WGS84. Never read parquets directly without this fix.
 
-**Datum**: Source data is in Kalianpur 1975 datum (Everest ellipsoid + 3-param Bursa-Wolf shift: towgs84=295,736,257). Set `CADASTRAL_DATUM=kalianpur` (confirmed via visual alignment test — parcels match satellite boundaries). Default in docker-compose and `.env.example`. Do NOT use `wgs84` (shifts parcels ~60 m S / ~108 m E).
+**Datum**: Source data is **EPSG:32643** (WGS84 / UTM Zone 43N). `load_village()` applies the affine swap then `set_crs(32643).to_crs(4326)`. No `CADASTRAL_DATUM` env var needed — no Kalianpur shift. The earlier Kalianpur approach added ~60-100 m synthetic offset and has been removed.
 
 ### Request flow
 

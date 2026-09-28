@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
 
   cadastral:
-    build: services/cadastral
+    image: tanmaycj/cadastral:latest
     ports:
       - "8011:8011"
     environment:

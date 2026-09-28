@@ -1,0 +1,51 @@
+# Builder module — qnit-vm production deployment
+# Reuses keycloak-prod and qnit-shared network from QnitxSoA platform.
+#
+# Prerequisites on qnit-vm:
+#   - /opt/builder/data/echawadi_village_list.json
+#   - /opt/builder/data/cadastral_lake_v2/dist_*/...
+#   - qnit-shared network (created by docker-compose.platform.yml)
+#   - keycloak-prod container running (from QnitxSoA)
+#
+# Run:
+#   docker compose -p qnit-builders --env-file .env.builders \
+#     -f docker-compose.builders.yml up -d
+
+networks:
+  qnit-shared:
+    external: true
+
+volumes:
+  builder_survey_index:
+
+services:
+  builder-server:
+    image: tanmaycj/builder-server:latest
+    container_name: builder-server
+    networks: [qnit-shared]
+    environment:
+      # NextAuth / Keycloak (runtime — not baked into image)
+      KEYCLOAK_URL: http://keycloak-prod:8080/auth
+      KEYCLOAK_REALM: sat
+      KEYCLOAK_CLIENT_ID: sat-web
+      NEXTAUTH_URL: https://builder.qnit.site
+      AUTH_SECRET: ${AUTH_SECRET}
+      # Supabase (runtime)
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+      # Cadastral backend
+      FLAGS: feature.cadastral.land-records
+      CADASTRAL_DATA_DIR: /data/cadastral_lake_v2
+      SURVEY_INDEX_DB: /survey_index/survey_index.db
+      CORS_ORIGINS: '["https://builder.qnit.site"]'
+    volumes:
+      - /opt/builder/data:/data:ro
+      - builder_survey_index:/survey_index
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8011/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 1200s
+      retries: 3
