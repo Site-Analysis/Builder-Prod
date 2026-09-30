@@ -134,6 +134,8 @@ def raster_water_blobs(doc, page):
         a = np.frombuffer(pix.samples, np.uint8).reshape(pix.height, pix.width, pix.n)[
             ..., :3
         ]
+        if s["transform"][3] < 0:  # strips are stored bottom-up (negative y scale)
+            a = a[::-1]
         v = (
             (a[..., 0].astype(np.uint32) << 16)
             | (a[..., 1].astype(np.uint32) << 8)

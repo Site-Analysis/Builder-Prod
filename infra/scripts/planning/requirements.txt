@@ -2,3 +2,4 @@ pymupdf==1.28.2
 numpy==2.5.3
 shapely==2.1.2
 pyproj==3.8.0
+pyarrow==17.0.0
