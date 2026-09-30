@@ -45,6 +45,40 @@ export const OVERLAY_UI: Record<OverlayKind, { label: string; legend: string; st
   },
 };
 
+const OVERLAY_KINDS: OverlayKind[] = ["ngt_buffer", "forest_symbol", "stream_centreline"];
+const STORAGE_KEY = "planning.toggles.v1";
+const ALL_OFF: PlanningToggles = { zones: false, ngt_buffer: false, forest_symbol: false, stream_centreline: false };
+
+/** Saved switch state; all off when nothing is saved or storage is unavailable. */
+export function loadPlanningToggles(): PlanningToggles {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return ALL_OFF;
+    const saved = JSON.parse(raw) as Partial<PlanningToggles>;
+    return {
+      zones: saved.zones === true,
+      ngt_buffer: saved.ngt_buffer === true,
+      forest_symbol: saved.forest_symbol === true,
+      stream_centreline: saved.stream_centreline === true,
+    };
+  } catch {
+    return ALL_OFF;
+  }
+}
+
+export function savePlanningToggles(t: PlanningToggles): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(t));
+  } catch {
+    // storage blocked (private window etc.): the switches still work for this page
+  }
+}
+
+/** The zone switch gates everything: overlays are drawn only while it is on. */
+export function effectiveToggles(t: PlanningToggles): PlanningToggles {
+  return t.zones ? t : ALL_OFF;
+}
+
 function zoneStyle(f?: GeoJSON.Feature): PathOptions {
   const p = (f?.properties ?? {}) as ZoneProperties;
   const colour = COLOUR_BY_LABEL.get(p.zone_label_native) ?? "#999999";
@@ -130,7 +164,7 @@ export function PlanningMapLayers({
       {toggles.zones && data.zones && (
         <GeoJSON key={`pz-${version}`} data={data.zones} style={zoneStyle} interactive={false} />
       )}
-      {(["ngt_buffer", "forest_symbol", "stream_centreline"] as OverlayKind[]).map((k) =>
+      {OVERLAY_KINDS.map((k) =>
         toggles[k] && data[k] ? (
           <GeoJSON key={`po-${k}-${version}`} data={data[k]!} style={() => OVERLAY_UI[k].style} interactive={false} />
         ) : null,
@@ -139,13 +173,34 @@ export function PlanningMapLayers({
   );
 }
 
-const btn = (on: boolean, isMobile: boolean) => ({
-  padding: isMobile ? "9px 11px" : "5px 9px", fontSize: isMobile ? 12 : 11, fontWeight: 600,
-  cursor: "pointer", border: "none", fontFamily: "inherit",
-  background: on ? "#306223" : "#FDFCFB", color: on ? "#FDFCFB" : "#7B8F83",
-});
+function Switch({
+  on, label, onClick, isMobile, indent = false,
+}: { on: boolean; label: string; onClick: () => void; isMobile: boolean; indent?: boolean }) {
+  return (
+    <button
+      role="switch" aria-checked={on} onClick={onClick}
+      style={{
+        display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left",
+        padding: isMobile ? "9px 11px" : "6px 10px", paddingLeft: indent ? (isMobile ? 22 : 20) : undefined,
+        fontSize: isMobile ? 12 : 11, fontWeight: indent ? 500 : 700, fontFamily: "inherit",
+        cursor: "pointer", border: "none", background: "#FDFCFB", color: on ? "#306223" : "#7B8F83",
+      }}
+    >
+      <span style={{
+        position: "relative", width: 26, height: 14, borderRadius: 7, flexShrink: 0,
+        background: on ? "#306223" : "#CFD6C4", transition: "background 0.15s",
+      }}>
+        <span style={{
+          position: "absolute", top: 2, left: on ? 14 : 2, width: 10, height: 10, borderRadius: 5,
+          background: "#FDFCFB", transition: "left 0.15s",
+        }} />
+      </span>
+      <span>{label}</span>
+    </button>
+  );
+}
 
-/** Toggle buttons for the zone layer and each overlay. */
+/** One switch for the RMP 2031 zone layer; the overlay switches appear only while it is on. */
 export function PlanningControls({
   toggles, setToggles, isMobile,
 }: {
@@ -158,12 +213,13 @@ export function PlanningControls({
     <div style={{
       position: "absolute", top: 112, right: 10, zIndex: 1000, display: "flex", flexDirection: "column",
       borderRadius: 6, overflow: "hidden", border: "1px solid #CFD6C4", boxShadow: "0 2px 8px rgba(58,63,59,0.14)",
+      background: "#FDFCFB",
     }}>
-      <button onClick={() => flip("zones")} style={btn(toggles.zones, isMobile)}>RMP 2031 zones (Draft)</button>
-      {(["ngt_buffer", "forest_symbol", "stream_centreline"] as OverlayKind[]).map((k) => (
-        <button key={k} onClick={() => flip(k)} style={{ ...btn(toggles[k], isMobile), borderTop: "1px solid #CFD6C4" }}>
-          {OVERLAY_UI[k].label}
-        </button>
+      <Switch on={toggles.zones} label="RMP 2031 zones (Draft)" onClick={() => flip("zones")} isMobile={isMobile} />
+      {toggles.zones && OVERLAY_KINDS.map((k) => (
+        <div key={k} style={{ borderTop: "1px solid #E8EEE4" }}>
+          <Switch on={toggles[k]} label={OVERLAY_UI[k].label} onClick={() => flip(k)} isMobile={isMobile} indent />
+        </div>
       ))}
     </div>
   );
@@ -178,10 +234,10 @@ function DraftBadge() {
   );
 }
 
-/** Legend with native labels; the Draft badge is always shown while the zone layer is on. */
+/** Legend with native labels and the Draft badge; shown only while the zone switch is on. */
 export function PlanningLegend({ toggles, status }: { toggles: PlanningToggles; status: string }) {
-  const overlays = (["ngt_buffer", "forest_symbol", "stream_centreline"] as OverlayKind[]).filter((k) => toggles[k]);
-  if (!toggles.zones && !overlays.length) return null;
+  if (!toggles.zones) return null;
+  const overlays = OVERLAY_KINDS.filter((k) => toggles[k]);
   return (
     <div style={{
       position: "absolute", left: 10, bottom: 24, zIndex: 1000, maxWidth: 250,
@@ -192,7 +248,7 @@ export function PlanningLegend({ toggles, status }: { toggles: PlanningToggles; 
         <span style={{ fontWeight: 800, color: "#306223" }}>BDA RMP 2031</span>
         <DraftBadge />
       </div>
-      {toggles.zones && PLANNING_LEGEND.map((e) => (
+      {PLANNING_LEGEND.map((e) => (
         <div key={e.label} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
           <span style={{
             width: 12, height: 10, background: e.colour, border: e.classNorm === "uncoloured" ? "1px dashed #9E9E9E" : "1px solid rgba(0,0,0,0.15)",
@@ -201,12 +257,10 @@ export function PlanningLegend({ toggles, status }: { toggles: PlanningToggles; 
           <span>{e.label}</span>
         </div>
       ))}
-      {toggles.zones && (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-          <span style={{ width: 12, height: 10, border: "1px dashed #8E24AA", display: "inline-block" }} />
-          <span>Zone inferred under a map symbol</span>
-        </div>
-      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+        <span style={{ width: 12, height: 10, border: "1px dashed #8E24AA", display: "inline-block" }} />
+        <span>Zone inferred under a map symbol</span>
+      </div>
       {overlays.map((k) => (
         <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
           <span style={{

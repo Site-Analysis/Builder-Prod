@@ -19,6 +19,7 @@ import { isEnabled } from "@/lib/flags";
 import { fetchZonesAt, type ZonesAtResult } from "@/lib/api/planning";
 import {
   PlanningCardSection, PlanningControls, PlanningLegend, PlanningMapLayers, type PlanningToggles,
+  effectiveToggles, loadPlanningToggles, savePlanningToggles,
 } from "./PlanningLayers";
 import "leaflet/dist/leaflet.css";
 
@@ -308,12 +309,12 @@ export function MapView() {
   const [loadedVillage, setLoadedVillage]           = useState<VillageCoords | null>(null);
   const [rtcData, setRtcData]                       = useState<RtcData | null | "loading">(null);
   const [clickedLatLng, setClickedLatLng]           = useState<{ lat: number; lng: number } | null>(null);
-  const [planningToggles, setPlanningToggles]       = useState<PlanningToggles>({
-    zones: false, ngt_buffer: false, forest_symbol: false, stream_centreline: false,
-  });
+  const [planningToggles, setPlanningToggles]       = useState<PlanningToggles>(loadPlanningToggles);
   const [planningStatus, setPlanningStatus]         = useState("");
   const [zonesAt, setZonesAt]                       = useState<ZonesAtResult | "loading" | { error: string } | null>(null);
   const zonesAtReq    = useRef(0);
+  const planningShown = effectiveToggles(planningToggles);
+  useEffect(() => { if (PLANNING) savePlanningToggles(planningToggles); }, [planningToggles]);
   const mapRef        = useRef<LeafletMap | null>(null);
 
   useEffect(() => {
@@ -511,7 +512,7 @@ export function MapView() {
         {PLANNING && (
           <>
             <PlanningControls toggles={planningToggles} setToggles={setPlanningToggles} isMobile={isMobile} />
-            <PlanningLegend toggles={planningToggles} status={planningStatus} />
+            <PlanningLegend toggles={planningShown} status={planningStatus} />
           </>
         )}
 
@@ -618,7 +619,7 @@ export function MapView() {
               fillOpacity={0.10}
             />
           )}
-          {PLANNING && <PlanningMapLayers toggles={planningToggles} onStatus={setPlanningStatus} />}
+          {PLANNING && <PlanningMapLayers toggles={planningShown} onStatus={setPlanningStatus} />}
           {parcelFc && (
             <>
               <ParcelLayer key={loadKey} fc={parcelFc} mapLayer={mapLayer} />
