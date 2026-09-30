@@ -9,11 +9,13 @@ tests/fixtures/planning (no real plan data). The cadastral call in /zones/at is 
 Covers:
   (a) /health
   (b) every gated endpoint -> 403 without flags
-  (c) /plans, /docs/{doc_id} (+404), /authority -> 501
+  (c) /plans, /docs/{doc_id} (+404)
   (d) /zones: status on every feature, plan flag gate, bbox cap -> 400
   (e) /overlays: each kind, note on every feature, unknown kind -> 400
   (f) /zones/at: overlap, edge distance, position uncertainty, near_edge, inferred,
       overlays_nearby, plans_skipped
+  (k) /authority: BDA full / partial / schedule-only village, outside BDA, unknown code,
+      other district, point inside / outside the LPA, missing parameters
 
 Run: pytest tests/planning_smoke.py
 Requires: cd services/planning && pip install -r requirements.txt
@@ -79,6 +81,10 @@ def _make_client(monkeypatch, flags: str):
     monkeypatch.setenv("FLAGS", flags)
     monkeypatch.setenv("PLANNING_REGISTER_DIR", str(_ROOT / "infra" / "planning"))
     monkeypatch.setenv("PLANNING_DATA_DIR", str(_ROOT / "tests" / "fixtures" / "planning"))
+    monkeypatch.setenv(
+        "PLANNING_AUTHORITY_CSV",
+        str(_ROOT / "tests" / "fixtures" / "planning" / "authority_villages.csv"),
+    )
     for m in [k for k in sys.modules if k == "app" or k.startswith("app.")]:
         sys.modules.pop(m, None)
     from app.auth import verify_token
@@ -146,7 +152,6 @@ def test_c_registry(client):
     doc = client.get("/docs/BDA-RMP2031-PLUCOMP").json()
     assert doc["status"] == "draft" and len(doc["sha256"]) == 64
     assert client.get("/docs/NOPE").status_code == 404
-    assert client.get("/authority?lat=12.97&lng=77.6").status_code == 501
 
 
 def test_d_zones(client):
@@ -241,3 +246,39 @@ def test_j_simplify_levels(client):
     assert client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}&simplify_m=5").status_code == 400
     r = client.get(f"/overlays?plan_id=BDA-RMP2031&bbox={bbox}&kind=stream_centreline&simplify_m=25")
     assert r.status_code == 200 and r.json()["simplify_m"] == 25
+
+
+def _wgs_point(x, y):
+    lng, lat = _TO_WGS(x, y)
+    return f"lat={lat:.7f}&lng={lng:.7f}"
+
+
+def test_k_authority(client):
+    full = client.get("/authority?dist=20&taluk=1&hobli=1&vlg=14").json()
+    assert full["authority"] == "BDA" and full["coverage"] == "full"
+    assert full["operative_plan"] is None
+    assert [p["plan_id"] for p in full["draft_plans"]] == ["BDA-RMP2031"]
+    assert full["draft_plans"][0]["status"] == "draft"
+    assert full["note"] == "Only a draft plan is loaded for this area"
+    assert full["share_pct"] == 100.0 and full["pd"] == 8 and full["source"] == "both"
+
+    part = client.get("/authority?dist=20&taluk=1&hobli=1&vlg=11").json()
+    assert part["coverage"] == "partial" and part["draft_plans"][0]["coverage"] == "partial"
+
+    edge = client.get("/authority?dist=20&taluk=1&hobli=1&vlg=12").json()
+    assert edge["authority"] == "BDA" and "text lists it" in edge["mismatch_note"]
+
+    out = client.get("/authority?dist=21&taluk=1&hobli=1&vlg=1").json()
+    assert out["authority"] is None and out["coverage"] == "none"
+    assert out["draft_plans"] == [] and out["note"] == "Outside BDA; this area's plan isn't loaded yet"
+
+    assert client.get("/authority?dist=20&taluk=9&hobli=9&vlg=999").status_code == 404
+    other = client.get("/authority?dist=5&taluk=1&hobli=1&vlg=1").json()
+    assert other["authority"] is None and other["coverage"] == "none"
+
+    inside = client.get(f"/authority?{_wgs_point(_E + 100, _N + 100)}").json()
+    assert inside["authority"] == "BDA" and inside["coverage"] == "full" and inside["source"] == "point"
+    outside = client.get(f"/authority?{_wgs_point(_E + 9000, _N + 9000)}").json()
+    assert outside["authority"] is None and outside["coverage"] == "none"
+
+    assert client.get("/authority?dist=20&taluk=1").status_code == 400

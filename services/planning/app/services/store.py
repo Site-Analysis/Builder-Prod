@@ -57,6 +57,11 @@ class Store:
     plans: dict[str, dict] = field(default_factory=dict)
     docs: dict[str, dict] = field(default_factory=dict)
     layers: dict[str, PlanLayers] = field(default_factory=dict)
+    # village key (dist, taluk, hobli, vlg) -> authority_villages.csv row
+    authority: dict[tuple[str, str, str, str], dict] = field(default_factory=dict)
+    authority_dists: set[str] = field(default_factory=set)
+    # LPA boundary per authority (EPSG:32643), e.g. {"BDA": polygon}
+    lpa: dict[str, shapely.Geometry] = field(default_factory=dict)
 
 
 def _read_csv(path: str) -> list[dict]:
@@ -143,6 +148,17 @@ def load_store() -> Store:
                 0 if zones is None else len(zones),
                 0 if overlays is None else len(overlays),
             )
+    auth_csv = os.getenv(
+        "PLANNING_AUTHORITY_CSV", os.path.join(reg, "authority_villages.csv")
+    )
+    for r in _read_csv(auth_csv):
+        st.authority[(r["dist"], r["taluk"], r["hobli"], r["vlg"])] = r
+        st.authority_dists.add(r["dist"])
+    lpa_path = os.path.join(data, "BDA-RMP2031_lpa.parquet")
+    if os.path.exists(lpa_path):
+        lpa = gpd.read_parquet(lpa_path).to_crs(CRS_METRIC)
+        st.lpa["BDA"] = shapely.union_all(list(lpa.geometry))
+        shapely.prepare(st.lpa["BDA"])
     return st
 
 
