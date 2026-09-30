@@ -11,6 +11,7 @@ Standalone production repo for the Qnit Builders module. Features land one at a 
 ```
 apps/web/                  Next.js 16 + React 19 frontend (port 3000)
 services/cadastral/        FastAPI cadastral service (port 8011)
+services/planning/         FastAPI planning service (port 8012): 2031 zone + overlay layers
 contracts/                 OpenAPI YAML — one per service + CHANGELOG.md
 infra/supabase/            Supabase SQL setup scripts
 tests/                     Smoke tests (one file per service, run per-process)
