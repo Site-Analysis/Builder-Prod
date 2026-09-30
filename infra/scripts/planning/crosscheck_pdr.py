@@ -24,6 +24,7 @@ import numpy as np
 import pymupdf
 
 sys.path.insert(0, os.path.dirname(__file__))
+from extract_plucomp import close, dilate
 from fetch_sources import PDR_PLU_FIGURES
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -36,6 +37,7 @@ COARSE = 16  # coarse search grid (~78 m)
 SCALES_C = np.exp(np.linspace(np.log(6), np.log(24), 48))  # figure px per coarse cell
 FINE_SHIFT = 8  # +- fine cells
 FINE_SCALES = np.linspace(0.95, 1.05, 11)
+PD_CLOSE_PX = 6
 MAIN_CLASSES = (
     "Residential",
     "Public and Semi Public",
@@ -85,6 +87,35 @@ def resample(a, s, shape_out=None):
     yi = np.minimum((np.arange(H) * s).astype(int), h - 1)
     xi = np.minimum((np.arange(W) * s).astype(int), w - 1)
     return a[yi][:, xi]
+
+
+def grow(seed, allowed):
+    """Region grown from seed pixels through allowed pixels (8 px per step)."""
+    comp = seed & allowed
+    while True:
+        nxt = dilate(comp, 8) & allowed
+        if nxt.sum() == comp.sum():
+            return comp
+        comp = nxt
+
+
+def pd_extent(fig, greys):
+    """The PD's own area on its PDR figure: each figure colours only its own PD and draws
+    neighbouring districts as grey base map. Coloured (non-grey) pixels are closed, holes
+    are filled (grey inside the PD stays in), and the largest region is kept (drops the
+    legend swatches)."""
+    coloured = close((fig >= 10) & ~np.isin(fig, greys), PD_CLOSE_PX)
+    border = np.zeros_like(coloured)
+    border[[0, -1], :] = True
+    border[:, [0, -1]] = True
+    outside = grow(border & ~coloured, ~coloured)
+    inside = ~outside
+    ys, xs = np.nonzero(coloured)
+    cy, cx = int(np.median(ys)), int(np.median(xs))
+    j = np.argmin((ys - cy) ** 2 + (xs - cx) ** 2)
+    seed = np.zeros_like(inside)
+    seed[ys[j], xs[j]] = True
+    return grow(seed, inside)
 
 
 def agreement(t, ref, dy, dx):
@@ -138,6 +169,12 @@ def main():
             pix.height, pix.width, pix.n
         )[..., :3]
         fig = classify(rgb, colours)
+        greys = [
+            by_label[g]
+            for g in ("Defense", "Transport and Communication")
+            if g in by_label
+        ]
+        pd_mask = pd_extent(fig, greys)
         # coarse: FFT correlation per scale, candidate judged by direct agreement
         best = None
         for s in SCALES_C:
@@ -183,14 +220,11 @@ def main():
                         fbest = (agr, s_f, dy, dx)
         agr, s_f, dy, dx = fbest
         t = resample(fig, s_f)
+        agr_all, n_all, _, _ = agreement(t, ref_f, dy, dx)
+        t = np.where(resample(pd_mask, s_f), t, -1)  # compare inside the PD only
         agr, n, a, b = agreement(t, ref_f, dy, dx)
         both = (a >= 10) & (b >= 10)
         dis = both & (a != b)
-        greys = [
-            by_label[g]
-            for g in ("Defense", "Transport and Communication")
-            if g in by_label
-        ]
         keep = both & ~np.isin(a, greys)
         pairs = {}
         for x, y in zip(a[dis].tolist(), b[dis].tolist(), strict=True):
@@ -205,6 +239,9 @@ def main():
             "offset_fine_cells": [int(dy), int(dx)],
             "compared_cells": n,
             "agreement": agr,
+            "agreement_whole_figure": agr_all,
+            "compared_cells_whole_figure": n_all,
+            "pd_extent_source": "coloured extent of the PDR figure (holes filled)",
             "majority_class_share": float(cnt.max() / cnt.sum()),
             # PDR greys are ambiguous: PD-level legends have an "Unclassified" grey close to
             # PLUCOMP Defense, and road lines/labels in the JPEG read as Transport

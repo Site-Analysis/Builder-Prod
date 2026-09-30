@@ -52,6 +52,8 @@ HATCH_CLOSE_PX = 10
 FOREST_CLOSE_PX = 30  # tree glyphs are ~60 px apart
 FOREST_DILATE_PX = 2
 SLIVER_PX = 2.0
+ROAD_TOUCH_PX = 1.5  # commercial slivers within this of a road line are kept
+ROAD_STYLE = ("#b2b2b2", 0.96)  # vector road network on the sheet
 STREAM_CASING_PX = 4  # light-blue stream casing is thinner than 2*this; lakes are wider
 STREAM_REACH_PX = 6  # casing must touch the teal stream core within this distance
 TILE = 256
@@ -408,6 +410,22 @@ def main():
 
     # 2. LPA mask
     lpa_page = lpa_polygon_page(page)
+    road_px = []  # road lines in raster pixel coordinates (for commercial slivers)
+    for x in page.get_drawings():
+        if (hx(x.get("color")), round(x.get("width") or 0, 2)) != ROAD_STYLE:
+            continue
+        for it in x["items"]:
+            if it[0] in ("l", "c"):
+                a, b = (it[1], it[2]) if it[0] == "l" else (it[1], it[4])
+                road_px.append(
+                    [
+                        ((a.x - x0) / cpt, (a.y - y0) / rpt),
+                        ((b.x - x0) / cpt, (b.y - y0) / rpt),
+                    ]
+                )
+    road_tree = shapely.STRtree(
+        shapely.buffer(shapely.linestrings(road_px), ROAD_TOUCH_PX)
+    )
     inside = render_mask(page, lpa_page, grid, cls.shape)
 
     # 3. symbols that hide the zone underneath: NGT hatch, stream symbol, forest glyphs
@@ -489,6 +507,7 @@ def main():
         "sheet_scale": "1:57,340 (fitted; title block says 1:5,000)",
     }
     rows, geoms, sliver_n, sliver_area = [], [], 0, 0.0
+    kept_commercial_n, kept_commercial_area = 0, 0.0
     names = {v: k for k, v in zones.items()}
     names[UNCOLOURED] = info[UNCOLOURED]["zone_label_native"]
     for code_f, g in polys.items():
@@ -504,6 +523,14 @@ def main():
         thin = shapely.is_empty(
             shapely.buffer(parts, -SLIVER_PX / 2, join_style="mitre")
         )
+        if code == zones["Commercial"] and thin.any():
+            # commercial frontage strips along roads are real zoning, not slivers
+            hit = np.unique(road_tree.query(parts[thin], predicate="intersects")[0])
+            keep = np.zeros(len(parts), bool)
+            keep[np.flatnonzero(thin)[hit]] = True
+            kept_commercial_n += int(keep.sum())
+            kept_commercial_area += float(shapely.area(parts[keep]).sum()) * px_area
+            thin &= ~keep
         sliver_n += int(thin.sum())
         sliver_area += float(shapely.area(parts[thin]).sum()) * px_area
         for p in parts[~thin]:
@@ -572,6 +599,8 @@ def main():
         "zone_area_inferred_under_hatch_ha": under_ha,
         "uncoloured_share_of_lpa": by.get("uncoloured", 0.0) / 1e4 / lpa_ha,
         "slivers_dropped": sliver_n,
+        "commercial_slivers_kept_on_roads": kept_commercial_n,
+        "commercial_sliver_area_kept_ha": kept_commercial_area / 1e4,
         "sliver_area_ha": sliver_area / 1e4,
         "blend_px": blend_px,
         "params": {

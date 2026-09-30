@@ -109,6 +109,12 @@ def main():
                 failed.append(k)
                 if k in FAIL_NOTES:
                     row["reason"] = FAIL_NOTES[k]
+                elif k == "commercial" and qa.get("commercial_slivers_kept_on_roads"):
+                    row["reason"] = (
+                        f"fail with note: {qa['commercial_slivers_kept_on_roads']} commercial slivers "
+                        f"touching road lines kept ({qa['commercial_sliver_area_kept_ha']:.0f} ha); "
+                        f"remaining gap ({diff:+.1%}) not tuned"
+                    )
                 elif abs(diff) <= CLOSE:
                     row["reason"] = f"close ({diff:+.1%})"
         rows.append(row)
