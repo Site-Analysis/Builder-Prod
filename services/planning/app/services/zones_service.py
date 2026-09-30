@@ -220,7 +220,18 @@ def parcel_geometry(fc: dict) -> tuple[shapely.Geometry, dict]:
     g = shapely.transform(
         g, lambda xy: np.column_stack(_to_metric.transform(xy[:, 0], xy[:, 1]))
     )
-    return shapely.make_valid(g), fc["features"][0].get("properties", {})
+    return _polygonal(shapely.make_valid(g)), fc["features"][0].get("properties", {})
+
+
+def _polygonal(g: shapely.Geometry) -> shapely.Geometry:
+    """make_valid can return a GeometryCollection with stray lines/points (a spike in the
+    source ring); its boundary is None. Keep only the polygon parts."""
+    parts = [
+        p
+        for p in shapely.get_parts(g)
+        if p.geom_type in ("Polygon", "MultiPolygon") and not p.is_empty
+    ]
+    return shapely.union_all(parts) if parts else shapely.Polygon()
 
 
 def position_uncertainty(qa: dict) -> float:

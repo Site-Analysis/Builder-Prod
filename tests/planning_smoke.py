@@ -80,7 +80,9 @@ def _parcel_fc(x0, y0, x1, y1):
 def _make_client(monkeypatch, flags: str):
     monkeypatch.setenv("FLAGS", flags)
     monkeypatch.setenv("PLANNING_REGISTER_DIR", str(_ROOT / "infra" / "planning"))
-    monkeypatch.setenv("PLANNING_DATA_DIR", str(_ROOT / "tests" / "fixtures" / "planning"))
+    monkeypatch.setenv(
+        "PLANNING_DATA_DIR", str(_ROOT / "tests" / "fixtures" / "planning")
+    )
     monkeypatch.setenv(
         "PLANNING_AUTHORITY_CSV",
         str(_ROOT / "tests" / "fixtures" / "planning" / "authority_villages.csv"),
@@ -165,7 +167,10 @@ def test_d_zones(client):
         p = f["properties"]
         assert p["status"] == "draft" and p["status_label"] == "Draft, never approved"
         assert p["qa"]["extraction"] == "raster_palette"
-    assert client.get("/zones?plan_id=BDA-RMP2031&bbox=77.0,12.0,77.2,12.2").status_code == 400
+    assert (
+        client.get("/zones?plan_id=BDA-RMP2031&bbox=77.0,12.0,77.2,12.2").status_code
+        == 400
+    )
     assert client.get(f"/zones?plan_id=NOPE&bbox={bbox}").status_code == 404
 
 
@@ -189,7 +194,10 @@ def test_e_overlays(client):
         p = fc["features"][0]["properties"]
         assert p["status"] == "draft" and "not a" in p["note"]
     bbox = boxes["ngt_buffer"]
-    assert client.get(f"/overlays?plan_id=BDA-RMP2031&bbox={bbox}&kind=roads").status_code == 400
+    assert (
+        client.get(f"/overlays?plan_id=BDA-RMP2031&bbox={bbox}&kind=roads").status_code
+        == 400
+    )
 
 
 def test_f_zones_at_deep(client, monkeypatch):
@@ -198,9 +206,13 @@ def test_f_zones_at_deep(client, monkeypatch):
     body = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()
     (hit,) = body["zones"]
     assert hit["zone_label_native"] == "Residential" and hit["overlap_pct"] == 100.0
-    assert hit["position_uncertainty_m"] == pytest.approx((10.1**2 + 4.86**2) ** 0.5, abs=0.1)
+    assert hit["position_uncertainty_m"] == pytest.approx(
+        (10.1**2 + 4.86**2) ** 0.5, abs=0.1
+    )
     assert hit["near_edge"] is False and hit["inferred"] is False
-    assert body["overlays_nearby"]["nearest_stream_centreline"] is None  # stream is 490 m away
+    assert (
+        body["overlays_nearby"]["nearest_stream_centreline"] is None
+    )  # stream is 490 m away
     assert body["note"] == "Only draft plans cover this parcel; shown for context only"
 
 
@@ -215,14 +227,21 @@ def test_g_zones_at_edge_and_inferred(client, monkeypatch):
     assert labels["Residential"]["inferred_notes"] == ["zone inferred under hatch"]
     assert 0 < labels["Residential"]["inferred_share_pct"] < 100
     near = body["overlays_nearby"]
-    assert len(near["ngt_buffer"]) == 1 and "not a measured buffer" in near["ngt_buffer"][0]["note"]
-    assert near["nearest_stream_centreline"]["distance_m"] == pytest.approx(10.0, abs=0.5)
+    assert (
+        len(near["ngt_buffer"]) == 1
+        and "not a measured buffer" in near["ngt_buffer"][0]["note"]
+    )
+    assert near["nearest_stream_centreline"]["distance_m"] == pytest.approx(
+        10.0, abs=0.5
+    )
     assert near["forest_symbol"] == []
 
 
 def test_h_zones_at_plan_flag_off(client_layers_only, monkeypatch):
     _stub_parcel(monkeypatch, _parcel_fc(_E + 400, _N + 400, _E + 460, _N + 460))
-    body = client_layers_only.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()
+    body = client_layers_only.get(
+        "/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1"
+    ).json()
     assert body["zones"] == [] and body["plans_skipped"] == ["BDA-RMP2031"]
 
 
@@ -242,9 +261,16 @@ def test_j_simplify_levels(client):
     for tol in (2, 8, 25):
         r = client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}&simplify_m={tol}")
         assert r.status_code == 200 and r.json()["simplify_m"] == tol
-    assert client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}").json()["simplify_m"] == 8
-    assert client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}&simplify_m=5").status_code == 400
-    r = client.get(f"/overlays?plan_id=BDA-RMP2031&bbox={bbox}&kind=stream_centreline&simplify_m=25")
+    assert (
+        client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}").json()["simplify_m"] == 8
+    )
+    assert (
+        client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}&simplify_m=5").status_code
+        == 400
+    )
+    r = client.get(
+        f"/overlays?plan_id=BDA-RMP2031&bbox={bbox}&kind=stream_centreline&simplify_m=25"
+    )
     assert r.status_code == 200 and r.json()["simplify_m"] == 25
 
 
@@ -263,22 +289,58 @@ def test_k_authority(client):
     assert full["share_pct"] == 100.0 and full["pd"] == 8 and full["source"] == "both"
 
     part = client.get("/authority?dist=20&taluk=1&hobli=1&vlg=11").json()
-    assert part["coverage"] == "partial" and part["draft_plans"][0]["coverage"] == "partial"
+    assert (
+        part["coverage"] == "partial"
+        and part["draft_plans"][0]["coverage"] == "partial"
+    )
 
     edge = client.get("/authority?dist=20&taluk=1&hobli=1&vlg=12").json()
     assert edge["authority"] == "BDA" and "text lists it" in edge["mismatch_note"]
 
     out = client.get("/authority?dist=21&taluk=1&hobli=1&vlg=1").json()
     assert out["authority"] is None and out["coverage"] == "none"
-    assert out["draft_plans"] == [] and out["note"] == "Outside BDA; this area's plan isn't loaded yet"
+    assert (
+        out["draft_plans"] == []
+        and out["note"] == "Outside BDA; this area's plan isn't loaded yet"
+    )
 
     assert client.get("/authority?dist=20&taluk=9&hobli=9&vlg=999").status_code == 404
     other = client.get("/authority?dist=5&taluk=1&hobli=1&vlg=1").json()
     assert other["authority"] is None and other["coverage"] == "none"
 
     inside = client.get(f"/authority?{_wgs_point(_E + 100, _N + 100)}").json()
-    assert inside["authority"] == "BDA" and inside["coverage"] == "full" and inside["source"] == "point"
+    assert (
+        inside["authority"] == "BDA"
+        and inside["coverage"] == "full"
+        and inside["source"] == "point"
+    )
     outside = client.get(f"/authority?{_wgs_point(_E + 9000, _N + 9000)}").json()
     assert outside["authority"] is None and outside["coverage"] == "none"
 
     assert client.get("/authority?dist=20&taluk=1").status_code == 400
+
+
+def test_l_zones_at_parcel_with_spike(client, monkeypatch):
+    # a ring with a zero-width spike: make_valid gives Polygon + LineString, whose
+    # boundary is None; /zones/at must keep the polygon part, not 500
+    x0, y0 = _E + 400, _N + 400
+    ring = [
+        (x0, y0),
+        (x0 + 60, y0),
+        (x0 + 60, y0 + 60),
+        (x0, y0 + 60),
+        (x0, y0 + 30),
+        (x0 - 40, y0 + 30),
+        (x0, y0 + 30),
+        (x0, y0),
+    ]
+    fc = _parcel_fc(x0, y0, x0 + 60, y0 + 60)
+    fc["features"][0]["geometry"] = {
+        "type": "Polygon",
+        "coordinates": [[list(_TO_WGS(x, y)) for x, y in ring]],
+    }
+    _stub_parcel(monkeypatch, fc)
+    r = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1")
+    assert r.status_code == 200
+    (hit,) = r.json()["zones"]
+    assert hit["zone_label_native"] == "Residential" and hit["overlap_pct"] == 100.0
