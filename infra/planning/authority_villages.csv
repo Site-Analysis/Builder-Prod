@@ -1,0 +1,2288 @@
+dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,source,text_coverage,text_name,mismatch_note
+20,1,1,11,DEVARA JEEVANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Devarajeebanahalli,
+20,1,1,12,KADUGONDANAHALLI,BDA,BDA-RMP2031,full,100.0,8,spatial,,,not in the text list; map share 100.0%
+20,1,1,13,LINGARAJAPURA,BDA,BDA-RMP2031,full,,8,text,full,Lingarajapura,no parcel geometry in our data; coverage from the text list
+20,1,1,14,NAGAVARA,BDA,BDA-RMP2031,full,100.0,8,both,full,Nagavara,
+20,1,1,15,HENNURU,BDA,BDA-RMP2031,full,100.0,,both,full,Hennuru,
+20,1,1,16,KAJARAKANAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,1,17,BYATEGUTTEPALYA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,2,1,GEDDALA HALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Geddalahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,1,2,2,NAGASHETTI HALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nagashettihalli,
+20,1,2,3,BHUPA SANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Bupasandra,
+20,1,2,4,PURNAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Poornapura,
+20,1,2,5,LOTTE GOLLAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Lottigollahalli,
+20,1,2,6,CHOLANAYKANA HALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Cholanayakanahalli,
+20,1,2,7,GUDDADA HALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Guddadahalli,
+20,1,2,8,VISHVANATHA NAGENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Vishwanathanagenahalli,
+20,1,2,9,KAVAL BAIRASANDRA,BDA,BDA-RMP2031,full,100.0,8,both,full,Kaval Byrasandra,
+20,1,2,10,SHAMPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Shyamapura,
+20,1,2,18,HEBBALA,BDA,BDA-RMP2031,full,,,text,full,Hebbala,no parcel geometry in our data; coverage from the text list
+20,1,2,19,HEBBALA AMANI KERE,BDA,BDA-RMP2031,full,100.0,,both,full,Hebbala Amanikere,
+20,1,3,1,ABBAGERE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,3,2,LAKSHMEEPURA,BDA,BDA-RMP2031,full,100.0,30,both,full,Lakshmipura,
+20,1,3,3,SOMASHETTIHALLI,BDA,BDA-RMP2031,full,100.0,34,both,full,Somashettahalli,
+20,1,3,4,KEREGULLADAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,3,5,CHIKKA BANAVARA,BDA,BDA-RMP2031,full,100.0,34,both,full,Chikkabanavara,
+20,1,3,6,GANIGARA HALLI,BDA,BDA-RMP2031,full,100.0,34,both,full,Ganigerahalli,
+20,1,3,7,CHIKKASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Chikkasandra,
+20,1,3,8,BAGALAGUNTE,BDA,BDA-RMP2031,full,99.99,,both,full,Bagalagunti,
+20,1,3,9,DODDABIDARAKALLU,BDA,BDA-RMP2031,full,99.84,,both,full,Doddabidarakallu,
+20,1,3,10,NAGASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Nagasandra,
+20,1,3,11,MALLASANDRA,BDA,BDA-RMP2031,full,100.0,30,both,full,Mallasandra,
+20,1,3,12,TIRUMALAPURA,BDA,BDA-RMP2031,partial,36.31,33,both,partial,Thirumalapura,
+20,1,3,17,PEENYA,BDA,BDA-RMP2031,full,100.0,,both,full,Peenya,
+20,1,3,18,LAGGERE,BDA,BDA-RMP2031,full,100.0,18,spatial,,,not in the text list; map share 100.0%
+20,1,3,20,JALAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Jyalahalli,
+20,1,3,21,TANNEERANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Thanneeranahalli,
+20,1,3,22,MYAKALA CHENNAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Myakalachinnenahalli,
+20,1,3,23,KAMMAGONDANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kamagondanahalli,
+20,1,3,24,MYADARAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,3,41,SEEDEDAHALLI,BDA,BDA-RMP2031,full,99.5,,both,full,Sidedahalli,
+20,1,3,42,SHETTIHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Shettihalli,
+20,1,4,13,CHOKKASANDRA,BDA,BDA-RMP2031,full,100.0,27,both,full,Chokkasandra,
+20,1,4,14,DASARAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Dasarahalli,
+20,1,4,15,NELAGADARANAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,4,16,KARIVABANAHALLI,BDA,BDA-RMP2031,full,99.77,,both,full,Karivobanahalli,
+20,1,4,25,HEROHALLI,BDA,BDA-RMP2031,partial,89.6,33,both,partial,Herohalli,
+20,1,4,26,ANDRAHALLI,BDA,BDA-RMP2031,partial,92.6,,spatial,,,not in the text list; map share 92.6%
+20,1,4,27,LINGADHEERANAHALLI,BDA,BDA-RMP2031,partial,91.51,,both,partial,Lingadeeranahalli,
+20,1,4,28,MALAGALU,BDA,BDA-RMP2031,full,100.0,,both,full,Malagala,
+20,1,4,29,SAJJEPALYA,BDA,BDA-RMP2031,full,100.0,,both,full,Sajjipalya,
+20,1,4,30,MALLATTAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Mallatthahalli,
+20,1,4,31,HULLALU,BDA,BDA-RMP2031,partial,89.06,,both,partial,Hullalu,
+20,1,4,32,NAGARABAVI,BDA,BDA-RMP2031,full,100.0,17,both,full,Nagarabhavi,
+20,1,4,33,GIDDADAKONENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Giddadakonehalli,
+20,1,4,34,KODIGEHALLI,BDA,BDA-RMP2031,partial,57.26,7,spatial,,,not in the text list; map share 57.26%
+20,1,4,35,KANNALLI,BDA,BDA-RMP2031,full,99.84,,spatial,,,not in the text list; map share 99.84%
+20,1,4,36,SHEEGEHALLI,BDA,BDA-RMP2031,full,99.46,23,both,full,Sheegehalli,
+20,1,4,37,HOSALLI GOLLARAPALYA,BDA,BDA-RMP2031,partial,55.93,,both,partial,Hosahalli Gollarapalya,
+20,1,4,38,SANEGURUVANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Saneguruvanahalli,
+20,1,4,39,HEGGANAHALLI,BDA,BDA-RMP2031,full,100.0,33,both,full,Hegganahalli,
+20,1,4,40,SHREEGANDHAKAVAL,BDA,BDA-RMP2031,full,100.0,,both,full,Shrigandhakavalu,
+20,1,4,47,MANGANAHALLI,BDA,BDA-RMP2031,partial,62.99,39,both,partial,Manganahalli,
+20,1,5,1,DASANAPURA,BDA,BDA-RMP2031,full,99.42,40,both,full,Dasanapura,
+20,1,5,2,ADAKAMARANAHALLI,BDA,BDA-RMP2031,full,100.0,40,both,full,Adakimaranahalli,
+20,1,5,3,HAROKYATANA HALLI,BDA,BDA-RMP2031,full,99.61,40,both,full,Harokyathanahalli,
+20,1,5,4,NARAYANAPPANAPALYA,BDA,BDA-RMP2031,full,99.35,,spatial,,,not in the text list; map share 99.35%
+20,1,5,5,KODIPALYA,,,none,0.0,,,,,
+20,1,5,6,MAKALI,BDA,BDA-RMP2031,full,100.0,40,both,full,Makali,
+20,1,5,7,MATTAHALLI,BDA,BDA-RMP2031,partial,2.85,,spatial,,,not in the text list; map share 2.85%
+20,1,5,8,NARASEEPURA,BDA,BDA-RMP2031,full,99.64,41,both,full,Narasipura,
+20,1,5,9,HONNASANDRA,,,none,0.0,,,,,
+20,1,5,10,TORENAGASANDRA,BDA,BDA-RMP2031,full,99.88,41,both,full,Thore Nagasandra,
+20,1,5,11,AGRAHARAPALYA,,,none,0.0,,,,,
+20,1,5,12,MUNIYANAPALYA,BDA,BDA-RMP2031,full,100.0,41,both,full,Muniyanapalya,
+20,1,5,13,GOVINDAPURA,,,none,0.03,,,,,
+20,1,5,14,SHYAMABHATTARAPALYA,,,none,,,,,,no parcel geometry in our data
+20,1,5,15,SHESHAGIRIRAV PALYA,,,none,0.0,,,,,
+20,1,5,16,HUSKURU,,,none,0.0,,,,,
+20,1,5,17,BETTANAGERE,,,none,0.0,,,,,
+20,1,5,18,HOSAHALLIPALYA,,,none,0.65,,,,,
+20,1,5,19,SAIDAMIPALYA,,,none,0.0,,,,,
+20,1,5,20,MARIYANAPALYA,,,none,0.0,,,,,
+20,1,5,21,GOPALAPURA,,,none,0.0,,,,,
+20,1,5,22,BOMMASHETTIHALLI,,,none,0.0,,,,,
+20,1,5,23,KUKKENAHALLI,,,none,0.0,,,,,
+20,1,5,24,TOTAGERE,,,none,0.0,,,,,
+20,1,5,25,ALURU,BDA,BDA-RMP2031,full,99.83,41,both,full,Aluru,
+20,1,5,26,HEGGADADEVANAPURA,BDA,BDA-RMP2031,full,99.95,41,both,full,Heggadadevanapura,
+20,1,5,27,KUDUREGERE,BDA,BDA-RMP2031,full,99.86,41,both,full,Kuduragere,
+20,1,5,28,TAMMENAHALLI,BDA,BDA-RMP2031,full,99.86,41,both,full,Thammenahalli,
+20,1,5,29,NAGARURU,,,none,0.09,,,,,
+20,1,5,30,PILLAHALLI,,,none,0.0,,,,,
+20,1,5,31,VADERAHALLI,,,none,0.44,,,,,
+20,1,5,32,RAMAPALYA,,,none,0.0,,,,,
+20,1,5,33,HUCHCHANAPALYA,,,none,,,,,,no parcel geometry in our data
+20,1,6,34,MADAVARA,BDA,BDA-RMP2031,partial,45.9,40,both,partial,Madavara,
+20,1,6,35,MADANAYKANAHALLI,BDA,BDA-RMP2031,partial,2.28,,spatial,,,not in the text list; map share 2.28%
+20,1,6,36,CHIKKABIDARAKALLU,BDA,BDA-RMP2031,full,99.93,33,both,partial,Chikkabidarakallu,"text says part village (Part Village [Sy. No. 1 to 21, 23 to 51, Gramathana]); map share 99.93%"
+20,1,6,37,SIDDANAHOSAHALLI,BDA,BDA-RMP2031,full,99.89,40,both,full,Siddanahosahalli,
+20,1,6,38,TOTADAGUDDADAHALLI,,,none,1.65,,,,,
+20,1,6,39,SHREEKANTAPURA,BDA,BDA-RMP2031,partial,86.37,40,both,partial,Srikantapura,
+20,1,6,40,HANUMANTASAGARA,BDA,BDA-RMP2031,full,99.47,41,both,full,Hanumanthasagara,
+20,1,6,41,LAKSHMEEPURA,BDA,BDA-RMP2031,partial,97.36,30,both,partial,Lakshmipura,
+20,1,6,42,GOGANDANAHALLI,BDA,BDA-RMP2031,partial,65.1,,spatial,,,not in the text list; map share 65.1%
+20,1,6,43,KAMMASANDRA,,,none,0.04,,,,,
+20,1,6,44,KADARANAHALLI,BDA,BDA-RMP2031,full,99.06,40,both,full,Kadaranahalli,
+20,1,6,45,KH GH SHREEKANTAPURA,BDA,BDA-RMP2031,partial,44.49,,spatial,,,not in the text list; map share 44.49%
+20,1,6,46,GAVIPALYA,BDA,BDA-RMP2031,full,100.0,40,both,full,Gavipalya,
+20,1,6,47,DOMBARAHALLI,BDA,BDA-RMP2031,full,,40,text,full,Dombarahalli,no parcel geometry in our data; coverage from the text list
+20,1,6,50,BAYYANDAHALLI,BDA,BDA-RMP2031,partial,92.18,40,both,full,Byandahalli,text says full village; map share 92.18%
+20,1,6,51,BETTAHALLI,,,none,0.01,,,,,
+20,1,6,52,MACHOHALLI,BDA,BDA-RMP2031,full,99.78,40,both,full,Machohalli,
+20,1,6,53,KACHOHALLI,BDA,BDA-RMP2031,partial,91.86,40,both,partial,Kachohalli,
+20,1,6,54,BAILUKONENAHALLI,BDA,BDA-RMP2031,partial,95.5,40,both,partial,Bylakonenahalli,
+20,1,6,55,VADDARAHALLI,BDA,BDA-RMP2031,full,98.97,22,both,full,Vaddarahalli,
+20,1,6,57,KH GH LAKKENAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,6,74,KADABAGERE,,,none,1.76,,,,,
+20,1,6,75,GIDDENAHALLI,,,none,0.0,,,,,
+20,1,7,58,SHIVANAPURA,,,none,0.01,,,,,
+20,1,7,59,AVAREHALLI,,,none,0.0,,,,,
+20,1,7,60,GOWDAHALLI,,,none,0.1,,,,,
+20,1,7,61,GEJJAGADAHALLI,,,none,0.66,,,,,
+20,1,7,62,RAVUTANAHALLI,,,none,0.0,,,,,
+20,1,7,63,KENGANAHALLI,,,none,0.0,,,,,
+20,1,7,64,HUNNIGERE,,,none,0.0,,,,,
+20,1,7,65,KITTANAHALLI,,,none,0.0,,,,,
+20,1,7,66,MALLASANDRA,,,none,0.0,,,,,
+20,1,7,67,GATTISIDDANAHALLI,,,none,0.0,,,,,
+20,1,7,68,NAGASANDRA,,,none,0.0,,,,,
+20,1,7,69,GULLARAPALYA,,,none,,,,,,no parcel geometry in our data
+20,1,7,70,LAKKENAHALLI,BDA,BDA-RMP2031,partial,0.0,40,text,full,Lakkenahalli,text lists it (Full Village); map share 0.0%
+20,1,7,71,HULLEGOWDANAHALLI,,,none,0.0,,,,,
+20,1,7,72,VANKATAPURA,,,none,0.0,,,,,
+20,1,7,73,BAIREGOWDANAHALLI,,,none,0.0,,,,,
+20,1,7,76,SONDEKOPPA,,,none,0.0,,,,,
+20,1,40,400,YESHWANTHAPURA,BDA,BDA-RMP2031,full,,,text,full,Yeshavanthapura,no parcel geometry in our data; coverage from the text list
+20,1,40,401,HOSAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,40,402,KETHAMARANAHALLI,BDA,BDA-RMP2031,full,,,text,full,Kethamaranahalli,no parcel geometry in our data; coverage from the text list
+20,1,40,403,SHIVANAHALLI,BDA,BDA-RMP2031,full,,,text,full,Shivanahalli,no parcel geometry in our data; coverage from the text list
+20,1,40,404,AGRAHARADASARAHALLI,BDA,BDA-RMP2031,full,,5,text,full,Agrahara Dasarahalli,no parcel geometry in our data; coverage from the text list
+20,1,40,405,GANGONDANAHALLI,BDA,BDA-RMP2031,full,,40,text,full,Gangondanahalli,no parcel geometry in our data; coverage from the text list
+20,1,41,400,MATTHIKERE,BDA,BDA-RMP2031,full,,6,text,full,Matthikere,no parcel geometry in our data; coverage from the text list
+20,1,41,401,CHIKKAMARANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,402,GANGENAHALLI,BDA,BDA-RMP2031,full,,7,text,full,Gangenahalli,no parcel geometry in our data; coverage from the text list
+20,1,41,403,GURIHOIDEYUVAMYDANA,BDA,BDA-RMP2031,full,,,text,full,Gurihodeyuvamaidana,no parcel geometry in our data; coverage from the text list
+20,1,41,404,MATADAHALLI,BDA,BDA-RMP2031,full,,,text,full,Matadahalli,no parcel geometry in our data; coverage from the text list
+20,1,41,405,SAVARLINE,,,none,,,,,,no parcel geometry in our data
+20,1,41,406,DYAVASANDRA,BDA,BDA-RMP2031,full,,,text,full,Dyavasandra,no parcel geometry in our data; coverage from the text list
+20,1,41,407,RANGANATHAPURA,,,none,,,,,,no parcel geometry in our data
+20,1,41,408,RAJMAHAL,,,none,,,,,,no parcel geometry in our data
+20,1,41,409,VYAYALIKAVAL,,,none,,,,,,no parcel geometry in our data
+20,1,41,410,WATERWORKS,,,none,,,,,,no parcel geometry in our data
+20,1,41,411,TATA RESERCH INSTITUTE,BDA,BDA-RMP2031,full,,,text,full,Tata Research Institute,no parcel geometry in our data; coverage from the text list
+20,1,41,412,JAKKASANDRA,,,none,,,,,,no parcel geometry in our data
+20,1,41,413,DODDAKUNTE,,,none,,,,,,no parcel geometry in our data
+20,1,41,414,BYADARAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,415,MALENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,416,ULSURU,,,none,,,,,,no parcel geometry in our data
+20,1,41,417,BINNAMANGALA,,,none,,,,,,no parcel geometry in our data
+20,1,41,418,DUKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,419,DANDUUPPARAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,420,BILEKALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,421,HANUMANTHAPURA,,,none,,,,,,no parcel geometry in our data
+20,1,41,422,BARIGEMUDDENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,423,BANGALORE CITY RS,,,none,,,,,,no parcel geometry in our data
+20,1,41,424,KEMPAPURA AGRAHARA,BDA,BDA-RMP2031,full,,5,text,full,Kempapura Agrahara,no parcel geometry in our data; coverage from the text list
+20,1,41,425,BYATARAYANAPURA,,,none,,,,,,no parcel geometry in our data
+20,1,41,426,BHOGANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,427,JEDAHALLI,BDA,BDA-RMP2031,full,,,text,full,Jedihalli,no parcel geometry in our data; coverage from the text list
+20,1,41,428,BANGALORE CITY,,,none,,,,,,no parcel geometry in our data
+20,1,41,429,DOMLUR,,,none,,,,,,no parcel geometry in our data
+20,1,41,430,SONNENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,431,NEELASANDRA,,,none,,,,,,no parcel geometry in our data
+20,1,41,432,AREKEMPANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,433,AKKITHIMMANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,434,DODDABAILAKHANE,,,none,,,,,,no parcel geometry in our data
+20,1,41,435,MAVALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,436,DODDABAILAKHANE,,,none,,,,,,no parcel geometry in our data
+20,1,41,437,BOGENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,438,KARITHIMMANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,439,SUNKENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,440,GUTTAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,441,LALBAGH,,,none,,,,,,no parcel geometry in our data
+20,1,41,442,SIDDAPURA,,,none,,,,,,no parcel geometry in our data
+20,1,41,443,ANNIPURA,,,none,,,,,,no parcel geometry in our data
+20,1,41,444,KARANJEBEESANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,445,GAVIPURA,BDA,BDA-RMP2031,full,,,text,full,Gavipura,no parcel geometry in our data; coverage from the text list
+20,1,41,446,KEMPAMBUDIKERE,,,none,,,,,,no parcel geometry in our data
+20,1,41,447,GERAHALLI,BDA,BDA-RMP2031,full,,,text,full,Gerahalli,no parcel geometry in our data; coverage from the text list
+20,2,11,1,SARAKKI,BDA,BDA-RMP2031,full,100.0,14,both,full,Sarakki,
+20,2,11,2,MARENAHALLI,BDA,BDA-RMP2031,full,100.0,5,both,full,Marenahalli,
+20,2,11,3,PUTTENAHALLI,BDA,BDA-RMP2031,full,100.0,14,both,full,Puttenahalli,
+20,2,11,4,YALACHENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Yalachenahalli,
+20,2,11,5,DODDAKALLASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Doddakallasandra,
+20,2,11,6,CHUNCHAGHATTA,BDA,BDA-RMP2031,full,100.0,,both,full,Chunchanagatta,
+20,2,11,7,JARAGANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Jeraganahalli,
+20,2,11,8,KAREESANDRA,,,none,,,,,,no parcel geometry in our data
+20,2,11,9,GOVINAGOVINAYAKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,11,10,SARAKKIKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Sarakkikeri,
+20,2,11,11,ANJANAPURA,BDA,BDA-RMP2031,partial,67.66,,both,partial,Anjanapura,
+20,2,11,12,KONANAKUNTE,BDA,BDA-RMP2031,full,100.0,,both,full,Konanakunti,
+20,2,11,13,GOLLAHALLI,BDA,BDA-RMP2031,partial,70.04,27,both,partial,Gollahalli,
+20,2,11,14,ALAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Aalahalli,
+20,2,11,15,KEMBATTAHALLI,BDA,BDA-RMP2031,partial,37.32,,both,partial,Kembatthahalli,
+20,2,11,16,GOTTIGERE,BDA,BDA-RMP2031,partial,60.76,,both,partial,Gottigeri,
+20,2,11,17,KOTTANURU,BDA,BDA-RMP2031,full,,,text,full,Kotthanuru,no parcel geometry in our data; coverage from the text list
+20,2,11,18,PILLAGANAHALLI,,,none,0.06,,,,,
+20,2,11,19,RAGHAVANAPALYA,BDA,BDA-RMP2031,full,100.0,,both,full,Raghavanapalya,
+20,2,12,20,TALAGHATTAPURA,BDA,BDA-RMP2031,partial,81.58,,both,partial,Thalaghattapura,
+20,2,12,21,MALLASANDRA,BDA,BDA-RMP2031,partial,60.67,30,both,partial,Mallasandra,
+20,2,12,22,VAJARAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Vajarahalli,
+20,2,12,23,RAGHUVANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Raguvanahalli,
+20,2,12,24,TIPPASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Thippasandra,
+20,2,12,25,HOSAHALLI,BDA,BDA-RMP2031,full,100.0,5,both,full,Hosahalli,
+20,2,12,26,UTTARAHALLI MANAVARTEKAVAL,BDA,BDA-RMP2031,partial,29.82,16,both,partial,Uttarahalli Manavarthi Kavalu,
+20,2,12,27,TARALU,,,none,0.0,,,,,
+20,2,12,28,GULIKAMALE,,,none,1.91,,,,,
+20,2,12,29,KAGGALEEPURA,,,none,0.05,,,,,
+20,2,12,30,UTTARI,,,none,0.68,,,,,
+20,2,12,31,O B CHUDAHALLI,BDA,BDA-RMP2031,full,99.31,30,both,full,Obichudahalli,
+20,2,13,32,SOMANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,13,33,VADDARAPALYA,BDA,BDA-RMP2031,partial,17.38,,both,partial,Vaddarapalya,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,13,34,SUNKADAKATTE,,,none,0.0,,,,,
+20,2,13,35,NELAGULI,,,none,0.0,,,,,
+20,2,13,36,K CHUDAHALLI,,,none,0.0,,,,,
+20,2,13,37,NAGANAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,13,38,RAVUGUDLU,,,none,0.0,,,,,
+20,2,13,39,NETTIGERE,,,none,0.0,,,,,
+20,2,13,40,TATTAGUPPE,,,none,0.0,,,,,
+20,2,13,41,ALAKABALALU,,,none,0.0,,,,,
+20,2,14,42,UTTARAHALLI,BDA,BDA-RMP2031,partial,94.58,16,both,partial,Uttarahalli,
+20,2,14,43,KADIRENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,14,45,AREHALLI,BDA,BDA-RMP2031,partial,91.8,,both,partial,Arehalli,
+20,2,14,46,CHANNASANDRA,BDA,BDA-RMP2031,partial,58.46,,both,partial,Channasandra,
+20,2,14,47,VADDARAPALYA,BDA,BDA-RMP2031,partial,17.38,,spatial,,,not in the text list; map share 17.38%
+20,2,14,48,SUBRAMANYAPUJRA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,14,49,BIKASHIPURA,,,none,,,,,,no parcel geometry in our data
+20,2,14,50,VASANTAPURA,BDA,BDA-RMP2031,full,100.0,15,both,full,Vasanthapura,
+20,2,14,51,GUBBILALA,BDA,BDA-RMP2031,full,100.0,,both,full,Gubbalala,
+20,2,14,52,TURAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Thurahalli,
+20,2,14,53,KATTARIGUPPE,BDA,BDA-RMP2031,full,100.0,,both,full,Katthariguppe,
+20,2,14,54,AVALAHALLI,BDA,BDA-RMP2031,partial,92.16,23,both,partial,Aavalahalli,
+20,2,14,55,ITTAMADU,BDA,BDA-RMP2031,full,100.0,,both,full,Ittamadu,
+20,2,14,56,HOSAKEREHALLI,BDA,BDA-RMP2031,partial,63.12,,both,partial,Hosakerihalli,
+20,2,14,57,CHIKKAKALLASANDRA,,,none,,,,,,no parcel geometry in our data
+20,2,14,58,BAIRASANDRA,BDA,BDA-RMP2031,full,,4,text,full,Bhyrasandra,no parcel geometry in our data; coverage from the text list; same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,14,99,JHUNK,,,none,,,,,,no parcel geometry in our data
+20,2,15,1,KORAMANGALA,BDA,BDA-RMP2031,full,100.0,3,both,full,Koramangala,
+20,2,15,5,RUPENA AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Rupena Agrahara,
+20,2,15,6,ADUGODI,BDA,BDA-RMP2031,full,100.0,3,spatial,,,not in the text list; map share 100.0%
+20,2,15,7,TAVAREKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Tavarekere,
+20,2,15,8,VANKOJIRAV KHANE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,15,9,MADIVALA,BDA,BDA-RMP2031,full,100.0,27,both,full,Madivala,
+20,2,15,10,LAKKASANDRA,BDA,BDA-RMP2031,full,100.0,4,both,full,Lakkasandra,
+20,2,15,11,AGARA,BDA,BDA-RMP2031,full,100.0,31,both,full,Agara,
+20,2,15,12,IBBALURU,BDA,BDA-RMP2031,full,100.0,,both,full,Ibbaluru,
+20,2,15,39,JAKKASANDRA,BDA,BDA-RMP2031,full,100.0,3,both,full,Jakkasandra,
+20,2,15,40,SHREENIVAGILU,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,15,41,SHREENIVAGILUKERE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,15,42,EEJIPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,16,2,CHIKKATOGURU,BDA,BDA-RMP2031,partial,24.47,,both,partial,Chikkathoguru,
+20,2,16,3,BETTADASANAPURA,BDA,BDA-RMP2031,full,100.0,28,both,full,Bettadasanapura,
+20,2,16,4,VITTASANDRA,BDA,BDA-RMP2031,full,99.73,28,both,full,Vittasandra,
+20,2,16,13,BOMMANAHALLI,BDA,BDA-RMP2031,full,100.0,14,both,full,Bommanahalli,
+20,2,16,14,HARALUKUNTE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,16,15,KODICHIKKANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kodichikkanahalli,
+20,2,16,16,ELLUKUNTE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,16,17,BASAPURA,BDA,BDA-RMP2031,partial,72.2,,both,partial,Basapura,
+20,2,16,18,HONGASANDRA,BDA,BDA-RMP2031,full,100.0,13,both,full,Hongasandra,
+20,2,16,19,SINGASANDRA,BDA,BDA-RMP2031,full,100.0,13,both,full,Shingasandra,
+20,2,16,20,PARAPPANA AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Parappana Agrahara,
+20,2,16,35,BERATENA AGRAHARA,BDA,BDA-RMP2031,partial,88.05,,both,partial,Beratena Agrahara,
+20,2,16,36,DODDANAGAMANGALA,BDA,BDA-RMP2031,partial,94.73,28,both,partial,Doddanagamangala,
+20,2,16,37,NAGANATHAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Naganathapura,
+20,2,16,38,KONAPPANA AGRAHARA,BDA,BDA-RMP2031,partial,72.55,28,both,partial,Konappana Agrahara,
+20,2,16,43,DODDATOGURU,BDA,BDA-RMP2031,partial,76.48,28,both,partial,Doddathoguru,
+20,2,17,21,BEGURU,BDA,BDA-RMP2031,partial,86.16,,both,partial,Beguru,
+20,2,17,22,MAILASANDRA,BDA,BDA-RMP2031,full,99.87,28,both,full,Mylasandra,
+20,2,17,23,ELENAHALLI,BDA,BDA-RMP2031,partial,65.09,,both,partial,Yelenahalli,
+20,2,17,24,CHANDRASHEKHARAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Chandrashekarapura,
+20,2,17,25,NYENAPPANASHETTI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,17,26,SARAKKI AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Sarakki Agrahara,
+20,2,17,27,DEVARACHIKKANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Devarachikkanahalli,
+20,2,17,28,BILEKAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,17,29,HULIMAVU,BDA,BDA-RMP2031,full,100.0,,both,full,Hulimavu,
+20,2,17,30,HOMMADEVANAHALLI,BDA,BDA-RMP2031,full,99.9,28,both,full,Hommadevanahalli,
+20,2,17,31,ARAKERE,BDA,BDA-RMP2031,full,100.0,13,both,full,Arakere,
+20,2,17,32,BASAVANAPURA,BDA,BDA-RMP2031,partial,91.45,10,both,partial,Basavanapura,
+20,2,17,33,KALENA AGRAHARA,BDA,BDA-RMP2031,full,,,text,full,Kalena Agrahara,no parcel geometry in our data; coverage from the text list
+20,2,17,34,KAMMANAHALLI,BDA,BDA-RMP2031,partial,69.19,8,both,partial,Kammanahalli,
+20,2,17,44,NYANAPPANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nyanappanahalli,
+20,2,18,1,KENGERI,BDA,BDA-RMP2031,partial,73.78,32,both,partial,Kengeri,
+20,2,18,2,VALAGERAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Valagerehalli,
+20,2,18,3,CHUDENAPURA,BDA,BDA-RMP2031,partial,78.09,,both,partial,Choodenapura,
+20,2,18,4,PATTANAGERE,,,none,,,,,,no parcel geometry in our data
+20,2,18,5,PANTARAPALYA,,,none,,,,,,no parcel geometry in our data
+20,2,18,6,HALAGEVADERAHALLI,BDA,BDA-RMP2031,full,,,text,full,Halagevaderahalli,no parcel geometry in our data; coverage from the text list; same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,18,7,NAYANDAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,18,8,MAILASANDRA,,,none,,,,,,no parcel geometry in our data
+20,2,18,9,GANAKALLU,,,none,,,,,,no parcel geometry in our data
+20,2,18,10,KENCHENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,18,11,DEEVATIGERAMANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,18,12,SULIKERE,BDA,BDA-RMP2031,full,100.0,38,both,full,Sulikeri,
+20,2,18,13,KOMMAGHATTA,BDA,BDA-RMP2031,partial,64.16,38,both,partial,Kommagatta,
+20,2,18,14,RAMASANDRA,BDA,BDA-RMP2031,partial,75.57,30,both,partial,Ramasandra,
+20,2,18,15,KENCHANAPURA,BDA,BDA-RMP2031,full,,38,text,full,Kenchanapura,no parcel geometry in our data; coverage from the text list
+20,2,18,16,SONNENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Sonnenahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,18,17,NAGADEVANAHALLI,BDA,BDA-RMP2031,full,,,text,full,Nagadevanahalli,no parcel geometry in our data; coverage from the text list
+20,2,18,18,B R SAGARA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,18,19,K KRUSHNASAGARA,BDA,BDA-RMP2031,full,99.72,42,spatial,,,not in the text list; map share 99.72%
+20,2,19,20,RAMOHALLI,BDA,BDA-RMP2031,full,100.0,38,both,full,Ramohalli,
+20,2,19,21,BHEEMANAKUPPE,BDA,BDA-RMP2031,full,100.0,38,both,full,Bheemanakuppe,
+20,2,19,22,CHALLAGHATTA,BDA,BDA-RMP2031,full,99.83,,both,full,Challaghatta,
+20,2,19,23,MARAGONDANAHALLI,BDA,BDA-RMP2031,full,99.1,22,both,full,Maaragondanahalli,
+20,2,19,24,EM KRUSHNASAGARA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,19,25,MALIGONDANAHALLI,BDA,BDA-RMP2031,full,98.72,,both,full,Maligowdanahalli,
+20,2,19,26,KUMBALAGODU,BDA,BDA-RMP2031,full,99.93,36,both,full,Kumbalagodu,
+20,2,19,27,KANIMINIKE,BDA,BDA-RMP2031,full,98.75,,spatial,,,not in the text list; map share 98.75%
+20,2,19,28,KAMBEEPURA,BDA,BDA-RMP2031,full,99.65,36,both,full,Kambipura,
+20,2,19,29,GONIPURA,,,none,0.0,,,,,
+20,2,19,30,CHINNAKURCHI,,,none,,,,,,no parcel geometry in our data
+20,2,19,31,VASANTANAHALLI,,,none,0.0,,,,,
+20,2,19,32,TIPPURU,,,none,0.0,,,,,
+20,2,19,33,SHEEGEHALLI,,,none,0.0,,,,,
+20,2,19,34,HAMPAPURA,,,none,0.0,,,,,
+20,2,19,35,KRUSHNARAJAPURA,,,none,0.0,,,,,
+20,2,20,36,HAMMIGEPURA,BDA,BDA-RMP2031,partial,65.69,32,both,partial,Hemmigepura,
+20,2,20,37,SOMPURA,,,none,0.01,,,,,
+20,2,20,38,LINGADEERANAHALLI,BDA,BDA-RMP2031,partial,95.63,,both,full,Lingadheeranahalli,text says full village; map share 95.63%
+20,2,20,39,RACHANAMADU,,,none,0.08,,,,,
+20,2,20,40,VARAHASANDRA,,,none,0.67,,,,,
+20,2,20,41,K GOLLAHALLI,BDA,BDA-RMP2031,partial,2.51,,spatial,,,not in the text list; map share 2.51%
+20,2,20,42,DODDABELE,BDA,BDA-RMP2031,partial,90.32,36,both,partial,Doddabele,
+20,2,20,43,VENKATAPURA,BDA,BDA-RMP2031,full,100.0,36,both,full,Venkatapura,
+20,2,20,44,KERE ITNAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,20,45,GUDIMAVU,BDA,BDA-RMP2031,full,99.22,36,spatial,,,not in the text list; map share 99.22%
+20,2,20,46,TAGACHAGUPPE,BDA,BDA-RMP2031,full,99.55,,spatial,,,not in the text list; map share 99.55%
+20,2,20,47,GANGASANDRA,,,none,0.23,,,,,
+20,2,20,48,DEVAGERE,BDA,BDA-RMP2031,full,99.77,36,both,full,Devageri,
+20,2,20,49,B EM KAVALE,BDA,BDA-RMP2031,partial,10.11,,spatial,,,not in the text list; map share 10.11%
+20,2,20,50,AGARA,BDA,BDA-RMP2031,partial,95.29,31,both,full,Agara,text says full village; map share 95.29%
+20,2,20,51,KUMBALAGODU GOLLAHALLI,,,none,0.87,,,,,
+20,2,21,1,CHOLANAYAKANAHALLI,,,none,0.0,,,,,
+20,2,21,2,GANGAPPANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,21,3,KEMPAGONDANAHALLI,,,none,0.0,,,,,
+20,2,21,4,TIPPAGONDANAHALLI,,,none,0.0,,,,,
+20,2,21,5,TAVAKADAHALLI,,,none,0.0,,,,,
+20,2,21,6,HULUVENAHALLI,,,none,0.0,,,,,
+20,2,21,7,AJJANAHALLI,,,none,0.0,,,,,
+20,2,21,8,MADAPATTANA,,,none,0.0,,,,,
+20,2,21,9,CHIKKANAHALLI,,,none,0.0,,,,,
+20,2,21,10,DODDERI,,,none,0.09,,,,,
+20,2,21,11,KURUBARAPALYA,,,none,0.0,,,,,
+20,2,21,12,VADAHALLI,,,none,0.0,,,,,
+20,2,21,13,KOOTLU,,,none,,,,,,no parcel geometry in our data
+20,2,22,13,TAVAREKERE,,,none,0.0,,,,,
+20,2,22,14,HONNAGANAHATTI,,,none,0.36,,,,,
+20,2,22,15,CHANNENAHALLI,BDA,BDA-RMP2031,full,99.84,39,both,full,Channenahalli,
+20,2,22,16,KURUBARAHALLI,,,none,0.18,,,,,
+20,2,22,17,YALACHAGUPPE,BDA,BDA-RMP2031,full,99.62,39,both,full,Yalachaguppe,
+20,2,22,18,YALACHAGUPPE  RAMPURA,BDA,BDA-RMP2031,full,100.0,39,both,full,Yalachaguppe Rampura,
+20,2,22,33,GANGENAHALLI,,,none,0.0,,,,,
+20,2,22,34,JOGERAHALLI,,,none,0.0,,,,,
+20,2,22,35,DEVAMACHOHALLI,,,none,0.0,,,,,
+20,2,22,36,D NARAYANAPURA,,,none,0.0,,,,,
+20,2,22,37,GANAKALLU,,,none,,,,,,no parcel geometry in our data
+20,2,22,38,VARTURU,,,none,0.0,,,,,
+20,2,22,39,NAGANAHALLI,,,none,0.0,,,,,
+20,2,22,40,BAICHAGUPPE,,,none,0.0,,,,,
+20,2,22,41,PEDDANAPALYA,,,none,0.0,,,,,
+20,2,22,42,MARENAHALLI,,,none,0.0,,,,,
+20,2,22,43,VARTURU NARASIPURA,,,none,0.0,,,,,
+20,2,23,19,KO GURURAYANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,23,20,KETOHALLI,BDA,BDA-RMP2031,full,99.22,37,both,full,Kethohalli,
+20,2,23,21,KETOHALLI RAMPURA,BDA,BDA-RMP2031,full,100.0,37,both,full,Kethohalli Rampura,
+20,2,23,22,KETOHALLI NARASIPURA,BDA,BDA-RMP2031,full,100.0,37,both,full,Kethohalli Narasipura,
+20,2,23,23,SHESHAGIRIPURA,BDA,BDA-RMP2031,full,100.0,37,both,full,Sheshagiripura,
+20,2,23,24,CHIKKALURU RAMPURA,BDA,BDA-RMP2031,full,100.0,37,both,full,Chikkeluru Rampura,
+20,2,23,25,CHIKKALURU VENKATAPURA,BDA,BDA-RMP2031,full,100.0,37,both,full,Chikkeluru Venkatapura,
+20,2,23,26,GANAPATIHALLI,,,none,0.44,,,,,
+20,2,23,27,CHUNCHANAKUPPE,,,none,0.1,,,,,
+20,2,23,28,MUDDAYYANAPALYA,BDA,BDA-RMP2031,partial,5.33,,spatial,,,not in the text list; map share 5.33%
+20,2,23,29,DODDAMARANAHALLI,,,none,0.0,,,,,
+20,2,23,30,PURADAPALYA,,,none,0.0,,,,,
+20,2,23,31,KARIGIRIPURA,,,none,0.0,,,,,
+20,2,23,32,PUNAGAMARANAHALLI,,,none,1.07,,,,,
+20,2,23,44,KOLURU,BDA,BDA-RMP2031,partial,96.88,37,both,full,Koluru,text says full village; map share 96.88%
+20,2,23,45,CHIKKALLURU,BDA,BDA-RMP2031,full,99.96,37,both,full,Chikkeluru,
+20,2,23,46,KOLURU NANJUNDAPURA,BDA,BDA-RMP2031,full,100.0,37,both,full,Koluru Nanjundapura,
+20,2,23,47,BYALALU,,,none,0.0,,,,,
+20,2,23,48,SULIVARA,,,none,0.0,,,,,
+20,2,23,49,DONEENAHALLI,,,none,0.26,,,,,
+20,2,23,50,SULIVARA RAMPURA,,,none,0.0,,,,,
+20,2,24,1,PATTANAGERE,BDA,BDA-RMP2031,full,100.0,,both,full,Patnagere,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,24,2,GANAKALLU,BDA,BDA-RMP2031,partial,65.69,,both,partial,Ganakullu,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,24,3,KENCHENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kenchenahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,24,4,NAYANDAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nayandahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,24,5,PANTARAPALYA,BDA,BDA-RMP2031,partial,73.28,,both,partial,Pantharapalya,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,24,6,HALAGEVADERAHALLI,,,none,,,,,,no parcel geometry in our data
+20,2,24,7,DEEVATIGERAMANAHALLI,BDA,BDA-RMP2031,partial,92.79,,both,partial,Devatigeramanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,24,8,MAILASANDRA,BDA,BDA-RMP2031,full,100.0,28,both,full,Mylasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,25,1,KAREESANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Karesandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,25,2,GOVINAGOVINAYAKANAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,25,3,BAIRASANDRA,,,none,,,,,,no parcel geometry in our data
+20,2,25,4,KADIRENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kadarenahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,25,5,CHIKKAKALLASANDRA,BDA,BDA-RMP2031,full,100.0,15,both,full,Chikkallasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,25,6,BIKASHIPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Bikashipura,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,40,400,YADIYURNAGASANDRA,BDA,BDA-RMP2031,full,,,text,full,Yadiyuru Nagasandra,no parcel geometry in our data; coverage from the text list; same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,2,40,401,YADIYUR,BDA,BDA-RMP2031,full,,4,text,full,Yadiyuru,no parcel geometry in our data; coverage from the text list
+20,2,40,402,YADIYURNAGASANDRA,,,none,,,,,,no parcel geometry in our data
+20,2,40,403,DASARAHALLI,BDA,BDA-RMP2031,full,,,text,full,Dasarahalli,no parcel geometry in our data; coverage from the text list
+20,2,40,404,TAYAPPANAHALLI,BDA,BDA-RMP2031,full,,,text,full,Thayappanahalli,no parcel geometry in our data; coverage from the text list
+20,2,41,400,SONNENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,1,TAMMANAYAKANA HALLI,,,none,0.0,,,,,
+20,3,1,2,CHIKKAHOSAHALLI,,,none,0.0,,,,,
+20,3,1,3,INDLAVADIPURA,,,none,0.0,,,,,
+20,3,1,4,CHIKKANAHALLI,,,none,0.0,,,,,
+20,3,1,5,MARASURU,,,none,,,,,,no parcel geometry in our data
+20,3,1,6,MARASURU AGRAHARA,,,none,,,,,,no parcel geometry in our data
+20,3,1,7,VANAKANAHALLI,,,none,0.0,,,,,
+20,3,1,8,MENASIGANAHALLI,,,none,0.0,,,,,
+20,3,1,9,SOLURU,,,none,0.0,,,,,
+20,3,1,10,KALANAYAKANAHALLI,,,none,0.0,,,,,
+20,3,1,11,BIDARAKADAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,12,MADIVALA,,,none,,,,,,no parcel geometry in our data
+20,3,1,13,SAMANDURU,,,none,,,,,,no parcel geometry in our data
+20,3,1,14,GERATIGANABELE,,,none,0.0,,,,,
+20,3,1,15,SAB‌MANGALA,,,none,0.0,,,,,
+20,3,1,16,GUDDANAHALLI,,,none,0.0,,,,,
+20,3,1,17,CHIKKANNANA HATTI,,,none,0.0,,,,,
+20,3,1,18,SURAJAKKANAHALLI,,,none,0.0,,,,,
+20,3,1,19,SIDIHOSAKOTE,,,none,0.0,,,,,
+20,3,1,20,HONNAKALASAPURA,,,none,0.0,,,,,
+20,3,1,21,GOWRENAHALLI,,,none,0.0,,,,,
+20,3,1,22,A  MEDIHALLI,,,none,0.0,,,,,
+20,3,1,23,AGASATIMMANAHALLI,,,none,0.0,,,,,
+20,3,1,24,HASIRUVANI,,,none,0.0,,,,,
+20,3,1,25,AMANIDODDAKERE,,,none,0.0,,,,,
+20,3,1,26,DODDA HAGADE,,,none,,,,,,no parcel geometry in our data
+20,3,1,27,SOPPAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,28,LINGAPURA,,,none,,,,,,no parcel geometry in our data
+20,3,1,29,KUMBARANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,30,KEMPAVADERAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,31,BYAGADADENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,32,KAMMASANDRA AGRAHARA,,,none,,,,,,no parcel geometry in our data
+20,3,1,33,AVADADENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,34,KONAMADIVALA,,,none,,,,,,no parcel geometry in our data
+20,3,1,35,KAVALAHOSAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,36,CHIKKAHAGADE,,,none,,,,,,no parcel geometry in our data
+20,3,1,37,TELUGARAHALLI,,,none,0.0,,,,,
+20,3,1,38,SINGASANDRA,,,none,0.0,,,,,
+20,3,1,39,SUNAVARA,,,none,0.0,,,,,
+20,3,1,40,HAMPALAGHATTA,,,none,0.0,,,,,
+20,3,1,41,PA  GOLLAHALLI,,,none,0.0,,,,,
+20,3,1,42,CHUDENAHALLI,,,none,0.0,,,,,
+20,3,1,43,ANEKAL GRAMANTARA,,,none,,,,,,no parcel geometry in our data
+20,3,1,46,INDLAVADI,,,none,0.0,,,,,
+20,3,1,47,ADURU,,,none,0.0,,,,,
+20,3,1,48,SONNINAYAKANAPURA,,,none,0.0,,,,,
+20,3,1,49,TIMMASANDRA,,,none,0.0,,,,,
+20,3,1,50,BAGGANADODDI,,,none,0.0,,,,,
+20,3,1,51,KARPURU,,,none,,,,,,no parcel geometry in our data
+20,3,1,52,TATNAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,53,HALDENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,55,ARAVANTIGEPURA,,,none,,,,,,no parcel geometry in our data
+20,3,1,56,RACHAMANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,57,BESTAMANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,1,58,BIDARAGERE,,,none,,,,,,no parcel geometry in our data
+20,3,1,59,MUTTAGATTI,,,none,,,,,,no parcel geometry in our data
+20,3,1,60,CHANNENAGRA HARA,,,none,,,,,,no parcel geometry in our data
+20,3,1,61,KURUBARA HATTI,,,none,,,,,,no parcel geometry in our data
+20,3,2,1,JIGANI,,,none,0.03,,,,,
+20,3,2,2,BUKKASAGARA,,,none,0.78,,,,,
+20,3,2,3,MAHANTALINGAPURA,,,none,0.0,,,,,
+20,3,2,4,KALLUBALU,,,none,0.0,,,,,
+20,3,2,5,GIDDENA HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,6,VADERAMANCHANA HALLI,,,none,0.0,,,,,
+20,3,2,7,J  BINGEEPURA,,,none,0.0,,,,,
+20,3,2,8,HULIMANGALA,,,none,,,,,,no parcel geometry in our data
+20,3,2,9,MARAGONDANA HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,10,RAJAPURA,,,none,0.0,,,,,
+20,3,2,11,HINNAKKI,,,none,0.0,,,,,
+20,3,2,12,RAMAKRUSHNAPURA,,,none,0.0,,,,,
+20,3,2,13,KOPPA,,,none,,,,,,no parcel geometry in our data
+20,3,2,14,HARAPPANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,15,BEGIHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,16,AMANIBIDARAKERE,,,none,,,,,,no parcel geometry in our data
+20,3,2,17,HULLUKASAVANA HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,18,AMANIBHUJANGADASANAKE,,,none,,,,,,no parcel geometry in our data
+20,3,2,19,BANNERUGHATTA,,,none,,,,,,no parcel geometry in our data
+20,3,2,21,GOLLAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,23,BHUTANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,24,BAIRAPPANA HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,25,BILVARADA HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,26,KANNANAYAKANAGRAHARA,,,none,,,,,,no parcel geometry in our data
+20,3,2,27,HARAGADDE,,,none,0.0,,,,,
+20,3,2,28,DYAVASANDRA,,,none,0.0,,,,,
+20,3,2,29,SHEETANAYAKANAHALLI,,,none,0.0,,,,,
+20,3,2,30,SO GOLLAHALLI,,,none,0.0,,,,,
+20,3,2,31,KADUJAKKANA HALLI,,,none,0.0,,,,,
+20,3,2,32,KONASANDRA,,,none,0.0,,,,,
+20,3,2,33,BOMMANDA HALLI,,,none,0.0,,,,,
+20,3,2,34,MANTAPA,,,none,,,,,,no parcel geometry in our data
+20,3,2,35,LAKSHMEEPURA,,,none,,,,,,no parcel geometry in our data
+20,3,2,36,RAMASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,2,37,HALESAMPIGE HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,38,RAGI HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,39,SHIVANA HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,40,HENNAGARA,,,none,0.0,,,,,
+20,3,2,41,KACHANAYAKANA HALLI,,,none,0.0,,,,,
+20,3,2,42,YARANDA HALLI,,,none,0.86,,,,,
+20,3,2,43,HOSA HALLI,,,none,0.0,,,,,
+20,3,2,44,YA  AMANIKERE,,,none,0.0,,,,,
+20,3,2,45,HULLA HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,46,S  BINGEEPURA,,,none,,,,,,no parcel geometry in our data
+20,3,2,47,SAKALAVARA,,,none,,,,,,no parcel geometry in our data
+20,3,2,48,VADERA HALLI,,,none,,,,,,no parcel geometry in our data
+20,3,2,49,KYALSANA HALLI,,,none,0.4,,,,,
+20,3,2,50,BANDENALLA SANDRA,,,none,0.14,,,,,
+20,3,2,51,NANJAPURA,BDA,BDA-RMP2031,full,99.38,29,both,full,Nanjapura,
+20,3,2,52,VABA SANDRA,BDA,BDA-RMP2031,full,99.24,29,both,full,Vabasandra,
+20,3,2,53,TIRUPALYA,BDA,BDA-RMP2031,full,99.7,27,both,full,Thirupalya,
+20,3,2,54,NALLASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,2,55,NOSENURU,,,none,0.0,,,,,
+20,3,2,56,KALKERE,BDA,BDA-RMP2031,full,100.0,30,both,full,Kallakere,
+20,3,3,1,ATTIBELE,,,none,0.0,,,,,
+20,3,3,2,KODLIPURA,,,none,0.0,,,,,
+20,3,3,3,BAKTIPURA,,,none,0.0,,,,,
+20,3,3,4,EM  MEDA HALLI,,,none,0.0,,,,,
+20,3,3,5,MARANAYAKANAHALLI,,,none,0.0,,,,,
+20,3,3,6,HALEHALLI,,,none,0.0,,,,,
+20,3,3,7,BALLURU,,,none,0.0,,,,,
+20,3,3,8,DASANA PURA,,,none,0.0,,,,,
+20,3,3,9,ARE HALLI,,,none,0.0,,,,,
+20,3,3,10,MANCHANA HALLI,,,none,0.0,,,,,
+20,3,3,11,BIDARAGUPPE,,,none,0.0,,,,,
+20,3,3,12,JIGALA,,,none,0.0,,,,,
+20,3,3,13,GUDDA HATTI,,,none,0.0,,,,,
+20,3,3,14,ADIGONDANA HALLI,,,none,0.0,,,,,
+20,3,3,15,ARENURU,,,none,0.0,,,,,
+20,3,3,16,INDLABELE,,,none,0.0,,,,,
+20,3,3,17,CHIKKANA HALLI,,,none,0.0,,,,,
+20,3,3,18,MAYASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,3,19,KAMBALEEPURA,,,none,0.0,,,,,
+20,3,3,20,MUTSANDRA,,,none,0.0,,,,,
+20,3,4,21,NERALURU,,,none,0.0,,,,,
+20,3,4,22,YADAVANAHALLI,,,none,0.0,,,,,
+20,3,4,23,ICHCHANGURU,,,none,0.0,,,,,
+20,3,4,24,BALEGARANAHALLI,,,none,0.0,,,,,
+20,3,4,25,BENDIGANA HALLI,,,none,0.0,,,,,
+20,3,4,26,KRUSHNA SAGARA,,,none,0.0,,,,,
+20,3,4,27,TIRUMAGONDAHALLI,,,none,0.0,,,,,
+20,3,4,28,GIDDENA HALLI,,,none,0.0,,,,,
+20,3,4,29,CHANDAPURA,,,none,0.0,,,,,
+20,3,4,30,IGGALURU,,,none,0.0,,,,,
+20,3,4,31,LAKSHMEESAGARA,,,none,,,,,,no parcel geometry in our data
+20,3,4,32,BOMMA SANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,4,33,BANAHALLI,,,none,0.0,,,,,
+20,3,4,34,KITTAGANA HALLI,,,none,0.0,,,,,
+20,3,4,35,HEBBAGODI,BDA,BDA-RMP2031,full,99.77,27,both,full,Hebbagodi,
+20,3,4,36,KAMMA SANDRA,,,none,0.46,,,,,
+20,3,4,37,VEERA SANDRA,BDA,BDA-RMP2031,full,100.0,27,both,full,Veerasandra,
+20,3,4,38,GOLLA HALLI,BDA,BDA-RMP2031,full,100.0,27,both,full,Gollahalli,
+20,3,4,39,RAMASAGARA,,,none,0.66,,,,,
+20,3,4,40,HEELALIGE,,,none,0.0,,,,,
+20,3,4,41,ANDAPURA,,,none,0.43,,,,,
+20,3,5,1,VALAGERE KALLAHALLI,,,none,0.0,,,,,
+20,3,5,2,SARJAPURA,,,none,0.0,,,,,
+20,3,5,3,KUTAGANAHALLI,,,none,0.0,,,,,
+20,3,5,4,ITTANGURU,,,none,0.0,,,,,
+20,3,5,5,DOMMASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,5,6,KATRIGUPPE,,,none,,,,,,no parcel geometry in our data
+20,3,5,7,TIGALACHOWDADENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,5,8,HALASAHALLI TIPPASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,5,9,RAMANAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,5,10,HEGGONDAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,5,11,NEKKUNDIDOMMASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,5,12,NERIGA,,,none,,,,,,no parcel geometry in our data
+20,3,5,13,CHIKKAVADERAPURA,,,none,,,,,,no parcel geometry in our data
+20,3,5,14,CHIKKANEKKUNDI,,,none,,,,,,no parcel geometry in our data
+20,3,5,15,JANTAGONDANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,5,16,CHIKKADASARAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,5,17,NAGENA AGRAHARA,,,none,,,,,,no parcel geometry in our data
+20,3,5,18,MUGALURU,,,none,0.0,,,,,
+20,3,5,19,PANDITANAGRAHARA,,,none,0.0,,,,,
+20,3,5,20,TINDLU,,,none,,,,,,no parcel geometry in our data
+20,3,5,21,GUDIGATTANAHALLI,,,none,0.0,,,,,
+20,3,5,22,MATTANAHALLI,,,none,0.0,,,,,
+20,3,5,23,MAHAL CHOWDADENAHALLI,,,none,0.0,,,,,
+20,3,5,24,DODDATIMMASANDRA,,,none,0.0,,,,,
+20,3,5,60,KUGURU,,,none,0.0,,,,,
+20,3,5,61,GONIGHATTAPURA,,,none,0.0,,,,,
+20,3,5,62,CHIKKANAHALLI-KAMANAHALLI,,,none,0.0,,,,,
+20,3,5,63,MADAPPANAHALLI,,,none,0.0,,,,,
+20,3,5,64,BANAHALLI,,,none,0.0,,,,,
+20,3,5,65,DESHAPANDEGATTAHALLI,,,none,0.0,,,,,
+20,3,5,66,SHEEGANAYKANAHALLI,,,none,0.0,,,,,
+20,3,5,67,SOLLEPURA,,,none,0.0,,,,,
+20,3,5,68,KUTAGANAHALLI,,,none,0.0,,,,,
+20,3,5,69,BALAHALLI,,,none,0.0,,,,,
+20,3,5,70,BIL‌CHIKKANAHALLI,,,none,0.0,,,,,
+20,3,5,71,S MEDAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,5,72,ADIGARAKALLAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,5,73,BILLAPURA,,,none,0.0,,,,,
+20,3,5,74,BURAGUNTE,,,none,0.0,,,,,
+20,3,5,75,HANDENAHALLI,,,none,0.0,,,,,
+20,3,6,25,S MEDAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,26,ADIGARAKALLAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,27,BILLAPURA,,,none,,,,,,no parcel geometry in our data
+20,3,6,28,BURAGUNTE,,,none,,,,,,no parcel geometry in our data
+20,3,6,29,BIKKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,30,CHIKKADUNNASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,6,31,B HOSAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,32,CHIKKATIMMASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,6,33,SAMANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,34,HANDENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,35,SOLLEPURA,,,none,,,,,,no parcel geometry in our data
+20,3,6,36,KUTAGANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,37,BALAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,38,BIL‌CHIKKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,39,YAMARE,,,none,,,,,,no parcel geometry in our data
+20,3,6,40,CHAMBENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,3,6,41,SOMPURA,,,none,,,,,,no parcel geometry in our data
+20,3,6,42,KADAGRAHARA,,,none,,,,,,no parcel geometry in our data
+20,3,6,43,KOMMASANDRA,,,none,,,,,,no parcel geometry in our data
+20,3,6,44,MUTTANALLURU,,,none,0.0,,,,,
+20,3,6,45,MUTTANALLURU AMANIKE,,,none,0.0,,,,,
+20,3,6,46,GOPASANDRA,,,none,0.03,,,,,
+20,3,6,47,ALIBOMMASANDRA,,,none,0.0,,,,,
+20,3,6,48,NARAYANAGHATTA,BDA,BDA-RMP2031,partial,5.62,,spatial,,,not in the text list; map share 5.62%
+20,3,6,49,SINGENAGRAHARA,BDA,BDA-RMP2031,full,99.36,27,both,full,Shingena Agrahara,
+20,3,6,50,KAGGALEEPURA,BDA,BDA-RMP2031,full,98.85,27,both,full,Kaggalipura,
+20,3,6,51,CHINTALAMADIVALA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,3,6,52,GATTAMARANAHALLI,BDA,BDA-RMP2031,full,100.0,27,both,full,Ghottamaranahalli,
+20,3,6,53,HUSKURU,BDA,BDA-RMP2031,full,100.0,27,both,full,Huskuru,
+20,3,6,54,GATTAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Ghattihalli,
+20,3,6,55,CHIKKANAGAMANGALA,BDA,BDA-RMP2031,full,100.0,27,both,full,Chikkanagamangala,
+20,3,6,56,GULIMANGALA,BDA,BDA-RMP2031,full,100.0,27,both,full,Gulamangala,
+20,3,6,57,CHOKKASANDRA,BDA,BDA-RMP2031,full,100.0,27,both,full,Chokkasandra,
+20,3,6,58,HAROHALLI,BDA,BDA-RMP2031,full,100.0,27,both,full,Harohalli,
+20,3,6,59,AVALAHALLI,BDA,BDA-RMP2031,full,100.0,23,both,full,Avalahalli,
+20,3,6,67,KUDLU,BDA,BDA-RMP2031,full,100.0,,both,full,Koodlu,
+20,3,6,68,RAYASANDRA,BDA,BDA-RMP2031,full,100.0,27,both,full,Rayasandra,
+20,3,6,69,CHUDASANDRA,BDA,BDA-RMP2031,full,100.0,27,both,full,Choodasandra,
+20,3,6,70,SHREERAMAPURA,BDA,BDA-RMP2031,full,100.0,27,both,full,Shrirampura,
+20,3,7,1,MARASURU,,,none,0.0,,,,,
+20,3,7,2,MARASURU AGRAHARA,,,none,0.0,,,,,
+20,3,7,3,MADIVALA,,,none,,,,,,no parcel geometry in our data
+20,3,7,4,DODDA HAGADE,,,none,0.0,,,,,
+20,3,7,5,SOPPAHALLI,,,none,0.0,,,,,
+20,3,7,6,LINGAPURA,,,none,0.0,,,,,
+20,3,7,7,KEMPAVADERAHALLI,,,none,0.0,,,,,
+20,3,7,8,BYAGADADENAHALLI,,,none,0.0,,,,,
+20,3,7,9,KAMMASANDRA AGRAHARA,,,none,0.0,,,,,
+20,3,7,10,AVADADENAHALLI,,,none,0.0,,,,,
+20,3,7,11,KONAMADIVALA,,,none,0.0,,,,,
+20,3,7,12,KAVALAHOSAHALLI,,,none,0.0,,,,,
+20,3,7,13,CHIKKAHAGADE,,,none,0.0,,,,,
+20,3,7,14,KARPURU,,,none,0.0,,,,,
+20,3,7,15,TATNAHALLI,,,none,0.0,,,,,
+20,3,7,16,ARAVANTIGEPURA,,,none,0.0,,,,,
+20,3,7,17,RACHAMANAHALLI,,,none,0.0,,,,,
+20,3,7,18,BESTAMANAHALLI,,,none,0.0,,,,,
+20,3,7,19,CHANNENAGRA HARA,,,none,0.0,,,,,
+20,3,7,20,BIDARAGERE,,,none,0.0,,,,,
+20,3,7,21,KUMBARANAHALLI,,,none,0.0,,,,,
+20,3,7,22,KURUBARA HATTI,,,none,0.0,,,,,
+20,3,7,23,MUTTAGATTI,,,none,0.0,,,,,
+20,3,7,24,HALDENAHALLI,,,none,0.0,,,,,
+20,3,8,1,HULIMANGALA,BDA,BDA-RMP2031,full,99.86,29,both,full,Hulimangala,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,2,MARAGONDANA HALLI,BDA,BDA-RMP2031,full,100.0,29,both,full,Maragondahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,3,KOPPA,,,none,1.24,,,,,
+20,3,8,4,HARAPPANAHALLI,,,none,0.0,,,,,
+20,3,8,5,BEGIHALLI,BDA,BDA-RMP2031,full,99.17,30,both,full,Begihalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,6,AMANIBIDARAKERE,,,none,1.79,,,,,
+20,3,8,7,HULLUKASAVANA HALLI,BDA,BDA-RMP2031,full,100.0,30,both,full,Hullakasavanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,8,AMANIBHUJANGADASANAKE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,3,8,9,BANNERUGHATTA,BDA,BDA-RMP2031,partial,97.35,30,both,full,Bannerugatta,text says full village; map share 97.35%; same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,10,GOLLAHALLI,BDA,BDA-RMP2031,full,100.0,27,both,full,Gollahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,11,BHUTANAHALLI,BDA,BDA-RMP2031,partial,89.47,30,both,full,Bhoothanahalli,text says full village; map share 89.47%; same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,12,BAIRAPPANA HALLI,BDA,BDA-RMP2031,full,99.61,30,both,full,Bhyrappanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,13,KANNANAYAKANAGRAHARA,BDA,BDA-RMP2031,full,99.97,30,both,full,Kannaikana Agrahara,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,14,RAMASANDRA,BDA,BDA-RMP2031,full,99.12,30,both,full,Ramasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,15,BILVARADA HALLI,BDA,BDA-RMP2031,full,99.91,30,both,full,Bilvaaradahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,16,HALESAMPIGE HALLI,BDA,BDA-RMP2031,full,100.0,30,both,full,Halesampigehalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,17,LAKSHMEEPURA,BDA,BDA-RMP2031,full,100.0,30,both,full,Lakshmipura,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,18,NALLASANDRA,BDA,BDA-RMP2031,full,100.0,30,both,full,Nallasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,19,MANTAPA,BDA,BDA-RMP2031,full,99.55,30,both,full,Mantapa,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,20,HULLA HALLI,BDA,BDA-RMP2031,full,99.89,30,both,full,Hullahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,21,VADERA HALLI,BDA,BDA-RMP2031,full,100.0,30,both,full,Vaderahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,22,S  BINGEEPURA,BDA,BDA-RMP2031,full,99.97,,spatial,,,not in the text list; map share 99.97%
+20,3,8,23,SAKALAVARA,BDA,BDA-RMP2031,full,100.0,30,both,full,Sakalavara,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,24,RAGI HALLI,,,none,0.0,,,,,
+20,3,8,25,SHIVANA HALLI,,,none,0.0,,,,,
+20,3,9,1,CHIKKATIMMASANDRA,,,none,0.41,,,,,
+20,3,9,2,SAMANAHALLI,,,none,0.0,,,,,
+20,3,9,3,CHAMBENAHALLI,,,none,1.2,,,,,
+20,3,9,4,YAMARE,BDA,BDA-RMP2031,partial,4.1,,spatial,,,not in the text list; map share 4.1%
+20,3,9,5,KOMMASANDRA,BDA,BDA-RMP2031,full,99.25,27,both,full,Kommasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,6,DOMMASANDRA,BDA,BDA-RMP2031,full,99.57,23,both,full,Dommasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,7,KATRIGUPPE,BDA,BDA-RMP2031,full,98.83,26,both,full,Kathriguppe,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,8,TIGALACHOWDADENAHALLI,BDA,BDA-RMP2031,full,99.95,,both,full,Thigalachoudadenahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,9,HALASAHALLI TIPPASANDRA,BDA,BDA-RMP2031,full,100.0,26,both,full,Halasahalli Thippasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,10,RAMANAYKANAHALLI,BDA,BDA-RMP2031,full,99.99,26,both,full,Ramanayikanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,11,HEGGONDAHALLI,BDA,BDA-RMP2031,full,100.0,26,both,full,Heggondahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,12,NEKKUNDIDOMMASANDRA,BDA,BDA-RMP2031,full,99.15,26,both,full,Nekkundi Dommasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,13,NERIGA,,,none,0.19,,,,,
+20,3,9,14,CHIKKAVADERAPURA,BDA,BDA-RMP2031,full,100.0,26,both,full,Chikkavaderapura,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,15,CHIKKANEKKUNDI,BDA,BDA-RMP2031,full,99.57,26,both,full,Chikkanekkundi,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,9,16,JANTAGONDANAHALLI,,,none,0.36,,,,,
+20,3,9,17,CHIKKADASARAHALLI,,,none,0.0,,,,,
+20,3,9,18,NAGENA AGRAHARA,,,none,0.0,,,,,
+20,3,9,19,BIKKANAHALLI,,,none,0.18,,,,,
+20,3,9,20,CHIKKADUNNASANDRA,,,none,1.19,,,,,
+20,3,9,21,B HOSAHALLI,BDA,BDA-RMP2031,full,99.47,,spatial,,,not in the text list; map share 99.47%
+20,3,9,22,KADAGRAHARA,,,none,1.03,,,,,
+20,3,9,23,SOMPURA,,,none,0.01,,,,,
+20,4,1,6,VIJANAPURA,BDA,BDA-RMP2031,full,,,text,full,Vijanapura,no parcel geometry in our data; coverage from the text list
+20,4,1,10,KOWDENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kavudenahalli,
+20,4,1,11,SANNATAMMANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Sonathammanahalli,
+20,4,1,12,DEVASANDRA,BDA,BDA-RMP2031,full,100.0,10,spatial,,,not in the text list; map share 100.0%
+20,4,1,13,KRUSHNARAJAPURA,BDA,BDA-RMP2031,full,100.0,42,both,full,Krishnarajapura,
+20,4,1,14,BASAVANAPURA,BDA,BDA-RMP2031,full,100.0,10,both,full,Basavanapura,
+20,4,1,15,SHEEGEHALLI,BDA,BDA-RMP2031,full,,23,text,full,Sheegehalli,no parcel geometry in our data; coverage from the text list
+20,4,1,16,CHELAKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Chelakere,
+20,4,1,17,BANASAVADI,BDA,BDA-RMP2031,full,,9,text,full,Banasawadi,no parcel geometry in our data; coverage from the text list
+20,4,1,23,BAIYAPPANAHALLI,BDA,BDA-RMP2031,full,,22,text,full,Byappanahalli,no parcel geometry in our data; coverage from the text list
+20,4,1,24,BENNIGANAHALLI,BDA,BDA-RMP2031,full,,,text,full,Bendiganahalli,no parcel geometry in our data; coverage from the text list
+20,4,1,25,BINNAMANGALA MA KA,,,none,,,,,,no parcel geometry in our data
+20,4,1,26,BAIYAPPANAHALLI MA KA,,,none,,,,,,no parcel geometry in our data
+20,4,1,27,MAHADEVAPURA,BDA,BDA-RMP2031,full,,,text,full,Mahadevapura,no parcel geometry in our data; coverage from the text list
+20,4,1,28,B NARAYANAPURA,,,none,,,,,,no parcel geometry in our data
+20,4,2,1,KYALASANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kyalasanahalli,
+20,4,2,2,K NARAYANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,2,3,KOTTANURU,BDA,BDA-RMP2031,full,100.0,,both,full,Kotthanooru,
+20,4,2,4,GEDDALAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Gedlahalli,
+20,4,2,5,NAGARESHVARA NAGENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nagareshwaranaganahal li,
+20,4,2,31,KALKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Kalkere,
+20,4,2,32,HORAMAVU,BDA,BDA-RMP2031,full,100.0,9,both,full,Horamavu,
+20,4,2,33,HORAMAVUAGARA,BDA,BDA-RMP2031,full,100.0,,both,full,Horamavu Agara,
+20,4,2,34,AMANI BAIRATIKHANE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,2,35,K CHENNASANDRA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,2,38,RACHENAHALLI,BDA,BDA-RMP2031,full,,,text,full,Rachenahalli,no parcel geometry in our data; coverage from the text list
+20,4,2,39,DASARAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Dasarahalli,
+20,4,2,40,THANISANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Thannasandra,
+20,4,3,7,KODIGEHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kodagehalli,
+20,4,3,8,SADARAMANGALA,BDA,BDA-RMP2031,full,100.0,,both,full,Sadaramangala,
+20,4,3,9,HUDI,BDA,BDA-RMP2031,full,,9,text,full,Hudi,no parcel geometry in our data; coverage from the text list
+20,4,3,18,R NARAYANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,3,19,NALLURAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nallurahalli,
+20,4,3,20,CHINNAPPANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Chinnappanahalli,
+20,4,3,21,KUNDALAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kundarahalli,
+20,4,3,22,SONNENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Sonnenahalli,
+20,4,3,29,VAIT FEELD,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,3,30,PATTANDURU AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Pattanduru Agrahara,
+20,4,3,36,HAGADURU,BDA,BDA-RMP2031,full,99.96,11,both,full,Hagadooru,
+20,4,3,37,NAGONDANAHALLI,BDA,BDA-RMP2031,full,98.34,,both,full,Nagondanahalli,
+20,4,4,1,RAMAGONDANAHALLI,BDA,BDA-RMP2031,full,100.0,42,both,full,Ramagondanahalli,
+20,4,4,2,TOBARAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Thubarahalli,
+20,4,4,3,SIDDAPURA,BDA,BDA-RMP2031,full,100.0,4,both,full,Shiddapura,
+20,4,4,4,MUNNEKOLALU,BDA,BDA-RMP2031,full,100.0,,both,full,Munnekolala,
+20,4,4,10,KODIHALLI,BDA,BDA-RMP2031,full,,,text,full,Kodihalli,no parcel geometry in our data; coverage from the text list
+20,4,4,11,MARATAHALLI,BDA,BDA-RMP2031,full,,,text,full,Marutthahalli,no parcel geometry in our data; coverage from the text list
+20,4,4,12,KONENA AGRAHARA,BDA,BDA-RMP2031,full,,12,text,full,Konena Agrahara,no parcel geometry in our data; coverage from the text list
+20,4,4,13,KEMPAPURA,BDA,BDA-RMP2031,full,,34,text,full,Kempapura,no parcel geometry in our data; coverage from the text list
+20,4,4,14,BELURU,BDA,BDA-RMP2031,full,,,text,full,Beluru,no parcel geometry in our data; coverage from the text list
+20,4,4,15,BELURU NAGASANDRA,BDA,BDA-RMP2031,full,,,text,full,Beluru Nagasandra,no parcel geometry in our data; coverage from the text list
+20,4,4,16,YAMALURU,BDA,BDA-RMP2031,full,,,text,full,Yamaluru,no parcel geometry in our data; coverage from the text list
+20,4,4,17,CHALLAGHATTA,BDA,BDA-RMP2031,full,,,text,full,Challaghatta,no parcel geometry in our data; coverage from the text list
+20,4,4,18,AMANI BELLANDURUKHANE,BDA,BDA-RMP2031,full,99.98,,spatial,,,not in the text list; map share 99.98%
+20,4,4,19,VALEPURA,BDA,BDA-RMP2031,full,98.9,24,both,full,Valepura,
+20,4,4,20,SORAHUNASE,BDA,BDA-RMP2031,full,100.0,,both,full,Shorahunashi,
+20,4,4,21,VARTURU,BDA,BDA-RMP2031,full,100.0,,both,full,Varthuru,
+20,4,4,22,KHANE KANDAYA,BDA,BDA-RMP2031,full,100.0,,both,full,Kanekandaya,
+20,4,4,31,KACHAMARANAHALLI,BDA,BDA-RMP2031,full,100.0,25,both,full,Kachamaranahalli,
+20,4,4,32,GUNJURU,BDA,BDA-RMP2031,full,100.0,,both,full,Gunjuru,
+20,4,4,41,VIBHUTIPURA,,,none,,,,,,no parcel geometry in our data
+20,4,4,42,TIPPASANDRA,,,none,,,,,,no parcel geometry in our data
+20,4,4,43,BAIRASANDRA,,,none,,,,,,no parcel geometry in our data
+20,4,4,44,DODDANEKUNDI,,,none,,,,,,no parcel geometry in our data
+20,4,4,45,KAGGADASANAPURA,,,none,,,,,,no parcel geometry in our data
+20,4,5,5,BHOGANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Bhoganahalli,
+20,4,5,6,BALAGERE,BDA,BDA-RMP2031,full,100.0,,both,full,Balageri,
+20,4,5,7,PANATURU,BDA,BDA-RMP2031,full,100.0,,both,full,Panathuru,
+20,4,5,8,KARIYAMMANA AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Kariammana Agrahara,
+20,4,5,9,KADUBEESANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kadabeesanahalli,
+20,4,5,23,BELLANDURU,BDA,BDA-RMP2031,full,100.0,12,both,full,Bellandur,
+20,4,5,24,DEVARA BEESANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Devarabisanahalli,
+20,4,5,25,AMBALEEPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Ambalipura,
+20,4,5,26,HARALURU,BDA,BDA-RMP2031,full,100.0,,both,full,Haraluru,
+20,4,5,27,SULIKUNTE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,5,28,MULLURU,BDA,BDA-RMP2031,full,100.0,,both,full,Mulluru,
+20,4,5,29,KODATI,BDA,BDA-RMP2031,full,100.0,25,both,full,Kodathi,
+20,4,5,30,CHIKKABELLANDURU,BDA,BDA-RMP2031,full,100.0,,both,full,Chikkabellanduru,
+20,4,5,33,DODDAKANNALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Doddakannelli,
+20,4,5,34,KASAVANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kasavanahalli,
+20,4,5,35,CHIKKANNALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,5,36,JUNNASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Junnasandra,
+20,4,5,37,HALANAYAKANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Halanayikanahalli,
+20,4,5,38,CHIKKANAYAKANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Chikkanayikanahalli,
+20,4,5,39,KAIKONDRAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kaikodahalli,
+20,4,5,40,HADOSIDDAPURA,BDA,BDA-RMP2031,full,100.0,25,both,full,Hadoshiddapura,
+20,4,6,40,BOMMENAHALLI,,,none,0.04,,,,,
+20,4,6,41,BENDIGANAHALLI,,,none,0.0,,,,,
+20,4,6,42,HUSKURU,,,none,0.82,,,,,
+20,4,6,43,LAGUMENAHALLI,,,none,0.0,,,,,
+20,4,6,44,KODIGEHALLI,,,none,0.0,,,,,
+20,4,6,45,NIMBEKAYIPURA,BDA,BDA-RMP2031,full,99.82,,both,full,Nimbekayipura,
+20,4,6,46,RAGHUVANAHALLI,,,none,0.0,,,,,
+20,4,6,47,KANNAMANGALA,BDA,BDA-RMP2031,full,99.91,23,both,full,Kannamangala,
+20,4,6,48,KHAJISONNENAHALLI,BDA,BDA-RMP2031,partial,97.38,23,both,full,Khajisonnenahalli,text says full village; map share 97.38%
+20,4,6,49,DODDABANAHALLI,BDA,BDA-RMP2031,full,100.0,23,both,full,Doddabanahalli,
+20,4,6,50,KATANNALLURU,BDA,BDA-RMP2031,partial,92.47,,both,full,Katamnalluru,text says full village; map share 92.47%
+20,4,6,51,GORAVIGERE,BDA,BDA-RMP2031,full,99.49,,both,full,Goravigeri,
+20,4,6,52,BIDARE AGRAHARA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,6,53,BANDAPURA,BDA,BDA-RMP2031,full,100.0,23,both,full,Bhandapura,
+20,4,6,54,SHEEGEHALLI,BDA,BDA-RMP2031,full,99.94,,both,full,Sheegihalli,
+20,4,6,55,BELATTURU,BDA,BDA-RMP2031,full,100.0,,both,full,Belathuru,
+20,4,6,56,CHIKKABANAHALLI,BDA,BDA-RMP2031,full,100.0,23,both,full,Chikkabanahalli,
+20,4,6,57,KUMBENA AGRAHARA,BDA,BDA-RMP2031,full,,23,text,full,Kumbena Agrahara,no parcel geometry in our data; coverage from the text list
+20,4,6,58,DOMMASANDRA,BDA,BDA-RMP2031,full,100.0,23,both,full,Dommasandra,
+20,4,6,59,KADUGODI,BDA,BDA-RMP2031,full,98.61,,both,full,Kadugodi,
+20,4,6,60,CHANNASANDRA,BDA,BDA-RMP2031,full,99.36,,both,full,Channasandra,
+20,4,6,61,KONADASAPURA,BDA,BDA-RMP2031,full,100.0,23,both,full,Konadasapura,
+20,4,6,62,HANCHARAHALLI,,,none,0.0,,,,,
+20,4,6,63,KADUGODI PLANTESHAN,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,7,1,MEDAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Medahalli,
+20,4,7,2,BHATTARAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Bhattarahalli,
+20,4,7,3,HALEHALLI,BDA,BDA-RMP2031,full,100.0,22,both,full,Halehalli,
+20,4,7,4,VARANASI,BDA,BDA-RMP2031,full,100.0,,both,full,Varanashi,
+20,4,7,5,MARAGONDANAHALLI,BDA,BDA-RMP2031,full,100.0,22,both,full,Maragondanahalli,
+20,4,7,6,VEERENAHALLI,BDA,BDA-RMP2031,full,100.0,23,both,full,Veerenahalli,
+20,4,7,7,KURUDU SONNENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kurudasonnenahalli,
+20,4,7,8,BIDARAHALLI,BDA,BDA-RMP2031,full,100.0,22,both,full,Bidarahalli,
+20,4,7,9,ADURU,BDA,BDA-RMP2031,full,100.0,,both,full,Adooru,
+20,4,7,10,BAIYYAPPANAHALLI,BDA,BDA-RMP2031,full,99.63,22,both,full,Byappanahalli,
+20,4,7,11,GUNDURU,,,none,0.0,,,,,
+20,4,7,12,CHIKKASANDRA,,,none,1.01,,,,,
+20,4,7,13,DODDENAHALLI,BDA,BDA-RMP2031,full,100.0,21,both,full,Doddenahalli,
+20,4,7,14,KAMMASANDRA,,,none,1.56,,,,,
+20,4,7,15,RAMPURA,,,none,,,,,,no parcel geometry in our data
+20,4,7,16,ANAGALAPURA,,,none,,,,,,no parcel geometry in our data
+20,4,7,17,BANDEBOMMASANDRA,,,none,,,,,,no parcel geometry in our data
+20,4,7,18,NADAGOWDA GOLLAHALLI,,,none,,,,,,no parcel geometry in our data
+20,4,7,19,KADAGRAHARA,,,none,,,,,,no parcel geometry in our data
+20,4,7,20,VADERAHALLI,,,none,,,,,,no parcel geometry in our data
+20,4,7,21,HUVINANI,,,none,,,,,,no parcel geometry in our data
+20,4,7,22,DODDAGUBBI,,,none,,,,,,no parcel geometry in our data
+20,4,7,23,BHAIRATI,,,none,,,,,,no parcel geometry in our data
+20,4,7,24,BILISHIVALE,,,none,,,,,,no parcel geometry in our data
+20,4,7,25,KANNURU,,,none,,,,,,no parcel geometry in our data
+20,4,7,26,CHIKKAGUBBI,,,none,,,,,,no parcel geometry in our data
+20,4,7,27,YARAPPANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,4,7,28,KADUSONNAPPANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,4,7,29,MITTAGANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,4,7,30,HIRANDAHALLI,BDA,BDA-RMP2031,full,100.0,22,both,full,Hirandahalli,
+20,4,7,31,AVALAHALLI,BDA,BDA-RMP2031,full,100.0,23,both,full,Aavalahalli,
+20,4,7,32,KITTAGANURU,BDA,BDA-RMP2031,full,,,text,full,Kitthaganooru,no parcel geometry in our data; coverage from the text list
+20,4,7,33,CHEEMASANDRA,BDA,BDA-RMP2031,full,99.71,23,both,full,Cheemasandra,
+20,4,7,34,MANDURU,,,none,0.13,,,,,
+20,4,7,35,JYOTIPURA,,,none,0.0,,,,,
+20,4,7,36,TIRUMENAHALLI,,,none,0.0,,,,,
+20,4,7,37,KATTUGOLLAHALLI,,,none,0.0,,,,,
+20,4,7,38,SHRUNGARIPURA,,,none,0.0,,,,,
+20,4,7,39,VANAJENAHALLI,,,none,0.0,,,,,
+20,4,8,1,BAIYAPPANAHALLI,BDA,BDA-RMP2031,full,100.0,22,spatial,,,not in the text list; map share 100.0%
+20,4,8,2,BENNIGANAHALLI,BDA,BDA-RMP2031,full,100.0,2,spatial,,,not in the text list; map share 100.0%
+20,4,8,3,BINNAMANGALA MA KA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,8,4,BAIYAPPANAHALLI MA KA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,8,5,VIJANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,8,6,MAHADEVAPURA,,,none,,,,,,no parcel geometry in our data
+20,4,8,7,B NARAYANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,1,KODIHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,2,MARATAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,3,KONENA AGRAHARA,BDA,BDA-RMP2031,full,100.0,12,spatial,,,not in the text list; map share 100.0%
+20,4,9,4,KEMPAPURA,BDA,BDA-RMP2031,full,100.0,34,spatial,,,not in the text list; map share 100.0%
+20,4,9,5,BELURU NAGASANDRA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,6,YAMALURU,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,7,CHALLAGHATTA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,8,VIBHUTIPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,9,TIPPASANDRA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,10,BAIRASANDRA,BDA,BDA-RMP2031,full,100.0,4,spatial,,,not in the text list; map share 100.0%
+20,4,9,11,DODDANEKUNDI,BDA,BDA-RMP2031,full,100.0,11,spatial,,,not in the text list; map share 100.0%
+20,4,9,12,KAGGADASANAPURA,,,none,,,,,,no parcel geometry in our data
+20,4,10,1,KANNURU,BDA,BDA-RMP2031,full,100.0,,both,full,Kannuru,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,2,CHIKKAGUBBI,BDA,BDA-RMP2031,full,100.0,21,both,full,Chikkagubbi,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,3,YARAPPANAHALLI,BDA,BDA-RMP2031,full,100.0,21,both,full,Yarappanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,4,KADUSONNAPPANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kadasonnappanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,5,MITTAGANAHALLI,BDA,BDA-RMP2031,full,100.0,21,both,full,Mittaganahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,6,RAMPURA,BDA,BDA-RMP2031,full,100.0,22,both,full,Ramapura,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,7,ANAGALAPURA,BDA,BDA-RMP2031,full,100.0,22,both,full,Anagalapura,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,8,BANDEBOMMASANDRA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,10,9,NADAGOWDA GOLLAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nadagoudagollahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,10,KADAGRAHARA,BDA,BDA-RMP2031,full,99.16,22,both,full,Kada Agrahara,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,11,VADERAHALLI,BDA,BDA-RMP2031,full,100.0,30,spatial,,,not in the text list; map share 100.0%
+20,4,10,12,HUVINANI,BDA,BDA-RMP2031,full,100.0,22,both,full,Huvina Ane,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,13,DODDAGUBBI,BDA,BDA-RMP2031,full,100.0,22,both,full,Doddagubbi,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,14,BHAIRATI,BDA,BDA-RMP2031,full,100.0,,both,full,Bhyrathi,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,10,15,BILISHIVALE,BDA,BDA-RMP2031,full,100.0,,both,full,Bilashivale,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,4,40,400,KADUGODIPLAMTATION,BDA,BDA-RMP2031,full,,,text,full,Kadagodi Plantation,no parcel geometry in our data; coverage from the text list
+20,4,41,400,BYATARAYANAPURA,,,none,,,,,,no parcel geometry in our data
+20,4,41,401,SRINIVASAPURA,,,none,,,,,,no parcel geometry in our data
+20,4,41,402,THIPPASANDRAMANAVARTIKAVAL,BDA,BDA-RMP2031,full,,,text,full,Thippasandra Manavarthe Kavalu,no parcel geometry in our data; coverage from the text list
+20,5,1,3,MUDDENAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,1,7,PUTTENAHALLI,BDA,BDA-RMP2031,full,100.0,14,both,full,Puttenahalli,
+20,5,1,8,RAMAGONDANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Ramagondahalli,
+20,5,1,9,TIRUMENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Thirumalenahalli,
+20,5,1,10,HONNENAHALLI,BDA,BDA-RMP2031,full,100.0,42,both,full,Honnenahalli,
+20,5,1,11,SHIVANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Shivanahalli,
+20,5,1,12,GOVINDAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Govindapura,
+20,5,1,14,SHREENIVASAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Srinivasapura,
+20,5,1,15,KRUSHNASAGARA,BDA,BDA-RMP2031,full,100.0,42,both,full,Krishnasagara,
+20,5,1,18,SINGANAYKANAHALLI AMANIKERA,BDA,BDA-RMP2031,full,100.0,42,both,full,Shinganayakanahalli Amanikere,
+20,5,1,19,NAGADASANAHALLI,BDA,BDA-RMP2031,full,100.0,35,spatial,,,not in the text list; map share 100.0%
+20,5,1,20,GANTIGANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Gantigenahalli,
+20,5,1,21,KOGILU,BDA,BDA-RMP2031,full,100.0,,both,full,Kogilu,
+20,5,1,23,ANANTAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Ananthapura,
+20,5,1,24,VENKATALA,BDA,BDA-RMP2031,full,100.0,,both,full,Vengatala,
+20,5,1,26,MANDALAKUNTE,BDA,BDA-RMP2031,full,100.0,,both,full,Mandalakunte,
+20,5,1,27,VASUDEVAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Vasudevapura,
+20,5,1,28,SINGANAYKANAHALLI,BDA,BDA-RMP2031,full,100.0,42,both,full,Shinganayakanahalli,
+20,5,1,30,BELLIHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Bellahalli,
+20,5,1,34,KENCHENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kenchenahalli,
+20,5,1,39,HAROHALLI,BDA,BDA-RMP2031,full,100.0,27,both,full,Harohalli,
+20,5,1,41,YALAHANKA,BDA,BDA-RMP2031,full,100.0,,both,full,Yelahanka,
+20,5,1,43,YALAHANKA A  KERE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,1,44,LAKSHEESAGARA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,1,53,MANCHENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Manchenahalli,
+20,5,1,57,VADERAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Vaderapura,
+20,5,1,58,AVALAHALLI,BDA,BDA-RMP2031,full,100.0,23,both,full,Aavalahalli,
+20,5,2,1,ALLALASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Allalasandra,
+20,5,2,2,BYATARAYAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Byatarayapura,
+20,5,2,22,AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Agrahara,
+20,5,2,25,GASTIKEMPANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Gasthikempanahalli,
+20,5,2,35,CHOKKANAHALLI,BDA,BDA-RMP2031,partial,86.0,,both,full,Chokkanahalli,text says full village; map share 86.0%
+20,5,2,36,TINDLU,BDA,BDA-RMP2031,full,100.0,,both,full,Thindlu,
+20,5,2,37,JAKKURU PLANTESHAN,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,2,50,JAKKURU,BDA,BDA-RMP2031,full,100.0,,both,full,Jakkuru,
+20,5,2,54,VENKATESHAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Venkateshapura,
+20,5,2,55,SAMPIGEHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Sampigehalli,
+20,5,2,56,SHREERAMAPURA,BDA,BDA-RMP2031,full,100.0,27,both,full,Sreerampura,
+20,5,2,57,CHIKKABOMMASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Chikkabammasandra,
+20,5,3,4,CHIKKABETTADAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Chikkabettahalli,
+20,5,3,6,VEERASAGARA,BDA,BDA-RMP2031,full,100.0,34,both,full,Veerasagara,
+20,5,3,16,SHYAMARAJAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Shyamarajapura,
+20,5,3,29,AMRUTAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Amruthahalli,
+20,5,3,31,ATTURU,BDA,BDA-RMP2031,full,100.0,,both,full,Atturu,
+20,5,3,32,SINGAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Shingapura,
+20,5,3,33,MEDIAGRAHARA,BDA,BDA-RMP2031,full,100.0,34,both,full,Medi Agrahara,
+20,5,3,38,KODIGEHALLI,BDA,BDA-RMP2031,full,100.0,7,spatial,,,not in the text list; map share 100.0%
+20,5,3,40,RAMACHANDRAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Ramachandrapura,
+20,5,3,42,KEMPANAHALLI,BDA,BDA-RMP2031,full,100.0,34,both,full,Kempanahalli,
+20,5,3,45,CHE B KAVAL,,,none,,,,,,no parcel geometry in our data
+20,5,3,46,DODDABETTADAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Doddabettahalli,
+20,5,3,47,DODDABOMMASANDRA,BDA,BDA-RMP2031,full,100.0,7,both,full,Doddabommasandra,
+20,5,3,48,KEMPAPURA,BDA,BDA-RMP2031,full,100.0,34,both,full,Kempapura,
+20,5,3,49,NARASEEPURA,BDA,BDA-RMP2031,full,100.0,41,both,full,Narashipura,
+20,5,3,51,KOTIHOSAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kothihosahalli,
+20,5,3,52,VADERAHALLI,BDA,BDA-RMP2031,full,100.0,30,both,full,Vaderahalli,
+20,5,4,4,MUTTUGADAHALLI,,,none,0.0,,,,,
+20,5,4,5,UNASURU,,,none,,,,,,no parcel geometry in our data
+20,5,4,6,MEESIGANAHALLI,,,none,0.0,,,,,
+20,5,4,8,EM  HOSAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,9,MARANAYKANAHALLI,,,none,0.0,,,,,
+20,5,4,13,DODDAJALA,,,none,0.0,,,,,
+20,5,4,16,DASANAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,17,BOYILAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,20,CHAGALATTI,,,none,,,,,,no parcel geometry in our data
+20,5,4,22,HUVINAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,23,MARENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,24,DODDAJALA AMANIKERE,,,none,0.0,,,,,
+20,5,4,25,AREBINNAMANGALA,,,none,,,,,,no parcel geometry in our data
+20,5,4,29,BEGURU,,,none,0.0,,,,,
+20,5,4,30,SINGAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,32,MARASANDRA,,,none,,,,,,no parcel geometry in our data
+20,5,4,34,B K HALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,35,PALYA,,,none,,,,,,no parcel geometry in our data
+20,5,4,36,CHIKKANAHALLI,,,none,0.0,,,,,
+20,5,4,39,B K HALLI AMANIKERE,,,none,,,,,,no parcel geometry in our data
+20,5,4,42,SHETTIGERE,,,none,0.0,,,,,
+20,5,4,44,MARALAKUNTE,,,none,,,,,,no parcel geometry in our data
+20,5,4,46,GOLLAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,47,DUMMANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,49,BAGALURU,,,none,,,,,,no parcel geometry in our data
+20,5,4,50,MAILANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,51,MAHADEVA KODIGEHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,52,CHALUMEKUNTE,,,none,,,,,,no parcel geometry in our data
+20,5,4,53,BILLAMARANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,4,54,HUTTANAHALLI,,,none,0.0,,,,,
+20,5,4,55,CHIKKAJALA,,,none,0.0,,,,,
+20,5,4,56,CHOKKANAHALLI,BDA,BDA-RMP2031,partial,3.39,,spatial,,,not in the text list; map share 3.39%
+20,5,4,57,NAVARATNAGRAHARA,,,none,0.0,,,,,
+20,5,4,58,CHANNAHALLI,,,none,0.0,,,,,
+20,5,4,59,MEENAKUNTE,,,none,0.0,,,,,
+20,5,4,60,TARABANAHALLI,,,none,0.0,,,,,
+20,5,4,61,BAIYYANAHALLI,,,none,0.65,,,,,
+20,5,5,1,TARAHUNASE,,,none,0.38,,,,,
+20,5,5,2,KATTIGENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kattigenahalli,
+20,5,5,3,SUGGUTA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,5,7,CHOKKANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,5,10,BILLAMARANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,5,11,NAVARATNAGRAHARA,,,none,,,,,,no parcel geometry in our data
+20,5,5,14,HOSAHALLI,,,none,1.29,,,,,
+20,5,5,15,GADENAHALLI,,,none,0.0,,,,,
+20,5,5,18,NELLUKUNTE,BDA,BDA-RMP2031,full,100.0,35,spatial,,,not in the text list; map share 100.0%
+20,5,5,19,HUTTANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,5,21,HUNASAMARANAHALLI,BDA,BDA-RMP2031,full,99.99,35,both,full,Hunasamaranahalli,
+20,5,5,26,SONNAPPANAHALLI,BDA,BDA-RMP2031,full,99.98,35,both,full,Sonnappanahalli,
+20,5,5,27,CHANNAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,5,28,KUDUREGERE,,,none,0.0,,,,,
+20,5,5,31,TIMMASANDRA,BDA,BDA-RMP2031,full,99.91,35,both,full,Thimmasandra,
+20,5,5,33,BAIYAPPANAHALLI,BDA,BDA-RMP2031,full,99.99,22,both,full,Byappanahalli,
+20,5,5,37,SATANURU,BDA,BDA-RMP2031,full,99.73,35,both,full,Sathanuru,
+20,5,5,38,KADAGANAHALLI,,,none,1.29,,,,,
+20,5,5,40,CHIKKAJALA,,,none,,,,,,no parcel geometry in our data
+20,5,5,41,PAPANAHALLI,,,none,0.24,,,,,
+20,5,5,43,MEENAKUNTE,,,none,,,,,,no parcel geometry in our data
+20,5,5,45,TARABANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,5,48,BETTAHALASURU,BDA,BDA-RMP2031,full,99.36,35,both,full,Bettahalasuru,
+20,5,5,55,BAIYYANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,6,3,BILIJAJI,BDA,BDA-RMP2031,full,,,text,full,Bilajaji,no parcel geometry in our data; coverage from the text list
+20,5,6,7,TARABANAHALLI,BDA,BDA-RMP2031,full,100.0,41,both,full,Tharabanahalli,
+20,5,6,10,GUNIAGRAHARA,BDA,BDA-RMP2031,full,100.0,34,both,full,Guni Agrahara,
+20,5,6,16,KODIGE TIRUMALAPURA,BDA,BDA-RMP2031,partial,74.56,41,both,full,Kodagithirumalapura,text says full village; map share 74.56%
+20,5,6,18,KASAGHATTAPURA,BDA,BDA-RMP2031,full,100.0,34,both,full,Kasagattapura,
+20,5,6,21,HURALICHIKKANAHALLI,BDA,BDA-RMP2031,full,98.95,41,both,full,Hurlichikkanahalli,
+20,5,6,22,SASUVEGHATTA,BDA,BDA-RMP2031,full,100.0,41,both,full,Sasiveghatta,
+20,5,6,23,ITTEGALAPURA,BDA,BDA-RMP2031,full,99.32,,spatial,,,not in the text list; map share 99.32%
+20,5,6,27,TAMMARASANAHALLI,BDA,BDA-RMP2031,full,100.0,41,both,full,Thammarasanahalli,
+20,5,6,28,MADUGIRIHALLI,BDA,BDA-RMP2031,full,100.0,42,both,full,Maddagirihalli,
+20,5,6,29,SULADEVANAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,6,31,DIBBURU,,,none,0.29,,,,,
+20,5,6,32,KALATAMMANAHALLI,BDA,BDA-RMP2031,full,100.0,34,both,full,Kalathammanahalli,
+20,5,6,33,BYALAKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Bylakere,
+20,5,6,36,KUMBARAHALLI,BDA,BDA-RMP2031,full,100.0,34,both,full,Kumbarahalli,
+20,5,6,37,GUDDADAHALLI,,,none,0.0,,,,,
+20,5,6,38,LINGARAJASAGARA,BDA,BDA-RMP2031,full,100.0,42,both,full,Lingarajasagara,
+20,5,6,40,KEMPAPURA,BDA,BDA-RMP2031,full,100.0,34,both,full,Kempapura,
+20,5,6,42,MATTAKURU,,,none,0.34,,,,,
+20,5,6,43,SHIVAKOTE,BDA,BDA-RMP2031,full,99.95,,spatial,,,not in the text list; map share 99.95%
+20,5,6,44,KONDASHETTIHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kondashettihalli,
+20,5,6,45,DASANAHALLI,,,none,0.0,,,,,
+20,5,6,50,HESARUGHATTA,BDA,BDA-RMP2031,partial,16.94,41,both,partial,Hesaraghatta,
+20,5,6,52,KOLUVARAYANAHALLI,,,none,0.29,,,,,
+20,5,6,58,KALENAHALLI,BDA,BDA-RMP2031,full,99.9,42,both,full,Kalenahalli,
+20,5,6,59,AIVARAKANDAPURA,BDA,BDA-RMP2031,full,99.12,42,both,full,Ivarakandapura,
+20,5,7,1,KEDATANAMALE,,,none,0.0,,,,,
+20,5,7,2,BUDAMANAHALLI,,,none,0.0,,,,,
+20,5,7,4,ADDIGANAHALLI,BDA,BDA-RMP2031,full,99.34,,both,full,Addiganahalli,
+20,5,7,5,BAIRAPURA,,,none,0.0,,,,,
+20,5,7,6,CHOKKANAHALLI,BDA,BDA-RMP2031,partial,86.0,,spatial,,,not in the text list; map share 86.0%
+20,5,7,8,RAJANAKUNTE,BDA,BDA-RMP2031,full,99.5,,both,full,Rajanakunte,
+20,5,7,9,MADAPPANAHALLI,BDA,BDA-RMP2031,full,99.97,42,both,full,Madappanahalli,
+20,5,7,11,SADENAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,7,12,CHANNASANDRA,,,none,0.0,,,,,
+20,5,7,13,KAKKEHALLI,,,none,0.0,,,,,
+20,5,7,14,SHYANUBOGANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,5,7,15,SONNENAHALLI,,,none,0.0,,,,,
+20,5,7,17,CHALLIHALLI,,,none,0.0,,,,,
+20,5,7,20,HANIYURU,,,none,0.0,,,,,
+20,5,7,24,KAMAKSHIPURA,,,none,0.0,,,,,
+20,5,7,25,BYATA,,,none,0.0,,,,,
+20,5,7,26,SURADENAPURA,,,none,0.0,,,,,
+20,5,7,30,AMANIMARASANDRA,,,none,0.0,,,,,
+20,5,7,34,ARAKERE,,,none,,,,,,no parcel geometry in our data
+20,5,7,35,KAKOLU,,,none,0.0,,,,,
+20,5,7,39,SHREERAMANAHALLI,,,none,0.0,,,,,
+20,5,7,41,SHEERESANDRA,,,none,0.0,,,,,
+20,5,7,46,MAVALLIPURA,BDA,BDA-RMP2031,full,100.0,42,both,full,Mavalipura,
+20,5,7,47,SEETAKEMPANAHALLI,,,none,0.0,,,,,
+20,5,7,48,ADDEVISHVANATHAPURA,,,none,0.04,,,,,
+20,5,7,51,NELLUKUNTE,,,none,0.0,,,,,
+20,5,7,53,LINGANAHALLI,BDA,BDA-RMP2031,full,99.96,42,both,full,Linganahalli,
+20,5,7,54,MAILAPPANAHALLI,BDA,BDA-RMP2031,full,100.0,42,both,full,Mylappanahalli,
+20,5,7,55,MUTTAGADAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,7,56,LINGARAJAPURA,BDA,BDA-RMP2031,full,100.0,8,both,full,Lingarajapura,
+20,5,7,57,KRUSHNARAJAPURA,BDA,BDA-RMP2031,full,100.0,42,both,full,Krishnarajapura,
+20,5,8,1,UNASURU,,,none,0.0,,,,,
+20,5,8,2,EM  HOSAHALLI,,,none,0.0,,,,,
+20,5,8,3,BOYILAHALLI,,,none,0.0,,,,,
+20,5,8,4,CHAGALATTI,BDA,BDA-RMP2031,full,99.71,21,both,full,Chagalatti,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,5,8,5,HUVINAYKANAHALLI,,,none,0.0,,,,,
+20,5,8,6,MARENAHALLI,BDA,BDA-RMP2031,full,99.81,5,both,full,Marenahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,5,8,7,AREBINNAMANGALA,,,none,0.0,,,,,
+20,5,8,8,SINGAHALLI,,,none,0.0,,,,,
+20,5,8,9,B K HALLI,,,none,0.0,,,,,
+20,5,8,10,PALYA,,,none,0.0,,,,,
+20,5,8,11,B K HALLI AMANIKERE,,,none,0.0,,,,,
+20,5,8,12,MARALAKUNTE,,,none,0.76,,,,,
+20,5,8,13,GOLLAHALLI,,,none,0.0,,,,,
+20,5,8,14,DUMMANAHALLI,,,none,0.0,,,,,
+20,5,8,15,BAGALURU,BDA,BDA-RMP2031,partial,5.23,21,both,partial,Bagaluru,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,5,8,16,MAILANAHALLI,,,none,0.0,,,,,
+20,5,8,17,MAHADEVA KODIGEHALLI,,,none,1.03,,,,,
+20,5,8,18,CHALUMEKUNTE,,,none,0.0,,,,,
+20,5,8,19,MARASANDRA,,,none,0.57,,,,,
+20,5,8,20,DASANAYKANAHALLI,BDA,BDA-RMP2031,full,99.72,21,both,full,Dasanayakanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,5,40,400,J.B.KAVAL,,,none,,,,,,no parcel geometry in our data
+20,5,40,401,PEENYAPLANTATION,BDA,BDA-RMP2031,full,,,text,full,Peenyada Plantation,no parcel geometry in our data; coverage from the text list
+21,1,1,1,ARISHINAKUNTE,,,none,0.11,,,,,
+21,1,1,2,VAJARAHALLI,,,none,0.0,,,,,
+21,1,1,3,MALLAPURA,,,none,0.0,,,,,
+21,1,1,4,NARAYANARAV PALYA,,,none,0.0,,,,,
+21,1,1,5,NARASEEPALYA,,,none,0.0,,,,,
+21,1,1,6,BAIRASANDRA,,,none,,,,,,no parcel geometry in our data
+21,1,1,7,YALACHEGERE,,,none,,,,,,no parcel geometry in our data
+21,1,1,8,HURULIHALLI,,,none,0.0,,,,,
+21,1,1,9,GANDRA GULEEPURA,,,none,0.0,,,,,
+21,1,1,10,VEERARAGHAVANAPALYA,,,none,0.0,,,,,
+21,1,1,12,DEGANAHALLI,,,none,0.0,,,,,
+21,1,1,13,ANANTAPURA,,,none,0.0,,,,,
+21,1,1,14,VEERANANJEEPURA,,,none,0.0,,,,,
+21,1,1,15,MACHONAYAKANAHALLI,,,none,0.0,,,,,
+21,1,1,16,BOMMANAHALLI,,,none,0.0,,,,,
+21,1,1,17,SHREENIVASAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,1,18,KEMPALINGANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,1,19,BAVEEKERE,,,none,,,,,,no parcel geometry in our data
+21,1,1,20,MANDIGERE,,,none,0.0,,,,,
+21,1,1,21,BARADI,,,none,,,,,,no parcel geometry in our data
+21,1,1,22,BETTAHALLI,,,none,0.0,,,,,
+21,1,1,23,NARASINHANAPALYA,,,none,0.0,,,,,
+21,1,1,24,KACHANAHALLA,,,none,,,,,,no parcel geometry in our data
+21,1,1,26,BAIRANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,1,27,AHOBALAPALYA,,,none,,,,,,no parcel geometry in our data
+21,1,1,28,BOLAMARANAHALLI,,,none,0.0,,,,,
+21,1,1,29,BHANASAVADI,,,none,0.0,,,,,
+21,1,1,31,K KEMPALINGANAHALLI,,,none,0.0,,,,,
+21,1,1,32,KANAVANAHALLI,,,none,0.0,,,,,
+21,1,1,33,NARASINHANAPALYA-,,,none,0.0,,,,,
+21,1,1,34,MANCHENAHALLI,,,none,0.0,,,,,
+21,1,1,35,MADALAKOTE,,,none,0.0,,,,,
+21,1,1,36,KEMPOHALLI,,,none,0.0,,,,,
+21,1,1,37,HAJEEPALYA,,,none,0.0,,,,,
+21,1,1,38,KONERIPURA,,,none,0.0,,,,,
+21,1,1,39,OBANAYKANAHALLI,,,none,0.0,,,,,
+21,1,1,40,MAILANAHALLI,,,none,0.0,,,,,
+21,1,1,41,HYADALU,,,none,0.0,,,,,
+21,1,1,42,K G SHREENIVASAPURA,,,none,0.0,,,,,
+21,1,1,43,KULEEPURA,,,none,0.0,,,,,
+21,1,1,44,GOLLAHALLI,,,none,0.0,,,,,
+21,1,1,45,ARJUNABETTAHALLI,,,none,0.0,,,,,
+21,1,1,46,BAIRASHETTAHALLI,,,none,0.0,,,,,
+21,1,1,47,BOLAMARANAHALLI1,,,none,0.0,,,,,
+21,1,1,48,TYAGADAHALLI,,,none,0.0,,,,,
+21,1,1,49,MAHADEVAPURA,,,none,0.0,,,,,
+21,1,1,50,BHUSANDRA,,,none,0.0,,,,,
+21,1,1,51,CHIKKAMARANAHALLI,BDA,BDA-RMP2031,partial,0.0,,text,full,Chikkamaranahalli,text lists it (Full Village); map share 0.0%; same name listed 2x in our data; picked the one with parcels / larger LPA share
+21,1,1,52,KADUKARENAHALLI,,,none,0.0,,,,,
+21,1,1,53,LINGENAHALLI,,,none,0.0,,,,,
+21,1,1,54,BALAGURUVANAHALLI,,,none,0.0,,,,,
+21,1,1,55,HANUMANAPALYA,,,none,0.0,,,,,
+21,1,1,56,MALLARABANAVADI,,,none,0.0,,,,,
+21,1,1,57,JAKKASANDRA,,,none,0.0,,,,,
+21,1,1,58,HANCHEEPURA,,,none,0.0,,,,,
+21,1,1,59,KODAPPANAHALLI,,,none,0.0,,,,,
+21,1,1,60,VADDARAPALYA,,,none,0.0,,,,,
+21,1,1,61,HONNASANDRA,,,none,0.0,,,,,
+21,1,1,62,CHOWDASANDRA,,,none,0.0,,,,,
+21,1,1,63,KOTNAHALLI,,,none,0.0,,,,,
+21,1,1,64,BEEDANAPALYA,,,none,0.0,,,,,
+21,1,1,65,DODDAKARENAHALLI,,,none,0.0,,,,,
+21,1,1,66,AVALAKUPPE,,,none,0.0,,,,,
+21,1,1,67,HOSAHALLI,,,none,0.0,,,,,
+21,1,1,69,GORINABELE,,,none,0.0,,,,,
+21,1,1,70,SOLADEVANAHALLI,,,none,0.0,,,,,
+21,1,1,71,GORAVANAHALLI,,,none,0.0,,,,,
+21,1,1,72,NELAMANGALA,,,none,0.0,,,,,
+21,1,1,73,BASAVANAHALLI,,,none,0.0,,,,,
+21,1,1,74,BYADARAHALLI,BDA,BDA-RMP2031,partial,0.0,,text,full,Byadarahalli,text lists it (Full Village); map share 0.0%; same name listed 2x in our data; picked the one with parcels / larger LPA share
+21,1,1,75,KANEGOWDANAHALLI,,,none,0.0,,,,,
+21,1,1,76,VISHVESHVARAPURA,,,none,0.0,,,,,
+21,1,1,77,YANTAGANAHALLI,,,none,0.0,,,,,
+21,1,1,79,KORATAGERE,,,none,0.0,,,,,
+21,1,1,80,BHATTARAHALLI,,,none,0.0,,,,,
+21,1,1,81,SEETARAMABHATTARAPALYA,,,none,0.0,,,,,
+21,1,1,82,ARALEDIBBA,,,none,0.0,,,,,
+21,1,1,83,AGASARAHALLI,,,none,0.0,,,,,
+21,1,1,84,ARALASANDRA,,,none,0.0,,,,,
+21,1,1,85,TONICHINAKUPPE,,,none,0.0,,,,,
+21,1,1,86,GEDDALAHALLI,,,none,0.0,,,,,
+21,1,1,87,KRUSHNARAJAPURA,,,none,0.0,,,,,
+21,1,1,88,B MAILANAHALLI,,,none,0.0,,,,,
+21,1,1,89,KENCHANAHALLI,,,none,0.0,,,,,
+21,1,1,90,TIRUMALAPURA,,,none,0.0,,,,,
+21,1,1,91,MALONAGATIHALLI,,,none,0.0,,,,,
+21,1,1,92,T BEGURU,,,none,0.0,,,,,
+21,1,1,93,MAROHALLI,,,none,0.0,,,,,
+21,1,1,94,GANGADHARANAPALYA,,,none,0.0,,,,,
+21,1,1,95,BUDIHALA,,,none,0.0,,,,,
+21,1,1,96,IRIGENAHALLI,,,none,0.0,,,,,
+21,1,1,97,MANTANAKURCHI,,,none,0.0,,,,,
+21,1,1,98,K G KRUSHNARA,,,none,0.0,,,,,
+21,1,1,99,YARAMANCHANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,1,100,KRUSHNARAJAPURA1,,,none,0.0,,,,,
+21,1,2,1,EDEHALLI,,,none,0.0,,,,,
+21,1,2,2,BHARATEEPURA,,,none,0.0,,,,,
+21,1,2,3,CHANDANAHOSAHALLI,,,none,0.0,,,,,
+21,1,2,4,K G SHREENIVASAPURA,,,none,0.0,,,,,
+21,1,2,5,LAKKURU,,,none,,,,,,no parcel geometry in our data
+21,1,2,6,MADENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,2,7,NIJAGAL‌KEMPOHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,2,8,TIMMANAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,2,9,AGALAKUPPE,,,none,0.0,,,,,
+21,1,2,10,KALLANAYKANAHALLI,,,none,0.0,,,,,
+21,1,2,11,BHEERAGONDANAHALLI,,,none,0.0,,,,,
+21,1,2,12,KAMALAPURA,,,none,0.0,,,,,
+21,1,2,13,VEERASAGARA,,,none,0.0,,,,,
+21,1,2,14,DEVARAHOSAHALLI,,,none,0.0,,,,,
+21,1,2,15,HALENIJAGAL,,,none,0.0,,,,,
+21,1,2,16,KASABANIJAGAL,,,none,0.0,,,,,
+21,1,2,17,NIDAVANDA,,,none,0.0,,,,,
+21,1,2,19,TATTEKERE,,,none,0.0,,,,,
+21,1,2,20,PEMMANAHALLI,,,none,0.0,,,,,
+21,1,2,21,BARAGURU,,,none,0.0,,,,,
+21,1,2,22,DASENAHALLI,,,none,0.0,,,,,
+21,1,2,24,GIRIYANAPALYA,,,none,0.0,,,,,
+21,1,2,25,CHIKKANAPALYA,,,none,0.0,,,,,
+21,1,2,26,MADAGA,,,none,,,,,,no parcel geometry in our data
+21,1,2,27,HEGGUNDA,,,none,,,,,,no parcel geometry in our data
+21,1,2,28,ELEKYATANAHALLI,,,none,0.0,,,,,
+21,1,2,29,HALENAHALLI,,,none,0.0,,,,,
+21,1,2,30,MAKENAHALLI,,,none,0.0,,,,,
+21,1,2,31,K G JAJURU,,,none,0.0,,,,,
+21,1,2,32,KULUMETIMMANAHALLI,,,none,0.0,,,,,
+21,1,2,33,NARASEEPURA,,,none,0.0,,,,,
+21,1,2,34,BETTADAHOSAHALLI,,,none,0.0,,,,,
+21,1,2,35,BUGADIHALLI,,,none,0.0,,,,,
+21,1,2,36,CHANNOHALLI,,,none,0.0,,,,,
+21,1,2,37,IMACHENAHALLI,,,none,0.0,,,,,
+21,1,2,38,GOVINDAPURA,,,none,0.0,,,,,
+21,1,2,39,RAMENAHALLI,,,none,0.0,,,,,
+21,1,2,40,MARALUKUNTE,,,none,0.0,,,,,
+21,1,2,41,BENACHINAHALLI,,,none,0.0,,,,,
+21,1,2,42,KUNTABOMMANAHALLI,,,none,0.0,,,,,
+21,1,2,43,CHIKKANNANAHALLI,,,none,0.0,,,,,
+21,1,2,44,SHIVAGANGE,,,none,0.0,,,,,
+21,1,2,45,KUTAGHATTA,,,none,0.0,,,,,
+21,1,2,46,GANGENAPURA,,,none,0.0,,,,,
+21,1,2,47,GOWRAPURA,,,none,0.0,,,,,
+21,1,2,48,BARAGENAHALLI,,,none,0.0,,,,,
+21,1,2,49,SHREEPATIHALLI,,,none,0.0,,,,,
+21,1,2,51,KAMBALU,,,none,0.0,,,,,
+21,1,2,52,GURUVANAHALLI,,,none,0.0,,,,,
+21,1,2,53,GHANTEHOSAHALLI,,,none,0.0,,,,,
+21,1,2,54,MARAGONDANAHALLI,,,none,0.0,,,,,
+21,1,2,55,NARAYANAPURA,,,none,0.0,,,,,
+21,1,2,56,BASAVAPATTANA,,,none,0.0,,,,,
+21,1,2,57,BILLANAKOTE,,,none,0.0,,,,,
+21,1,2,58,HOSAHALLI,,,none,0.0,,,,,
+21,1,2,59,GUNDENAHALLI,,,none,0.0,,,,,
+21,1,2,60,KENGAL KEMPOHALLI,,,none,0.0,,,,,
+21,1,2,61,HONNENAHALLI,,,none,0.0,,,,,
+21,1,2,62,AVVERAHALLI,,,none,0.0,,,,,
+21,1,2,63,MACHANAHALLI,,,none,0.0,,,,,
+21,1,2,64,GOTTIGERE,,,none,0.0,,,,,
+21,1,2,65,KEREKATTIGANURU,,,none,0.0,,,,,
+21,1,2,66,MELEKATTIGANURU,,,none,0.0,,,,,
+21,1,2,67,HANUMANTAPURA,,,none,0.0,,,,,
+21,1,2,68,DASANAPURA,,,none,0.0,,,,,
+21,1,2,69,ALADAHALLI,,,none,0.0,,,,,
+21,1,2,70,ANANTAPURA,,,none,0.0,,,,,
+21,1,2,71,GEDDALAHALLI,,,none,0.0,,,,,
+21,1,2,72,KASARAGHATTA,,,none,0.0,,,,,
+21,1,2,73,BENNAGERE,,,none,0.0,,,,,
+21,1,2,74,HULLUHARIVE,,,none,0.0,,,,,
+21,1,2,75,KARIMANNE,,,none,0.0,,,,,
+21,1,2,76,KENGAL,,,none,0.0,,,,,
+21,1,2,77,SOMPURA,,,none,0.0,,,,,
+21,1,3,1,DODDABELE,,,none,0.0,,,,,
+21,1,3,2,TADASEEGHATTA,,,none,0.0,,,,,
+21,1,3,3,KALALUGHATTA,,,none,,,,,,no parcel geometry in our data
+21,1,3,4,GUNDENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,5,NARASAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,3,6,KULUVANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,7,LAKKENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,8,DODDERI,,,none,,,,,,no parcel geometry in our data
+21,1,3,9,ALANAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,10,HONNARAYANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,11,TIMMASANDRA,,,none,,,,,,no parcel geometry in our data
+21,1,3,12,HALKURU,,,none,,,,,,no parcel geometry in our data
+21,1,3,13,KODAGI BOMMANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,14,OBALAPURA,,,none,0.0,,,,,
+21,1,3,15,HADIHOSAHALLI,,,none,0.0,,,,,
+21,1,3,16,MADDENAHALLI,,,none,0.0,,,,,
+21,1,3,17,DODDACHANNOHALLI,,,none,0.0,,,,,
+21,1,3,18,KRUSHNARAJAPURA,,,none,0.0,,,,,
+21,1,3,19,JAKKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,20,MINNAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,3,21,VARADANAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,22,GUDDEGOWDANA CHANNOHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,23,KRUSHNARAJAPALYA,,,none,,,,,,no parcel geometry in our data
+21,1,3,24,KODIHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,25,KODIPALYA,,,none,,,,,,no parcel geometry in our data
+21,1,3,26,BIDALURU,,,none,,,,,,no parcel geometry in our data
+21,1,3,27,HARIVESANDRA,,,none,,,,,,no parcel geometry in our data
+21,1,3,28,GOVENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,29,TOTANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,30,TYAMAGONDLU AMANIKERE,,,none,,,,,,no parcel geometry in our data
+21,1,3,31,TAVAREKERE,,,none,0.0,,,,,
+21,1,3,32,TIPPASHETTIHALLI,,,none,0.0,,,,,
+21,1,3,33,BEERAGONDANAHALLI,,,none,0.0,,,,,
+21,1,3,34,KAREHALLI,,,none,0.0,,,,,
+21,1,3,35,LAKSHMANA PURA,,,none,0.0,,,,,
+21,1,3,36,HALURAMPURA,,,none,0.0,,,,,
+21,1,3,37,MANNE,,,none,0.0,,,,,
+21,1,3,38,TYAMAGONDLU,,,none,0.0,,,,,
+21,1,3,39,HASARUHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,40,BAIRANAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,41,CHIKKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,42,LAKKAPPANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,43,AREBOMMANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,44,SULUKUNTE,,,none,,,,,,no parcel geometry in our data
+21,1,3,45,MAHIMAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,3,46,KEMPAPURA AGRAHARA,,,none,,,,,,no parcel geometry in our data
+21,1,3,47,KARENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,48,GORAGHATTA,,,none,0.0,,,,,
+21,1,3,49,MAVINAKUNTE,,,none,0.0,,,,,
+21,1,3,50,KAREEMARANAHALLI,,,none,0.0,,,,,
+21,1,3,51,SOMASAGARA,,,none,0.0,,,,,
+21,1,3,52,VENKATAPURA,,,none,0.0,,,,,
+21,1,3,53,JAKKASANDRA BA,,,none,0.0,,,,,
+21,1,3,54,ISUVANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,55,VADAKUNTE,,,none,,,,,,no parcel geometry in our data
+21,1,3,56,GULAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,3,57,NIMBENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,58,KODIGEHALLI,,,none,0.0,,,,,
+21,1,3,59,KENCHANAPURA,,,none,0.0,,,,,
+21,1,3,60,BALLAGERE,,,none,0.0,,,,,
+21,1,3,61,MAVINAKOMMANAHALLI,,,none,0.0,,,,,
+21,1,3,62,MAKANAKUPPE,,,none,0.0,,,,,
+21,1,3,63,MUDDALINGANAHALLI,,,none,0.0,,,,,
+21,1,3,64,KANNOHALLI,,,none,0.0,,,,,
+21,1,3,65,APPAGONDANAHALLI,,,none,0.0,,,,,
+21,1,3,66,MANNERAMPURA,,,none,0.0,,,,,
+21,1,3,67,SHIRAGANAHALLI,,,none,0.0,,,,,
+21,1,3,68,BYADARAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,69,TIPPAGONDANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,70,TALEKERE,,,none,,,,,,no parcel geometry in our data
+21,1,3,71,PALLARAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,3,72,LAKKASANDRA,,,none,,,,,,no parcel geometry in our data
+21,1,3,73,GOVINDAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,3,74,CHIKKANNANNE,,,none,,,,,,no parcel geometry in our data
+21,1,4,1,BAVEEKERE,,,none,0.0,,,,,
+21,1,4,2,KEMPALINGANAHALLI,,,none,0.0,,,,,
+21,1,4,3,AHOBALAPALYA,,,none,0.0,,,,,
+21,1,4,4,KACHANAHALLA,,,none,0.0,,,,,
+21,1,4,5,BAIRANAHALLI,,,none,0.0,,,,,
+21,1,4,6,YARAMANCHANAHALLI,,,none,0.0,,,,,
+21,1,4,7,SHREENIVASAPURA,,,none,0.0,,,,,
+21,1,5,1,LAKKURU,,,none,0.0,,,,,
+21,1,5,2,MADENAHALLI,,,none,0.0,,,,,
+21,1,5,3,NIJAGAL‌KEMPOHALLI,,,none,0.0,,,,,
+21,1,5,4,HEGGUNDA,,,none,0.0,,,,,
+21,1,5,5,TIMMANAYKANAHALLI,,,none,0.0,,,,,
+21,1,6,1,LAKKAPPANAHALLI,,,none,0.0,,,,,
+21,1,6,2,CHIKKANAHALLI,,,none,0.0,,,,,
+21,1,6,3,BAIRANAYKANAHALLI,,,none,0.0,,,,,
+21,1,6,4,HASARUHALLI,,,none,0.0,,,,,
+21,1,6,5,KULUVANAHALLI,,,none,0.0,,,,,
+21,1,6,6,LAKKENAHALLI,,,none,0.0,,,,,
+21,1,6,7,DODDERI,,,none,0.0,,,,,
+21,1,6,8,ALANAYKANAHALLI,,,none,0.0,,,,,
+21,1,6,9,AREBOMMANAHALLI,,,none,0.0,,,,,
+21,1,6,10,SULUKUNTE,,,none,0.0,,,,,
+21,1,6,11,MAHIMAPURA,,,none,0.0,,,,,
+21,1,6,12,KEMPAPURA AGRAHARA,,,none,0.0,,,,,
+21,1,6,13,KARENAHALLI,,,none,0.0,,,,,
+21,1,6,14,HONNARAYANAHALLI,,,none,0.0,,,,,
+21,1,6,15,KODAGI BOMMANAHALLI,,,none,0.0,,,,,
+21,1,6,16,GUNDENAHALLI,,,none,0.0,,,,,
+21,1,6,17,HALKURU,,,none,0.0,,,,,
+21,1,6,18,NARASAPURA,,,none,0.0,,,,,
+21,1,6,19,GOVINDAPURA,,,none,0.0,,,,,
+21,1,6,20,BYADARAHALLI,,,none,0.0,,,,,
+21,1,6,21,CHIKKANNANNE,,,none,0.0,,,,,
+21,1,6,22,PALLARAHALLI,,,none,0.0,,,,,
+21,1,6,23,KRUSHNARAJAPALYA,,,none,0.0,,,,,
+21,1,6,24,LAKKASANDRA,,,none,0.0,,,,,
+21,1,6,25,TIPPAGONDANAHALLI,,,none,0.0,,,,,
+21,1,6,26,TALEKERE,,,none,0.0,,,,,
+21,1,6,27,KODIPALYA,,,none,0.0,,,,,
+21,1,6,28,TYAMAGONDLU AMANIKERE,,,none,0.0,,,,,
+21,1,6,29,KODIHALLI,,,none,0.0,,,,,
+21,1,6,30,HARIVESANDRA,,,none,0.0,,,,,
+21,1,6,31,TOTANAHALLI,,,none,0.0,,,,,
+21,1,6,32,GULAPURA,,,none,0.0,,,,,
+21,1,6,33,NIMBENAHALLI,,,none,0.0,,,,,
+21,1,6,34,VADAKUNTE,,,none,0.0,,,,,
+21,1,6,35,ISUVANAHALLI,,,none,0.0,,,,,
+21,1,6,36,BIDALURU,,,none,0.0,,,,,
+21,1,6,37,VARADANAYKANAHALLI,,,none,0.0,,,,,
+21,1,6,38,JAKKANAHALLI,,,none,0.0,,,,,
+21,1,6,39,MINNAPURA,,,none,0.0,,,,,
+21,1,6,40,TIMMASANDRA,,,none,0.0,,,,,
+21,1,6,41,GOVENAHALLI,,,none,0.0,,,,,
+21,1,6,42,GUDDEGOWDANA CHANNOHALLI,,,none,0.0,,,,,
+21,1,6,43,KALALUGHATTA,,,none,0.0,,,,,
+21,1,7,1,SOLURU,,,none,,,,,,no parcel geometry in our data
+21,1,7,2,KALYANAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,3,TUBARAPALYA,,,none,,,,,,no parcel geometry in our data
+21,1,7,4,ENNIGERE,,,none,,,,,,no parcel geometry in our data
+21,1,7,5,CHIKKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,6,VADDARAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,7,GANGENAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,8,KANAKENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,9,BHAIRAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,10,MALLIKARJUNAPALYA,,,none,,,,,,no parcel geometry in our data
+21,1,7,11,LAKKENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,12,BEERAVARA,,,none,,,,,,no parcel geometry in our data
+21,1,7,13,KORAMANGALA,,,none,,,,,,no parcel geometry in our data
+21,1,7,14,KANNASANDRA,,,none,,,,,,no parcel geometry in our data
+21,1,7,15,PARVATAPALYA,,,none,,,,,,no parcel geometry in our data
+21,1,7,16,GUDEMARANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,17,UDUKUNTE,,,none,,,,,,no parcel geometry in our data
+21,1,7,18,MAILANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,19,PALANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,20,SHANTAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,21,KALLAHATTIPALYA,,,none,,,,,,no parcel geometry in our data
+21,1,7,22,BHAIRASANDRA,,,none,,,,,,no parcel geometry in our data
+21,1,7,23,MALLURU,,,none,,,,,,no parcel geometry in our data
+21,1,7,24,VIMALAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,25,BHANTARAKUPPE,,,none,,,,,,no parcel geometry in our data
+21,1,7,26,NAGANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,27,MUMMENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,28,BOMMANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,29,TORECHANNOHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,30,VOTAGONDANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,31,GOLLAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,32,KOTTAGONDANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,33,MARENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,34,GARGESHVARAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,35,KODIHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,36,PEMMANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,37,HAKKINALU,,,none,,,,,,no parcel geometry in our data
+21,1,7,38,MARIKUPPE,,,none,,,,,,no parcel geometry in our data
+21,1,7,39,BASAVENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,40,HOSAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,41,BANAVADI,,,none,,,,,,no parcel geometry in our data
+21,1,7,42,HALURU,,,none,,,,,,no parcel geometry in our data
+21,1,7,43,SHIRAGANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,44,MALLAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,45,MUGANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,46,BITTASANDRA,,,none,,,,,,no parcel geometry in our data
+21,1,7,47,HEMAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,48,NARASAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,49,RANGENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,50,KEMPAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,51,TATTEKERE,,,none,,,,,,no parcel geometry in our data
+21,1,7,52,LINGENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,53,TIMMASANDRA,,,none,,,,,,no parcel geometry in our data
+21,1,7,54,RAMANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,55,GORORU,,,none,,,,,,no parcel geometry in our data
+21,1,7,56,RANGANABETTA,,,none,,,,,,no parcel geometry in our data
+21,1,7,57,MUPPENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,58,CHANNOHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,59,ARISHINAKUNTE,,,none,,,,,,no parcel geometry in our data
+21,1,7,60,UDDANDALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,61,CHIKKASOLURU,,,none,,,,,,no parcel geometry in our data
+21,1,7,62,HYAGANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,63,BYADARAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,64,KUDLURU,,,none,,,,,,no parcel geometry in our data
+21,1,7,65,SOMEDEVANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,1,7,66,OMBHATTANAKUNTE,,,none,,,,,,no parcel geometry in our data
+21,1,7,67,KUPPEMALA,,,none,,,,,,no parcel geometry in our data
+21,1,7,68,TIRUMALAPURA,,,none,,,,,,no parcel geometry in our data
+21,1,7,69,HOSURU,,,none,,,,,,no parcel geometry in our data
+21,2,1,1,KANTANAKUNTE,,,none,0.0,,,,,
+21,2,1,2,VADDARAHALLI,,,none,0.0,,,,,
+21,2,1,3,HASANAGHATTA,,,none,0.0,,,,,
+21,2,1,4,PALANA JOGAHALLI,,,none,0.0,,,,,
+21,2,1,5,AMANI PALANAKERE,,,none,0.0,,,,,
+21,2,1,6,TALAGAVARA,,,none,0.0,,,,,
+21,2,1,7,GALIPOJE,,,none,0.0,,,,,
+21,2,1,8,HONNAGHATA,,,none,0.0,,,,,
+21,2,1,9,MADAGONDANAHALLI,,,none,0.0,,,,,
+21,2,1,10,KOLURU,,,none,0.0,,,,,
+21,2,1,11,MARALENAHALLI,,,none,0.0,,,,,
+21,2,1,12,NERALAGHATTA,,,none,0.0,,,,,
+21,2,1,13,KESTURU,,,none,0.0,,,,,
+21,2,1,14,MANDIBYADARAHALLI,,,none,0.0,,,,,
+21,2,1,15,VEERAPURA,,,none,0.0,,,,,
+21,2,1,16,MAJARA HOSAHALLI,,,none,0.0,,,,,
+21,2,1,17,JINKEBACHCHAHALLI,,,none,0.0,,,,,
+21,2,1,18,CHIKKA TUMAKURU,,,none,0.0,,,,,
+21,2,1,19,TIPPAPURA,,,none,0.0,,,,,
+21,2,1,20,KONAGHATTA,,,none,0.0,,,,,
+21,2,1,21,LINGANAHALLI,,,none,0.0,,,,,
+21,2,1,22,BASHETTAHALLI,,,none,,,,,,no parcel geometry in our data
+21,2,1,23,AREHALLIGUDDADAHALLI,,,none,0.0,,,,,
+21,2,1,24,VARADANAHALLI,,,none,0.0,,,,,
+21,2,1,25,OBADENAHALLI,,,none,0.0,,,,,
+21,2,1,26,ELLUPURA,,,none,0.0,,,,,
+21,2,1,27,KOLIPURA,,,none,0.0,,,,,
+21,2,1,28,K G KUNTANAHALLI,,,none,0.0,,,,,
+21,2,1,29,BINUVANAHALLI,,,none,0.0,,,,,
+21,2,1,30,HOSAHUDYA,,,none,0.0,,,,,
+21,2,1,31,KASAVANAHALLI,,,none,0.0,,,,,
+21,2,1,32,KODIGEHALLI,,,none,0.0,,,,,
+21,2,1,33,KURUBARAHALLI,,,none,0.0,,,,,
+21,2,1,34,NAGASANDRA,,,none,0.0,,,,,
+21,2,1,35,MENASI,,,none,0.0,,,,,
+21,2,1,36,KAKKENAHALLI,,,none,0.0,,,,,
+21,2,1,37,DARGAJOGIHALLI,,,none,0.0,,,,,
+21,2,1,38,KARENAHALLI,,,none,0.0,,,,,
+21,2,1,39,SHREENIVASAPURA,,,none,0.0,,,,,
+21,2,1,40,ARALUMALLIGE,,,none,,,,,,no parcel geometry in our data
+21,2,1,41,JAKKASANDRA,,,none,0.0,,,,,
+21,2,1,42,KUNTANAHALLI,,,none,0.0,,,,,
+21,2,1,43,ALAHALLI,,,none,0.0,,,,,
+21,2,1,44,S EM GOLLAHALLI,,,none,0.0,,,,,
+21,2,1,45,EKASHIPURA,,,none,0.0,,,,,
+21,2,1,46,GANGADHARAPURA,,,none,0.0,,,,,
+21,2,1,47,ROJIPURA,,,none,0.0,,,,,
+21,2,1,48,VEERABADHRANAPALYA,,,none,0.0,,,,,
+21,2,1,49,TIGALEBAGAYTI,,,none,0.0,,,,,
+21,2,1,50,KHAS‌BAG,,,none,0.0,,,,,
+21,2,1,51,DARGAPURA,,,none,0.0,,,,,
+21,2,1,52,SIDDENAYKANAHALLI,,,none,0.0,,,,,
+21,2,1,53,MUTTURU,,,none,0.0,,,,,
+21,2,1,55,RAGHUNATHAPURA,,,none,0.0,,,,,
+21,2,1,56,ADINARAYANA HOSAHALLI,,,none,0.0,,,,,
+21,2,1,57,NAGADENAHALLI,,,none,0.0,,,,,
+21,2,1,59,SHIVAPURA-AMANIKERE,,,none,0.0,,,,,
+21,2,1,60,K G GOVINDAPURA,,,none,0.0,,,,,
+21,2,1,61,TAMMASHETTAHALLI,,,none,0.0,,,,,
+21,2,1,62,RAJAGHATTA,,,none,0.0,,,,,
+21,2,1,63,DASAGONDAHALLI,,,none,0.0,,,,,
+21,2,1,64,RAJAGHATTA AMANIKERE,,,none,0.0,,,,,
+21,2,1,65,TIMMASANDRA,,,none,0.0,,,,,
+21,2,1,66,MALLATTAHALLI,,,none,0.0,,,,,
+21,2,1,67,TOGARIGHATTA,,,none,0.0,,,,,
+21,2,1,68,MUTSANDRA,,,none,0.0,,,,,
+21,2,1,69,PINDAKURUTIMMANAHALLI,,,none,0.0,,,,,
+21,2,1,70,MEDAHALLI,,,none,0.0,,,,,
+21,2,1,71,SHIVAPURA,,,none,0.0,,,,,
+21,2,1,72,SUNNAPPANAHALLI,,,none,0.0,,,,,
+21,2,1,73,KOLURU PLANTESHAN,,,none,0.0,,,,,
+21,2,2,1,GUNDUNGERE,,,none,0.0,,,,,
+21,2,2,2,BANKENAHALLI,,,none,0.0,,,,,
+21,2,2,3,VABASANDRA,,,none,0.0,,,,,
+21,2,2,4,PURA,,,none,0.0,,,,,
+21,2,2,5,BOMMANAHALLI,,,none,0.0,,,,,
+21,2,2,6,SONNENAHALLI,,,none,0.0,,,,,
+21,2,2,8,MAKALI,,,none,0.0,,,,,
+21,2,2,9,BYADARAHALLI,,,none,0.0,,,,,
+21,2,2,10,HOSAHALLI,,,none,0.0,,,,,
+21,2,2,11,MALLASANDRA,,,none,0.0,,,,,
+21,2,2,12,OJENAHALLI,,,none,0.0,,,,,
+21,2,2,13,HOSAKOTE,,,none,0.0,,,,,
+21,2,2,14,UJJANI,,,none,0.0,,,,,
+21,2,2,15,KOTTIGEMACHENAHALLI,,,none,0.0,,,,,
+21,2,2,16,KADUKUNTE,,,none,0.0,,,,,
+21,2,2,17,KUKKALAHALLI,,,none,0.0,,,,,
+21,2,2,18,SOLAKUNTE,,,none,0.0,,,,,
+21,2,2,19,JAKKENAHALLI,,,none,0.0,,,,,
+21,2,2,20,TEKALAHALLI,,,none,0.0,,,,,
+21,2,2,21,YARRAMADENAHALLI,,,none,0.0,,,,,
+21,2,2,22,K G DEVAPALA,,,none,0.0,,,,,
+21,2,2,23,KALLUKUNTE,,,none,0.0,,,,,
+21,2,2,24,SASALU,,,none,0.0,,,,,
+21,2,2,25,TAMMAGANAHALLI,,,none,0.0,,,,,
+21,2,2,26,GUMMANAHALLI,,,none,0.0,,,,,
+21,2,2,27,LINGADAVEERANAHALLI,,,none,0.0,,,,,
+21,2,2,29,SHREERAMANAHALLI,,,none,0.0,,,,,
+21,2,2,30,BENAKINA MADAGU,,,none,0.0,,,,,
+21,2,2,31,KILLARANAHALLI,,,none,0.0,,,,,
+21,2,2,32,GARADAGALLU,,,none,0.0,,,,,
+21,2,2,33,GANADALU,,,none,0.0,,,,,
+21,2,2,34,MACHCHENAHALLI,,,none,0.0,,,,,
+21,2,2,35,SHINGENAHALLI,,,none,0.0,,,,,
+21,2,2,36,TODALABANDE,,,none,0.0,,,,,
+21,2,2,37,LAKKENALLI,,,none,0.0,,,,,
+21,2,2,38,NARASAPURA,,,none,0.0,,,,,
+21,2,2,39,MALLEGOWDANAHALLI,,,none,0.0,,,,,
+21,2,2,40,BHAKTARAHALLI,,,none,0.0,,,,,
+21,2,2,41,ALAPPANAHALLI,,,none,0.0,,,,,
+21,2,2,42,ADAKAVALA,,,none,0.0,,,,,
+21,2,2,43,K J LINGENAHALLI,,,none,0.0,,,,,
+21,2,2,44,ANKONAHALLI,,,none,0.0,,,,,
+21,2,2,45,JYOTIPURA,,,none,0.0,,,,,
+21,2,2,46,BAIYAPPANAHALLI,,,none,0.0,,,,,
+21,2,2,47,KADALAPPANAHALLI,,,none,0.0,,,,,
+21,2,2,48,KADABYADARAHALLI,,,none,0.0,,,,,
+21,2,2,49,KANAKENAHALLI,,,none,0.0,,,,,
+21,2,2,50,JALIGERE,,,none,0.0,,,,,
+21,2,2,51,SUTTAHALLI,,,none,0.0,,,,,
+21,2,2,52,BAIRAPURA,,,none,0.0,,,,,
+21,2,2,53,CHANNAVEERANAHALLI,,,none,0.0,,,,,
+21,2,2,54,BANAVATI,,,none,,,,,,no parcel geometry in our data
+21,2,2,55,DADAGATTAMADAGU,,,none,0.0,,,,,
+21,2,2,56,GOWDANAKUNTE,,,none,0.0,,,,,
+21,2,2,57,KAMAKSHIHALLI,,,none,0.0,,,,,
+21,2,2,58,ARUDI,,,none,,,,,,no parcel geometry in our data
+21,2,2,59,HOSANAGENAHALLI,,,none,0.0,,,,,
+21,2,2,60,HAROHALLI,,,none,0.0,,,,,
+21,2,3,1,KANNAMANGALA,,,none,0.0,,,,,
+21,2,3,2,GEJJEGADAHALLI,,,none,0.0,,,,,
+21,2,3,3,PUTTENAHALLI,,,none,0.0,,,,,
+21,2,3,4,NAGENAHALLI,,,none,0.0,,,,,
+21,2,3,5,KANASAVADI,,,none,0.0,,,,,
+21,2,3,6,UDDICHIKKANAHALLI,,,none,0.0,,,,,
+21,2,3,7,HONNAVARA,,,none,0.0,,,,,
+21,2,3,8,GANDRAGULIPURA,,,none,0.0,,,,,
+21,2,3,9,SHIMPADIPURA,,,none,0.0,,,,,
+21,2,3,10,GULYA,,,none,0.0,,,,,
+21,2,3,11,PURUSHANAHALLI,,,none,0.0,,,,,
+21,2,3,12,BHADRAPURA,,,none,0.0,,,,,
+21,2,3,13,KODIHALLI,,,none,0.0,,,,,
+21,2,3,14,MADURE,,,none,0.0,,,,,
+21,2,3,15,MADURE AMANIKERE,,,none,0.0,,,,,
+21,2,3,16,JUNNASANDRA,,,none,0.0,,,,,
+21,2,3,17,RAMADEVANAHALLI,,,none,0.0,,,,,
+21,2,3,18,MARASANDRA,,,none,0.0,,,,,
+21,2,3,19,KUKKANAHALLI,,,none,0.0,,,,,
+21,2,3,20,KALLODU,,,none,0.0,,,,,
+21,2,3,21,K G SHASTRIPALYA,,,none,0.0,,,,,
+21,2,3,22,KADANURU,,,none,0.0,,,,,
+21,2,3,23,MADAGONDANAHALLI,,,none,0.0,,,,,
+21,2,3,24,DODDATUMAKURU,,,none,0.0,,,,,
+21,2,3,25,GOWDAHALLI,,,none,0.0,,,,,
+21,2,3,26,KAREESONNENAHALLI,,,none,0.0,,,,,
+21,2,3,27,CHANNADEVIAGRAHARA,,,none,0.0,,,,,
+21,2,3,28,BAIRASANDRA,,,none,0.0,,,,,
+21,2,3,29,HALENAHALLI,,,none,0.0,,,,,
+21,2,3,30,KAMMASANDRA,,,none,0.0,,,,,
+21,2,3,31,CHIKKAVADAGERE,,,none,0.0,,,,,
+21,2,3,32,DODDAVADAGERE,,,none,0.0,,,,,
+21,2,3,33,TIMMASANDRA,,,none,0.0,,,,,
+21,2,3,34,PUTTAYYANAGRAHARA,,,none,0.0,,,,,
+21,2,3,35,NARASAYYANAGRAHARA,,,none,0.0,,,,,
+21,2,3,36,SHYAKALADEVANAPURA,,,none,0.0,,,,,
+21,2,3,37,HONNADEVIPURA,,,none,0.0,,,,,
+21,2,3,38,NALLENAHALLI,,,none,0.0,,,,,
+21,2,3,39,MALLOHALLI,,,none,0.0,,,,,
+21,2,3,40,MUPPADIGHATTA,,,none,0.0,,,,,
+21,2,3,41,ISTURU,,,none,0.0,,,,,
+21,2,3,42,KENJIGANAHALLI,,,none,0.0,,,,,
+21,2,4,1,SAKKAREGOLLAHALLI,,,none,0.0,,,,,
+21,2,4,2,BHEEMARAVUTTANAHALLI,,,none,0.0,,,,,
+21,2,4,3,TAMBENAHALLI,,,none,0.0,,,,,
+21,2,4,4,LINGAPURA,,,none,0.0,,,,,
+21,2,4,5,SANKARASANAHALLI,,,none,0.0,,,,,
+21,2,4,6,CHIKKAKALENAHALLI,,,none,0.0,,,,,
+21,2,4,7,KANGALAPURA,,,none,0.0,,,,,
+21,2,4,8,HALEKOTE,,,none,0.0,,,,,
+21,2,4,9,KONENAHALLI,,,none,0.0,,,,,
+21,2,4,10,DODDABELAVANGALA,,,none,,,,,,no parcel geometry in our data
+21,2,4,11,RAMPURA,,,none,0.0,,,,,
+21,2,4,12,BHAKTARAHALLI,,,none,0.0,,,,,
+21,2,4,13,TIPPURU,,,none,0.0,,,,,
+21,2,4,14,VANIGARAHALLI,,,none,0.0,,,,,
+21,2,4,15,KADATIPPURU,,,none,0.0,,,,,
+21,2,4,16,MUDLAKADENAHALLI,,,none,0.0,,,,,
+21,2,4,17,BOMMAHALLI,,,none,0.0,,,,,
+21,2,4,18,GUNDLAHALLI,,,none,0.0,,,,,
+21,2,4,19,SHIRAGONAHALLI,,,none,,,,,,no parcel geometry in our data
+21,2,4,20,CHIGARANAHALLI,,,none,0.0,,,,,
+21,2,4,21,HULIKUNTE,,,none,0.0,,,,,
+21,2,4,22,APPAKARENAHALLI,,,none,0.0,,,,,
+21,2,4,23,MUTTAGADAHALLI,,,none,0.0,,,,,
+21,2,4,24,KASAGHATTA,,,none,0.0,,,,,
+21,2,4,25,KATTIHOSAHALLI,,,none,0.0,,,,,
+21,2,4,26,TARABANAHALLI,,,none,0.0,,,,,
+21,2,4,27,TOBUKUNTE,,,none,0.0,,,,,
+21,2,4,28,JOYISA AGRAHARA,,,none,0.0,,,,,
+21,2,4,29,DODDAHEJJAJE,,,none,0.0,,,,,
+21,2,4,30,KAREPURA,,,none,0.0,,,,,
+21,2,4,31,AMBALAGERE,,,none,0.0,,,,,
+21,2,4,32,VENKATESHAPURA,,,none,0.0,,,,,
+21,2,4,33,HANABE,,,none,0.0,,,,,
+21,2,4,34,GUNDASANDRA,,,none,0.0,,,,,
+21,2,4,35,HUSKURU,,,none,0.0,,,,,
+21,2,4,36,KUGONAHALLI,,,none,0.0,,,,,
+21,2,4,37,BOKIPURA,,,none,0.0,,,,,
+21,2,4,38,KALLUDEVANAHALLI,,,none,0.0,,,,,
+21,2,4,39,SHRAVANURU,,,none,0.0,,,,,
+21,2,4,40,HADRIPURA,,,none,0.0,,,,,
+21,2,4,41,RAMESHVARA,,,none,0.0,,,,,
+21,2,4,42,CHUNCHEGOWDAHOSAHALLI,,,none,0.0,,,,,
+21,2,4,43,CHIKKAHEJJAJI,,,none,0.0,,,,,
+21,2,4,44,MADURANAHOSAHALLI,,,none,0.0,,,,,
+21,2,4,45,NARANAHALLI,,,none,0.0,,,,,
+21,2,4,46,CHIKKAHEJJAJI AMANIKERE,,,none,0.0,,,,,
+21,2,4,47,CHIKKABELAVANGALA,,,none,0.0,,,,,
+21,2,4,48,SONNENAHALLI,,,none,0.0,,,,,
+21,2,4,49,MUGENAHALLI,,,none,0.0,,,,,
+21,2,4,50,MALLANAYAKANAHALLI,,,none,0.0,,,,,
+21,2,4,51,KOLIGERE,,,none,,,,,,no parcel geometry in our data
+21,2,4,52,AKKATAMMANAHALLI,,,none,0.0,,,,,
+21,2,4,53,KAMANAGRAHARA,,,none,0.0,,,,,
+21,2,4,54,DODDAMANKANALA,,,none,0.0,,,,,
+21,2,4,55,BHADRAPURA,,,none,0.0,,,,,
+21,2,4,56,KADATIPPENAHALLI,,,none,0.0,,,,,
+21,2,4,58,CHIKKANAHALLI,,,none,0.0,,,,,
+21,2,4,60,MADESHVARA,,,none,0.0,,,,,
+21,2,4,61,BUCHANAHALLI,,,none,0.0,,,,,
+21,2,4,62,GALIBILIKOTE,,,none,0.0,,,,,
+21,2,4,63,BOVA MUNAHALLI,,,none,0.0,,,,,
+21,2,4,64,BYADARAJAKKASANDRA,,,none,0.0,,,,,
+21,2,4,65,BASAVANAPURA,,,none,0.0,,,,,
+21,2,4,66,CHIKKAMANKANALA,,,none,0.0,,,,,
+21,2,4,67,KARAPURA,,,none,0.0,,,,,
+21,2,5,1,MALEKOTE,,,none,0.0,,,,,
+21,2,5,2,MARAHALLI,,,none,0.0,,,,,
+21,2,5,3,CHIKKARAYAPPANAHALLI,,,none,0.0,,,,,
+21,2,5,4,DODDARAYAPPANAHALLI,,,none,0.0,,,,,
+21,2,5,5,ANTARAHALLI,,,none,0.0,,,,,
+21,2,5,6,TAPASEEHALLI,,,none,0.0,,,,,
+21,2,5,7,BACHCHAHALLI,,,none,0.0,,,,,
+21,2,5,8,ALLALASANDRA,,,none,0.0,,,,,
+21,2,5,9,KARENAHALLI,,,none,0.0,,,,,
+21,2,5,10,KAMALURU,,,none,0.0,,,,,
+21,2,5,11,SHREENIVASAPURA,,,none,0.0,,,,,
+21,2,5,12,HEGGADIHALLI,,,none,0.0,,,,,
+21,2,5,13,GULYANANDIGUNDA,,,none,0.0,,,,,
+21,2,5,14,SONNAMARANAHALLI,,,none,0.0,,,,,
+21,2,5,15,TAPASEEPURA,,,none,0.0,,,,,
+21,2,5,16,ACHARLAHALLI,,,none,0.0,,,,,
+21,2,5,17,MELINAJUGANAHALLI,,,none,0.0,,,,,
+21,2,5,18,KELAGINA JUGANAHALLI,,,none,0.0,,,,,
+21,2,5,19,LAGUMENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,2,5,20,GUNJURU,,,none,0.0,,,,,
+21,2,5,21,MELINANAYKARANDAHALLI,,,none,0.0,,,,,
+21,2,5,22,KELAGINA NAYKARANDAHALLI,,,none,0.0,,,,,
+21,2,5,23,HIREMUDDENAHALLI,,,none,0.0,,,,,
+21,2,5,24,CHIKKAMUDDENAHALLI,,,none,0.0,,,,,
+21,2,5,25,MUGACHANNENAHALLI,,,none,0.0,,,,,
+21,2,5,26,KALLUKOTE,,,none,0.0,,,,,
+21,2,5,27,K G LAKKASANDRA,,,none,0.0,,,,,
+21,2,5,28,MUKKADIGHATTA,,,none,0.0,,,,,
+21,2,5,29,YADLAHALLI,,,none,0.0,,,,,
+21,2,5,30,GEDDALAPALYA,,,none,0.0,,,,,
+21,2,5,31,BHUMENAHALLI,,,none,0.0,,,,,
+21,2,5,32,MUTTAGADAHALLI,,,none,0.0,,,,,
+21,2,5,33,TUBAGERE,,,none,0.0,,,,,
+21,2,5,34,SOTENAHALLI,,,none,0.0,,,,,
+21,2,5,36,MYAKALAHALLI,,,none,0.0,,,,,
+21,2,5,37,HEERENAGUDDADAHALLI,,,none,0.0,,,,,
+21,2,5,38,MASTAMMANAHALLI,,,none,0.0,,,,,
+21,2,5,41,CHEELENAHALLI,,,none,0.0,,,,,
+21,2,5,42,SHIRAVARA,,,none,0.0,,,,,
+21,2,5,43,MAJARA HOSAHALLI,,,none,0.0,,,,,
+21,2,5,44,SOMASHETTIHALLI,,,none,0.0,,,,,
+21,2,5,45,NELLUKUNTE,,,none,0.0,,,,,
+21,2,5,46,CHOKKANAHALLI,,,none,0.0,,,,,
+21,2,5,47,KALLUDEVANAHALLI,,,none,0.0,,,,,
+21,2,5,48,MACHAGONDAHALLI,,,none,0.0,,,,,
+21,2,5,49,CHOGONDAHALLI,,,none,0.0,,,,,
+21,2,5,50,DANDADASAKODIGEHALLI,,,none,0.0,,,,,
+21,2,5,51,CHENNAPURA,,,none,0.0,,,,,
+21,2,5,52,UDANAHALLI,,,none,0.0,,,,,
+21,2,5,53,BEEDIKERE AGRAHARA,,,none,0.0,,,,,
+21,2,5,54,KURUBARAHALLI,,,none,0.0,,,,,
+21,2,5,55,KARANALA,,,none,0.0,,,,,
+21,2,5,56,LAKSHMIDEVIPURA,,,none,0.0,,,,,
+21,2,5,57,KANCHIGANALA,,,none,0.0,,,,,
+21,2,5,58,HADONAHALLI,,,none,0.0,,,,,
+21,2,5,59,TIRUMAGONDANAHALLI,,,none,0.0,,,,,
+21,2,5,60,S  NAGENAHALLI,,,none,0.0,,,,,
+21,2,5,61,GANTIGANAHALLI,,,none,0.0,,,,,
+21,2,5,62,BEEDIKERE,,,none,0.0,,,,,
+21,2,5,63,KAVALAHALLI,,,none,0.0,,,,,
+21,2,5,64,KURUVIGERE,,,none,0.0,,,,,
+21,2,5,65,DINNENAHALLI,,,none,0.0,,,,,
+21,2,5,66,DURGENAHALLI,,,none,0.0,,,,,
+21,2,5,67,KACHAHALLI,,,none,0.0,,,,,
+21,2,5,68,MYAKALATIMMANAHALLI,,,none,0.0,,,,,
+21,2,5,69,NARAGANAHALLI,,,none,0.0,,,,,
+21,3,1,1,NARAYANAPURA,,,none,0.0,,,,,
+21,3,1,2,CHINNAPPANAYKANAHALLIHOSURA,,,none,0.0,,,,,
+21,3,1,3,GOLLAHALLI,,,none,0.0,,,,,
+21,3,1,4,CHINUMANDANAHALLI,,,none,0.0,,,,,
+21,3,1,5,RANGANADHAPURA,,,none,0.0,,,,,
+21,3,1,6,HOSAHALLI,,,none,0.0,,,,,
+21,3,1,7,GODLAMUDDENAHALLI,,,none,0.0,,,,,
+21,3,1,8,GONURU,,,none,0.0,,,,,
+21,3,1,9,SAMBARAGIDA KAVALU,,,none,0.0,,,,,
+21,3,1,10,CHANNASANDRA,,,none,0.0,,,,,
+21,3,1,11,DHARMAPURA,,,none,0.0,,,,,
+21,3,1,12,TIMMANAHALLI,,,none,0.0,,,,,
+21,3,1,13,SHATAKUNTANAHALLI,,,none,0.0,,,,,
+21,3,1,14,BUDAN‌PADIYA,,,none,0.0,,,,,
+21,3,1,15,VIJAYAPURA AMANIKERE,,,none,,,,,,no parcel geometry in our data
+21,3,1,16,GEJJEGUPPE,,,none,0.0,,,,,
+21,3,1,17,YALUVAHALLI,,,none,0.0,,,,,
+21,3,1,18,MANDIBELE,,,none,0.0,,,,,
+21,3,1,19,KOKKAREPADIYA,,,none,0.0,,,,,
+21,3,1,21,SHETTIHALLI,,,none,0.0,,,,,
+21,3,1,22,HARALURU NAGENAHALLI,,,none,0.0,,,,,
+21,3,1,23,KOMMASANDRA,,,none,0.0,,,,,
+21,3,1,24,BATRENAHALLI,,,none,0.0,,,,,
+21,3,1,25,PURA,,,none,0.0,,,,,
+21,3,1,26,VENKATENAHALLI,,,none,0.0,,,,,
+21,3,1,27,DODDAMUDDENAHALLI,,,none,0.0,,,,,
+21,3,1,28,CHIKKANAHALLI,,,none,0.0,,,,,
+21,3,1,29,CHANDENAHALLI,,,none,0.0,,,,,
+21,3,1,30,HOLERAHALLI,,,none,0.0,,,,,
+21,3,1,31,BIJJAVARA,,,none,0.0,,,,,
+21,3,1,32,IRIGENAHALLI,,,none,0.0,,,,,
+21,3,1,33,TIMMAHALLI,,,none,0.0,,,,,
+21,3,1,34,GURURAYANA HOSURU,,,none,0.0,,,,,
+21,3,1,35,VIJAYAPURA,,,none,,,,,,no parcel geometry in our data
+21,3,1,36,BINGEEPURA,,,none,0.0,,,,,
+21,3,1,37,HURULAGURKI,,,none,0.0,,,,,
+21,3,1,38,HOSAHUDYA,,,none,0.0,,,,,
+21,3,1,39,DODDASAGARA HALLI,,,none,0.0,,,,,
+21,3,1,40,VENKATAGIRIKOTE,,,none,0.0,,,,,
+21,3,1,41,MUDUGURKI,,,none,0.0,,,,,
+21,3,1,42,KORAMANGALA,,,none,0.0,,,,,
+21,3,1,43,KONDENAHALLI,,,none,0.0,,,,,
+21,3,1,44,CHIKKATATTAMANGALA,,,none,0.0,,,,,
+21,3,1,45,DODDATATTAMANGALA,,,none,0.0,,,,,
+21,3,1,46,DANDIGANAHALLI,,,none,0.0,,,,,
+21,3,1,47,BAIRAPURA,,,none,0.0,,,,,
+21,3,1,48,HAROHALLI,,,none,0.0,,,,,
+21,3,1,49,BULLAHALLI,,,none,0.0,,,,,
+21,3,1,50,TATAMACHANAHALLIAMANIKERE,,,none,0.0,,,,,
+21,3,1,51,HARADIPURA,,,none,0.0,,,,,
+21,3,1,52,MANGASANDRA,,,none,0.0,,,,,
+21,3,1,53,GADDADA NAGENALLI,,,none,0.0,,,,,
+21,3,1,54,GUDAVANAHALLI,,,none,0.0,,,,,
+21,3,2,1,SOWTEGOWDANAHALLI,,,none,0.0,,,,,
+21,3,2,2,GUTTAHALLI,,,none,0.0,,,,,
+21,3,2,3,RAYASANDRA,,,none,0.0,,,,,
+21,3,2,4,BUDIHALA,,,none,0.0,,,,,
+21,3,2,5,GOKARE,,,none,0.0,,,,,
+21,3,2,6,PRASANNAHALLI,,,none,0.0,,,,,
+21,3,2,7,KURUBARAKUNTE,,,none,,,,,,no parcel geometry in our data
+21,3,2,8,BHANDARAMANAHALLI,,,none,0.0,,,,,
+21,3,2,9,UPPARAHALLI,,,none,0.0,,,,,
+21,3,2,10,GULLOBANAHALLI,,,none,0.0,,,,,
+21,3,2,11,HOSATOTA,,,none,0.0,,,,,
+21,3,2,12,BENNAMANGALA,,,none,0.0,,,,,
+21,3,2,13,CHIKKASANNI,,,none,0.0,,,,,
+21,3,2,14,SANNAMANIKERE,,,none,0.0,,,,,
+21,3,2,15,BAICHAPURA,,,none,0.0,,,,,
+21,3,2,16,AVATI,,,none,0.0,,,,,
+21,3,2,17,BAIRAPPANAHALLI,,,none,0.0,,,,,
+21,3,2,18,LALAGONDANAHALLI,BDA,BDA-RMP2031,partial,0.0,,text,full,Kalagondanahalli,text lists it (Full Village); map share 0.0%
+21,3,2,19,ABACHIKKANAHALLI,,,none,0.0,,,,,
+21,3,2,20,ATTIBELE,,,none,0.0,,,,,
+21,3,2,21,GOBBARAGUNTE,,,none,0.0,,,,,
+21,3,2,22,SAVAKANAHALLI,,,none,0.0,,,,,
+21,3,2,23,ANIFETTA,,,none,0.0,,,,,
+21,3,2,24,MALIGENAHALLI,,,none,0.0,,,,,
+21,3,2,25,LAKSHEEPURA,,,none,0.0,,,,,
+21,3,2,26,NEELERI,,,none,0.0,,,,,
+21,3,2,27,DEVENAHALLI,,,none,0.0,,,,,
+21,3,2,28,KODIMANCHENAHALLI,,,none,0.0,,,,,
+21,3,2,29,HIREAMANIKERE,,,none,0.0,,,,,
+21,3,2,30,DEVASTHANADA AMANIKERE,,,none,0.0,,,,,
+21,3,2,31,SHETTERAHALLI,,,none,0.0,,,,,
+21,3,2,32,BOMMAVARA,,,none,0.0,,,,,
+21,3,2,33,TIMMEGOWDANA HOSAHALLI,,,none,0.0,,,,,
+21,3,2,34,KEMPALINGANAPURA,,,none,0.0,,,,,
+21,3,2,35,AKKUPETE,,,none,0.0,,,,,
+21,3,2,36,CHIKKACHEEMANAHALLI,,,none,0.0,,,,,
+21,3,2,37,UGANAVADI,,,none,0.0,,,,,
+21,3,2,38,MULLIAMANIKERE,,,none,0.0,,,,,
+21,3,2,39,BIDALURU,,,none,0.0,,,,,
+21,3,2,40,VADERAHALLI,,,none,0.0,,,,,
+21,3,2,41,YAMBRAHALLI,,,none,0.0,,,,,
+21,3,2,42,GUNDLAHALLI,,,none,0.0,,,,,
+21,3,2,43,KODAGURKI,,,none,0.0,,,,,
+21,3,2,44,DASARAHALLI,,,none,0.0,,,,,
+21,3,2,45,KANNAMANGALA,,,none,0.0,,,,,
+21,3,2,46,KEMPATIMMANAHALLI,,,none,0.0,,,,,
+21,3,2,47,DODDAPPANAHALLI,,,none,0.0,,,,,
+21,3,2,48,PALYA,,,none,0.0,,,,,
+21,3,2,49,JOGAHALLI,,,none,0.0,,,,,
+21,3,2,50,YARTIGANAHALLI,,,none,0.0,,,,,
+21,3,2,51,AKLENAHALLI,,,none,0.0,,,,,
+21,3,2,52,SADAHALLI,,,none,0.0,,,,,
+21,3,2,53,ANNESHVARA,,,none,0.0,,,,,
+21,3,2,54,GANGAMUTTANAHALLI,,,none,0.0,,,,,
+21,3,2,56,ARISHINAKUNTE,,,none,0.0,,,,,
+21,3,2,57,BHUVANAHALLI,,,none,0.0,,,,,
+21,3,2,58,UDAYAGIRI,,,none,0.0,,,,,
+21,3,2,59,DODDASANNE,,,none,0.0,,,,,
+21,3,2,60,PUJANAHALLI,,,none,0.0,,,,,
+21,3,2,61,DEVANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,3,1,SOMATTANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,3,2,BATRAMARENAHALLI,,,none,0.0,,,,,
+21,3,3,3,DEVANAYKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,3,4,KAVADADASANAHALLI,,,none,0.0,,,,,
+21,3,3,5,BETTAKOTE,,,none,0.0,,,,,
+21,3,3,6,BETTAKOTE AMANIKERE,,,none,0.0,,,,,
+21,3,3,7,BALADIMMANAHALLI,,,none,0.0,,,,,
+21,3,3,8,REDDIHALLI,,,none,0.0,,,,,
+21,3,3,9,HOSAHALLI,,,none,0.0,,,,,
+21,3,3,10,AGALAKOTE,,,none,0.0,,,,,
+21,3,3,11,JONNAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,3,12,NALLURU,,,none,0.0,,,,,
+21,3,3,13,MALLENAHALLI,,,none,0.0,,,,,
+21,3,3,14,BALEPURA,,,none,0.0,,,,,
+21,3,3,15,MALLEPURA,,,none,0.0,,,,,
+21,3,3,16,NALLAPPANAHALLI,,,none,0.0,,,,,
+21,3,3,18,BIDALAPURA,,,none,0.0,,,,,
+21,3,3,19,BIDALAPURA  AMANIKERE,,,none,0.0,,,,,
+21,3,3,20,BUDIGERE,,,none,,,,,,no parcel geometry in our data
+21,3,3,21,BUDIGERE AMANIKERE,,,none,0.0,,,,,
+21,3,3,22,KOTNATEVARU,,,none,0.0,,,,,
+21,3,3,23,HANDRAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,3,24,CHEEMACHANAHALLI,,,none,0.0,,,,,
+21,3,3,25,HARALURU,,,none,0.0,,,,,
+21,3,3,26,MUDDENAHALLI,,,none,0.0,,,,,
+21,3,3,27,POLANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,3,28,CHANNAHALLI,,,none,0.0,,,,,
+21,3,3,29,NAGANAYKANAHALLI,,,none,0.0,,,,,
+21,3,3,30,GANGAVARA CHOWDAPPANAHALLI,,,none,0.0,,,,,
+21,3,3,31,KONDENAHALLI,,,none,0.0,,,,,
+21,3,3,32,KAGGALAHALLI,,,none,0.0,,,,,
+21,3,3,33,AIBASAPURA,,,none,0.0,,,,,
+21,3,3,34,PAPANAHALLI,,,none,0.0,,,,,
+21,3,3,35,DODDAKURUBARAHALLI,,,none,0.0,,,,,
+21,3,3,36,GOPASANDRA,,,none,0.0,,,,,
+21,3,3,37,KONAGINABELE,,,none,,,,,,no parcel geometry in our data
+21,3,3,38,MARADI ANE,,,none,0.0,,,,,
+21,3,3,39,GUMMANAHALLI,,,none,0.0,,,,,
+21,3,3,40,VARADENAHALLI,,,none,0.0,,,,,
+21,3,3,41,GOKARE BACHCHENAHALLI,,,none,0.0,,,,,
+21,3,3,42,BEEDIGANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,3,43,CHANNARAYAPATTANA AMANIKERE,,,none,0.0,,,,,
+21,3,3,44,CHANNARAYAPATTANA,,,none,,,,,,no parcel geometry in our data
+21,3,3,45,IRIGENAHALLI,,,none,0.0,,,,,
+21,3,3,46,PALYA,,,none,0.0,,,,,
+21,3,3,47,HYADALA,,,none,0.0,,,,,
+21,3,3,48,TELLOHALLI AGRAHARA,,,none,0.0,,,,,
+21,3,3,49,TAMMENAHALLI,,,none,0.0,,,,,
+21,3,3,50,CHIKKARAMANAHALLI,,,none,0.0,,,,,
+21,3,3,51,SHROTRIYATELLOHALLI,,,none,0.0,,,,,
+21,3,3,52,BOMMANAHALLI,,,none,0.0,,,,,
+21,3,3,53,KOMMASANDRA,,,none,0.0,,,,,
+21,3,3,54,YALIYURU,,,none,0.0,,,,,
+21,3,3,55,MATTIBARLU,,,none,0.0,,,,,
+21,3,3,56,KACHEEPURA,,,none,0.0,,,,,
+21,3,3,57,NALLURU AMARAYI,,,none,0.0,,,,,
+21,3,4,1,HEGGANAHALLI,,,none,0.0,,,,,
+21,3,4,2,NAGAMANGALA,,,none,0.0,,,,,
+21,3,4,3,SINGRAHALLI,,,none,0.0,,,,,
+21,3,4,4,INDRASANAHALLI,,,none,0.0,,,,,
+21,3,4,5,BETTENAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,4,6,CHOWDANAHALLI,,,none,0.0,,,,,
+21,3,4,7,IL‌TORE,,,none,0.0,,,,,
+21,3,4,8,VISHVANADHAPURA,,,none,0.0,,,,,
+21,3,4,9,SOLURU,,,none,0.0,,,,,
+21,3,4,10,CHINNAKEMPANAHALLI,,,none,0.0,,,,,
+21,3,4,11,ARUVANAHALLI,,,none,0.0,,,,,
+21,3,4,12,CHIKKOBANAHALLI,,,none,0.0,,,,,
+21,3,4,13,BEERASANDRA,,,none,0.0,,,,,
+21,3,4,14,CHAPPARADAHALLI,,,none,0.0,,,,,
+21,3,4,15,RABBANAHALLI,,,none,0.0,,,,,
+21,3,4,16,BAIRADENAHALLI,,,none,0.0,,,,,
+21,3,4,17,RAMANADHAPURA,,,none,0.0,,,,,
+21,3,4,18,DODDAGOLLAHALLI,,,none,0.0,,,,,
+21,3,4,19,TAILAGERE,,,none,0.0,,,,,
+21,3,4,20,KUNDANA,,,none,0.0,,,,,
+21,3,4,21,ARASANAHALLI PEDDANAHALLI,,,none,0.0,,,,,
+21,3,4,22,NARAGANAHALLI,,,none,0.0,,,,,
+21,3,4,23,SULAKUNTE,,,none,0.0,,,,,
+21,3,4,24,LINGADHEERAGOLAHALLI,,,none,0.0,,,,,
+21,3,4,25,BACHCHAHALLI,,,none,0.0,,,,,
+21,3,4,26,DYAVARAHALLI,,,none,0.0,,,,,
+21,3,4,28,DODDACHEEMANAHALLI,,,none,0.0,,,,,
+21,3,4,29,KOYIRA,,,none,0.0,,,,,
+21,3,4,30,BYADARAHALLI,,,none,0.0,,,,,
+21,3,4,31,MAYASANDRA,,,none,0.0,,,,,
+21,3,4,32,SHYANAPPANAHALLI,,,none,0.0,,,,,
+21,3,4,33,MARAGONDANAHALLI,,,none,0.0,,,,,
+21,3,4,34,VAJARAHALLI,,,none,0.0,,,,,
+21,3,4,35,KARAHALLI,,,none,0.0,,,,,
+21,3,4,36,KARAHALLIAMANIKERE,,,none,0.0,,,,,
+21,3,4,37,KEMPATIMMANAHALLI,,,none,0.0,,,,,
+21,3,4,38,MUDIGANAHALLI,,,none,0.0,,,,,
+21,3,4,39,YARRAPPANAHALLI,,,none,0.0,,,,,
+21,3,4,40,MUDDANAYKANAHALLI,,,none,0.0,,,,,
+21,3,4,41,MEESAGANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,3,4,42,KOTTIGETIMMANAHALLI,,,none,0.0,,,,,
+21,3,4,43,SONNENAHALLI,,,none,0.0,,,,,
+21,3,4,44,ALURUDUDDANAHALLI,,,none,0.0,,,,,
+21,3,4,45,BANNIMANGALAMANIKERE,,,none,0.0,,,,,
+21,3,4,46,BANNIMANGALA,,,none,0.0,,,,,
+21,3,4,47,VENKATAPURA,,,none,0.0,,,,,
+21,3,4,48,SUNNAGHATTA,,,none,0.0,,,,,
+21,3,4,49,PANDITAPURA,,,none,0.0,,,,,
+21,3,4,50,ARADESHANAHALLI,,,none,0.0,,,,,
+21,3,4,51,TINDLU,,,none,0.0,,,,,
+21,3,4,52,JUTTANAHALLI,,,none,0.0,,,,,
+21,3,4,53,KAMENAHALLI,,,none,0.0,,,,,
+21,3,4,54,MANAGONDANAHALLI,,,none,0.0,,,,,
+21,3,4,55,CHIKKANNANAHOSAHALLI,,,none,0.0,,,,,
+21,3,4,56,JALIGE,,,none,0.0,,,,,
+21,3,4,57,CHIKKAGOLLAHALLI,,,none,0.0,,,,,
+21,3,4,58,DEVAGANAHALLI,,,none,0.0,,,,,
+21,4,1,1,DODDAGATTIGANABBE,,,none,,,,,,no parcel geometry in our data
+21,4,1,2,PUJENAGRAHARA,,,none,,,,,,no parcel geometry in our data
+21,4,1,3,CHIKKAGATTIGANABBE,,,none,0.0,,,,,
+21,4,1,4,SARKARA GUTTAGANAHALLI,,,none,0.0,,,,,
+21,4,1,5,AMANIDODDAKERE,,,none,,,,,,no parcel geometry in our data
+21,4,1,6,GANAGALU,,,none,,,,,,no parcel geometry in our data
+21,4,1,7,PETTANAHALLI,,,none,0.0,,,,,
+21,4,1,8,CHEEMANDAHALLI,,,none,0.0,,,,,
+21,4,1,9,HOSAKOTE,,,none,,,,,,no parcel geometry in our data
+21,4,1,10,MALLASANDRA,,,none,0.06,,,,,
+21,4,1,11,NADUVATTI,,,none,0.0,,,,,
+21,4,1,12,BHAKTARAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,1,13,APPAJIPURA,,,none,0.0,,,,,
+21,4,1,14,KUMBALAHALLI,,,none,0.0,,,,,
+21,4,1,15,SONNADENAHALLI,,,none,0.0,,,,,
+21,4,1,16,SOMPURA,,,none,0.0,,,,,
+21,4,1,17,UPPARAHALLI,,,none,0.0,,,,,
+21,4,1,18,KURUBARAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,1,19,KALLAHALLI,,,none,0.0,,,,,
+21,4,1,20,AMANICHIKKAKERE,,,none,0.0,,,,,
+21,4,1,21,KOLATURU,,,none,0.0,,,,,
+21,4,1,22,DASARAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,1,23,HALASAHALLI,,,none,0.0,,,,,
+21,4,1,24,DANDUPALYA,,,none,0.0,,,,,
+21,4,1,25,VARADAPURA,,,none,0.0,,,,,
+21,4,1,26,KANNURAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,1,27,ALAPPANAHALLI,,,none,0.0,,,,,
+21,4,1,28,SHANKANEEPURA,,,none,0.0,,,,,
+21,4,1,29,LAKKONDAHALLI,,,none,0.0,,,,,
+21,4,1,30,VABASANDRA,,,none,0.0,,,,,
+21,4,1,31,DODDAHULLURU,,,none,0.0,,,,,
+21,4,1,32,CHIKKAHULLURU,,,none,0.0,,,,,
+21,4,1,33,CHOKKAHALLI,,,none,0.0,,,,,
+21,4,1,34,PILLAGUMPE,,,none,0.0,,,,,
+21,4,1,35,CHOLAPPANAHALLI,,,none,0.0,,,,,
+21,4,1,36,MALLIMAKANAPURA,,,none,0.0,,,,,
+21,4,1,37,CHIKKANALLURAHALLI,,,none,0.0,,,,,
+21,4,1,38,DASARATIMMANAHALLI,,,none,0.0,,,,,
+21,4,1,39,YALACHANAYKANAPURA,,,none,0.0,,,,,
+21,4,1,40,HULLURU AMANIKERELA,,,none,0.0,,,,,
+21,4,1,41,KORALURU,,,none,0.05,,,,,
+21,4,2,1,ANUGONDANAHALLI,,,none,0.0,,,,,
+21,4,2,2,OBALAPURA,,,none,0.0,,,,,
+21,4,2,3,MUTKURU,,,none,0.0,,,,,
+21,4,2,4,YADAGONDANAHALLI,,,none,0.0,,,,,
+21,4,2,5,BYALAHALLI,,,none,0.0,,,,,
+21,4,2,6,MUTTUKADAHALLI,,,none,0.0,,,,,
+21,4,2,7,NAGANAYKANAKOTE,,,none,0.0,,,,,
+21,4,2,8,SAMETANAHALLI,,,none,0.0,,,,,
+21,4,2,9,TIRUMALASHETTIHALLI,,,none,0.18,,,,,
+21,4,2,10,HEMMANDAHALLI,,,none,0.0,,,,,
+21,4,2,11,BHODANAHOSAHALLI,,,none,0.0,,,,,
+21,4,2,12,DODDADUNNASANDRA,,,none,0.0,,,,,
+21,4,2,13,GANAGALURU,,,none,0.0,,,,,
+21,4,2,14,BAGURU,,,none,0.0,,,,,
+21,4,2,15,GUNDURU,,,none,0.0,,,,,
+21,4,2,16,SIDDANAPURA,,,none,0.0,,,,,
+21,4,2,17,SHIVANAPURA,,,none,0.0,,,,,
+21,4,2,18,MARANGERE,,,none,0.0,,,,,
+21,4,2,19,TATTANURU,,,none,0.0,,,,,
+21,4,2,20,TIRUVARANGA,,,none,0.0,,,,,
+21,4,2,21,MUTSANDRA,,,none,0.09,,,,,
+21,4,2,22,BELLIKERE,,,none,0.0,,,,,
+21,4,2,23,KOTURU,,,none,0.0,,,,,
+21,4,2,24,TIMMANDAHALLI,,,none,0.38,,,,,
+21,4,2,25,HAROHALLI,,,none,0.08,,,,,
+21,4,2,26,AJAGONDANAHALLI,,,none,1.03,,,,,
+21,4,2,27,GULLAKAYIPURA,,,none,0.24,,,,,
+21,4,2,28,DEVANAGONDI,,,none,0.0,,,,,
+21,4,2,29,LINGADHEERAMALLASANDRA,,,none,0.0,,,,,
+21,4,2,30,D HOSAHALLI,,,none,0.0,,,,,
+21,4,2,31,SOMLAPURA,,,none,0.0,,,,,
+21,4,2,32,MEDIHALLI,,,none,0.0,,,,,
+21,4,2,33,DEVALAPURA,,,none,0.0,,,,,
+21,4,2,34,BASABATTANAHALLI,,,none,0.0,,,,,
+21,4,2,35,MEDIMALLASANDRA,,,none,0.0,,,,,
+21,4,2,36,HANDENAHALLI,,,none,0.0,,,,,
+21,4,2,37,BANARAHALLI,,,none,0.0,,,,,
+21,4,2,38,AREHALLI,,,none,0.0,,,,,
+21,4,2,39,KALKUNTEAGRAHARA,,,none,0.0,,,,,
+21,4,2,40,NARAYANAKERE,,,none,0.0,,,,,
+21,4,2,41,BAIRAHALLI,,,none,0.0,,,,,
+21,4,2,42,TIMMANDAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,3,1,JADIGENAHALLI,,,none,0.0,,,,,
+21,4,3,2,KARIBEERANAHOSAHALLI,,,none,0.0,,,,,
+21,4,3,3,HARALURU,,,none,0.0,,,,,
+21,4,3,4,CHANDRAPURA BE,,,none,0.0,,,,,
+21,4,3,5,ARALEMAKANAHALLI BE,,,none,0.0,,,,,
+21,4,3,6,BHAKTAGONDANAHALLI BE,,,none,0.0,,,,,
+21,4,3,7,VIJAYAPURA BE,,,none,0.0,,,,,
+21,4,3,8,DODDANALLALA BE,,,none,0.0,,,,,
+21,4,3,9,GUGUTTAHALLI,,,none,0.0,,,,,
+21,4,3,10,CHIKKANALLALA,,,none,0.0,,,,,
+21,4,3,11,ALAGONDANAHALLI,,,none,0.0,,,,,
+21,4,3,12,HALAVASINAKAYIPURA,,,none,0.0,,,,,
+21,4,3,13,DABBAGUNTE,,,none,0.0,,,,,
+21,4,3,14,DODDADENAHALLI,,,none,0.0,,,,,
+21,4,3,15,YALACHAMANAHALLI,,,none,0.0,,,,,
+21,4,3,16,TIMMAPURA,,,none,0.0,,,,,
+21,4,3,17,UMMALU,,,none,0.0,,,,,
+21,4,3,18,HONACHANAHALLI,,,none,0.0,,,,,
+21,4,3,19,TINDLU,,,none,0.0,,,,,
+21,4,3,20,KAMARASANAHALLI,,,none,0.0,,,,,
+21,4,3,21,KURUBARAGOLLAHALLI,,,none,0.0,,,,,
+21,4,3,22,GOVINDAPURA,,,none,0.0,,,,,
+21,4,3,23,PARAMANAHALLI,,,none,0.0,,,,,
+21,4,3,24,BANAHALLI BE,,,none,0.0,,,,,
+21,4,3,25,KATTIGENAHALLI,,,none,0.0,,,,,
+21,4,3,26,BOMMANABANDE,,,none,0.0,,,,,
+21,4,3,27,KHAJIHOSAHALLI,,,none,0.0,,,,,
+21,4,3,28,DEVARAGOLLAHALLI,,,none,0.0,,,,,
+21,4,3,29,MARAGONDANAHALLI,,,none,0.0,,,,,
+21,4,3,30,MUGABALA,,,none,0.0,,,,,
+21,4,3,31,MUGABALA HOSAHALLI,,,none,0.0,,,,,
+21,4,3,32,CHANNAPURA,,,none,0.0,,,,,
+21,4,3,33,PUJARAMANAHALLI,,,none,0.0,,,,,
+21,4,3,34,MAILAPURA,,,none,0.0,,,,,
+21,4,3,35,DODDANALLURAHALLI,,,none,0.0,,,,,
+21,4,3,36,NAKKANAHALLI,,,none,0.0,,,,,
+21,4,3,37,VALAGEREPURA,,,none,0.0,,,,,
+21,4,3,38,CHENNANDAHALLI,,,none,0.0,,,,,
+21,4,3,39,VEERAPURA,,,none,0.0,,,,,
+21,4,3,40,OROHALLI,,,none,0.0,,,,,
+21,4,3,41,TAGGALIHOSAHALLI,,,none,0.0,,,,,
+21,4,3,42,AMBALEEPURA,,,none,0.0,,,,,
+21,4,3,43,INJANAHALLI,,,none,0.0,,,,,
+21,4,3,44,APPASANDRA,,,none,0.0,,,,,
+21,4,3,45,DODDATAGGALI,,,none,0.0,,,,,
+21,4,3,46,CHIKKATAGGALI,,,none,,,,,,no parcel geometry in our data
+21,4,3,47,GONAKANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,3,48,TIRATAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,3,49,BELAMANGALA,,,none,0.0,,,,,
+21,4,3,50,NIDAGHATTA,,,none,0.0,,,,,
+21,4,3,51,GOTTAPURA,,,none,0.0,,,,,
+21,4,3,52,ATTINATTA,,,none,0.0,,,,,
+21,4,3,53,ATTURU,,,none,0.0,,,,,
+21,4,3,54,TAVATAHALLI BE,,,none,0.0,,,,,
+21,4,3,55,SOLURU,,,none,0.0,,,,,
+21,4,3,56,MATTAHALLI BE,,,none,0.0,,,,,
+21,4,3,57,VAGATA,,,none,0.0,,,,,
+21,4,3,58,VADIGEHALLI,,,none,0.0,,,,,
+21,4,3,59,JINNAGARA,,,none,0.0,,,,,
+21,4,3,60,MAKANAHALLI,,,none,0.0,,,,,
+21,4,3,61,DODDADASARAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,3,62,KANEEKALLU,,,none,0.0,,,,,
+21,4,3,63,TARABAHALLI,,,none,0.0,,,,,
+21,4,3,64,HUNASEHALLI,,,none,0.0,,,,,
+21,4,3,65,KODIHALLI,,,none,0.0,,,,,
+21,4,3,66,BISANAHALLI,,,none,0.0,,,,,
+21,4,3,67,DEVASHETTIHALLI,,,none,0.0,,,,,
+21,4,3,68,KACHARAKANAHALLI,,,none,0.0,,,,,
+21,4,3,69,VAGATAGRAHARA,,,none,0.0,,,,,
+21,4,4,1,SULIBELE,,,none,,,,,,no parcel geometry in our data
+21,4,4,2,KADARANAPURA,,,none,0.0,,,,,
+21,4,4,3,RAMPURA,,,none,0.0,,,,,
+21,4,4,4,ANKONAHALLI,,,none,0.0,,,,,
+21,4,4,5,ARASANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,4,6,NALLAGANAHALLI,,,none,0.0,,,,,
+21,4,4,7,BETTAHALLI,,,none,0.0,,,,,
+21,4,4,8,GIDDAPPANAHALLI,,,none,0.0,,,,,
+21,4,4,9,OLAGEREPURA,,,none,0.0,,,,,
+21,4,4,10,K K BEEDU,,,none,0.0,,,,,
+21,4,4,11,KODIPURA,,,none,0.0,,,,,
+21,4,4,12,CHOWDASANDRA,,,none,0.0,,,,,
+21,4,4,13,VENKATESHAPURA,,,none,0.0,,,,,
+21,4,4,14,BATTIGANAHALLI,,,none,0.0,,,,,
+21,4,4,15,BEGURU,,,none,0.0,,,,,
+21,4,4,16,BEEMAKKANAHALLI,,,none,0.0,,,,,
+21,4,4,17,SONNEBAICHANAHALLI,,,none,0.0,,,,,
+21,4,4,18,MUTTAKADAHALLI,,,none,0.0,,,,,
+21,4,4,19,CHIKKAKOLIGA,,,none,,,,,,no parcel geometry in our data
+21,4,4,20,DODDAKOLIGA,,,none,0.0,,,,,
+21,4,4,21,BAGALURU,,,none,0.0,,,,,
+21,4,4,22,GULLAHALLI,,,none,0.0,,,,,
+21,4,4,23,NAGARENAHALLI,,,none,0.0,,,,,
+21,4,4,24,GUNDRAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,4,25,VANAMANAHALLI,,,none,0.0,,,,,
+21,4,4,26,KAMBALIPURA,,,none,,,,,,no parcel geometry in our data
+21,4,4,27,EM SATYAVARA,,,none,0.0,,,,,
+21,4,4,28,SONNAHALLIPURA,,,none,0.0,,,,,
+21,4,4,29,MUTSANDRA,,,none,0.0,,,,,
+21,4,4,30,EKARAJAPURA,,,none,,,,,,no parcel geometry in our data
+21,4,4,31,KEMPAPURA,,,none,0.0,,,,,
+21,4,4,32,HASIGALA,,,none,0.0,,,,,
+21,4,4,33,KAMMASANDRA,,,none,0.0,,,,,
+21,4,4,34,TIMMASANDRA,,,none,0.0,,,,,
+21,4,4,35,SHIVADENAHALLI,,,none,0.0,,,,,
+21,4,4,36,BENDIGANAHALLI,,,none,0.0,,,,,
+21,4,4,37,TIMMAPPANAHALLI,,,none,0.0,,,,,
+21,4,4,38,BALENAHALLI,,,none,0.0,,,,,
+21,4,4,39,DYAVASANDRA,,,none,0.0,,,,,
+21,4,4,40,TENEYURU,,,none,0.0,,,,,
+21,4,4,41,CHIKKARALAGERE,,,none,,,,,,no parcel geometry in our data
+21,4,4,42,AIMANAHALLI,,,none,0.0,,,,,
+21,4,4,43,MATABARLU,,,none,0.0,,,,,
+21,4,4,44,HANIYURU,,,none,0.0,,,,,
+21,4,4,45,CHIKKAKURUBARAHALLI,,,none,0.0,,,,,
+21,4,4,46,DODDARALAGERE,,,none,0.0,,,,,
+21,4,4,47,SIDDENAHALLI,,,none,0.0,,,,,
+21,4,4,48,BHAVAPURA,,,none,0.0,,,,,
+21,4,4,49,HOSADAMBAHALLI,,,none,0.0,,,,,
+21,4,4,50,BHUVANAHALLI,,,none,0.0,,,,,
+21,4,4,51,T AGRAHARA,,,none,0.0,,,,,
+21,4,4,52,SASIMAKANAHALLI,,,none,0.0,,,,,
+21,4,4,53,TAMMARASANAHALLI,,,none,0.0,,,,,
+21,4,4,54,AMANIARALAGERE,,,none,0.0,,,,,
+21,4,4,55,PULAMUNCHI,,,none,0.0,,,,,
+21,4,4,56,SHREENIVASAPURA,,,none,0.0,,,,,
+21,4,4,57,EE AMANIKERE,,,none,0.0,,,,,
+21,4,4,58,SHIVAPURA BE,,,none,0.0,,,,,
+21,4,4,59,DIMBAHALLI BE,,,none,0.0,,,,,
+21,4,4,60,EE HOSAHALLI,,,none,0.0,,,,,
+21,4,4,61,ANUPAHALLI,,,none,0.0,,,,,
+21,4,4,62,RALAKUNTE,BDA,BDA-RMP2031,partial,0.0,,text,full,Yalakunte,text lists it (Full Village); map share 0.0%
+21,4,4,63,CHEEMASANDRA,,,none,0.0,,,,,
+21,4,4,64,ATTIBELE,,,none,0.0,,,,,
+21,4,4,65,ETTINAVADEYAPURA,,,none,0.0,,,,,
+21,4,4,66,SADAPPANAHALLI,,,none,0.0,,,,,
+21,4,4,67,YANAGUNTE,,,none,0.0,,,,,
+21,4,4,68,SHANTANAPURA,,,none,0.0,,,,,
+21,4,4,69,EESTURU,,,none,0.0,,,,,
+21,4,5,1,NANDAGUDI,,,none,0.0,,,,,
+21,4,5,2,CHOKKASANDRA,,,none,0.0,,,,,
+21,4,5,3,GIDNAHALLI,,,none,0.0,,,,,
+21,4,5,4,HETTAKKI,,,none,0.0,,,,,
+21,4,5,5,SATTIGANAHALLI,,,none,0.0,,,,,
+21,4,5,6,BANDAHALLI,,,none,0.0,,,,,
+21,4,5,7,OBALAHALLI,,,none,0.0,,,,,
+21,4,5,8,MARASANDAHALLI,,,none,0.0,,,,,
+21,4,5,9,HULUVANAHALLI,,,none,0.0,,,,,
+21,4,5,10,AGASARAHALLI,,,none,0.0,,,,,
+21,4,5,11,LINGAPURA,,,none,0.0,,,,,
+21,4,5,12,BEERAHALLI,,,none,0.0,,,,,
+21,4,5,13,KOLALA CHENNENAHALLI,,,none,0.0,,,,,
+21,4,5,14,GUDDADACHINNENAHALLI,,,none,0.0,,,,,
+21,4,5,15,ITTASANDRA,,,none,0.0,,,,,
+21,4,5,16,RAMAGOVINDAPURA,,,none,0.0,,,,,
+21,4,5,17,BANAHALLI,,,none,0.0,,,,,
+21,4,5,18,GEDDALAHALLIPURA,,,none,0.0,,,,,
+21,4,5,19,NELAVAGILU,,,none,0.0,,,,,
+21,4,5,20,SARAKANURU,,,none,0.0,,,,,
+21,4,5,21,ETTINAVADEYAPURA,,,none,0.0,,,,,
+21,4,5,22,AREHALLI,,,none,0.0,,,,,
+21,4,5,23,DALASAGERE,,,none,,,,,,no parcel geometry in our data
+21,4,5,24,SHIVANAPURA,,,none,0.0,,,,,
+21,4,5,25,BISSANAHALLI,,,none,0.0,,,,,
+21,4,5,26,BEEMAPURA,,,none,0.0,,,,,
+21,4,5,27,MOTAKADAHALLI,,,none,0.0,,,,,
+21,4,5,28,GULLENAHALLI,,,none,0.0,,,,,
+21,4,5,29,SIDDANAHALLI,,,none,0.0,,,,,
+21,4,5,30,KARAHALLI,,,none,0.0,,,,,
+21,4,5,31,K SHETTIHALLI,,,none,0.0,,,,,
+21,4,5,32,A VADDAHALLI,,,none,0.0,,,,,
+21,4,5,33,S  VADDAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,5,34,S VADDAHALLI,,,none,0.0,,,,,
+21,4,5,35,YAVANTAPURA,,,none,0.0,,,,,
+21,4,5,36,HINDIGANALA,,,none,0.0,,,,,
+21,4,5,37,HOSAVENKATAPURA,,,none,0.0,,,,,
+21,4,5,38,TARABAHALLI,,,none,0.0,,,,,
+21,4,5,39,CHIKKONDAHALLI,,,none,0.0,,,,,
+21,4,5,40,HOSAHARADI,,,none,0.0,,,,,
+21,4,5,41,DODDAHARADI PLANTESHAN,,,none,0.0,,,,,
+21,4,5,42,KARAPPANAHALLI,,,none,0.0,,,,,
+21,4,5,43,K SATYAVARA,,,none,0.0,,,,,
+21,4,5,44,D SHETTIHALLI,,,none,0.0,,,,,
+21,4,5,45,EM HOSAHALLI,,,none,0.0,,,,,
+21,4,5,46,DODDENAHALLI,,,none,0.0,,,,,
+21,4,5,47,MALIYAPPANAHALLI,,,none,0.0,,,,,
+21,4,5,48,TAVAREKERE,,,none,0.0,,,,,
+21,4,5,49,GERAHALLI,,,none,0.0,,,,,
+21,4,5,50,YALACHANAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,5,51,MANCHAPANAHALLI,,,none,0.0,,,,,
+21,4,5,52,KALAPPANAHALLI,,,none,0.0,,,,,
+21,4,5,53,BANAMAKANAHALLI,,,none,0.0,,,,,
+21,4,5,54,GANGAPURA,,,none,0.0,,,,,
+21,4,5,55,VENKATAPURA,,,none,0.0,,,,,
+21,4,5,56,GORAVEHALLE,,,none,0.0,,,,,
+21,4,5,57,N. HOSAHALLI,,,none,0.0,,,,,
+21,4,5,58,MUDDANAHALLI,,,none,0.0,,,,,
+21,4,5,59,KONDRAHALLI,,,none,,,,,,no parcel geometry in our data
+21,4,5,60,MODURU,,,none,0.0,,,,,
+21,4,5,61,BAILANARASAPURA,,,none,0.0,,,,,
+21,4,5,62,KORATE,,,none,0.0,,,,,
+21,4,5,63,DODDARAMANAHALLI,,,none,0.0,,,,,
+21,4,5,64,HEDAKANAHALLI,,,none,0.0,,,,,
+21,4,5,65,GUNDRAHALLI,,,none,0.0,,,,,
+21,4,5,66,SONNIKEMPANAHALLI,,,none,0.0,,,,,
+21,4,5,67,TIMMASANDRA,,,none,0.0,,,,,
+21,4,5,68,DODDAGANAHALLI,,,none,0.0,,,,,
+21,4,5,69,KEMBALIGANAHALLI,,,none,0.0,,,,,
+21,4,5,70,C T GOLLAHALLI,,,none,0.0,,,,,
+21,4,5,71,CHIKKANAHALLI,,,none,0.0,,,,,
+21,4,5,72,SIDDAPURA,,,none,0.0,,,,,
+21,4,5,73,ANKONAHALLI,,,none,0.0,,,,,
