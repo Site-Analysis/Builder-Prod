@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.8.0"
+  version: "1.9.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -301,6 +301,18 @@ components:
           type: string
           enum: [vector_pdf, primeocr_raster, manual]
         georef_rmse_m: { type: [number, "null"], example: 4.2 }
+        m_per_px:
+          type: [number, "null"]
+          example: 4.8
+          description: >
+            Ground size of one source pixel in metres (null for vector extraction).
+            Overlap and edge distance carry this uncertainty together with georef_rmse_m.
+        georef_method:
+          type: [string, "null"]
+          example: "affine_gcp"
+          description: >
+            How the sheet was georeferenced, e.g. affine or 2nd-order polynomial fit on
+            control points from OpenStreetMap and the cadastral lake (never KGIS).
         legend_check:
           type: string
           enum: [pass, warn, fail]

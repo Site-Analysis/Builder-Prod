@@ -4,6 +4,17 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.9.0 — 2026-09-30 — planning
+
+**`SheetQA` extended:** two optional fields on every sheet's QA block (in `/zones` feature
+`qa` and `/zones/at` `sheets_qa`):
+- `m_per_px` (number or null): ground size of one source pixel in metres; null for vector sheets.
+- `georef_method` (string or null): how the sheet was georeferenced (e.g. `affine_gcp`).
+
+Additive, no breaking change. Needed for the raster BDA-RMP2031 Proposed Land Use composite.
+
+---
+
 ## 1.8.0 — 2026-09-30 — planning
 
 Initial planning service contract (`contracts/planning.yaml`, port 8012). 2031 plans only.
