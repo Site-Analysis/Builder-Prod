@@ -329,3 +329,48 @@ Overlays are separate constraint flags; they change what can be built, not how r
 - [Nelamangala Planning Authority master plan page](http://www.nelamangala.tpa.gov.in/en/master-plan) (India only, not opened)
 - Hoskote figures (592 sq km, 316 villages) are from a secondary site (1acre.in) and are unverified.
 - Could not open: OpenCity's second page of master-plan search results (rate-limited), and any `*.tpa.gov.in` or BMRDA page (India only).
+
+---
+
+## Decisions log, 30 Sep 2026
+
+Recorded in the repo because the updated plan file did not come through. Where this log and the sections above disagree, this log wins.
+
+### Sources
+
+| Decision | Detail |
+|---|---|
+| OpenCity PD sheets are Existing Land Use, not Proposed | All 41 "Land Use Maps - Planning District n" PDFs (172 pages) are titled "Existing Land Use Map". Registered as `BDA-RMP2031-ELU-PD<n>` (plan_sheet, draft). The plan's "41 Proposed Land Use maps" (section 1a, step 1.2) was wrong. |
+| ELU as a reference layer | New plan `BDA-ELU2015` (status reference) derived from the ELU sheets. First extraction, since 26 of 41 sheets are vector (11 raster, 4 mixed). |
+| Proposed 2031 zones come from PLUCOMP | `BDA-RMP2031-PLUCOMP`, the A0 Proposed Land Use composite. Chosen over the PDR figures because it is lossless (Flate, exactly 15 main colours = 99.8% of pixels; PDR figures are JPEG with 290k colours), covers the whole LPA on one sheet (no seams, includes PD19), carries its labels as vector text (not burned into zone colour), and has vector road lines usable for georeferencing. About 4.9 m per pixel at the fitted scale 1:57,340; the "1:5,000" in its title block is wrong. |
+| PDR figures are a cross-check only | `BDA-RMP2031-PDR-PLU-PD1..42` (Planning District Report Proposed Land Use figures, PDR page in `applies_to`; PD14/16 caption typos fixed in title with the printed caption kept). After extraction, compare zone class per PD and flag disagreements. |
+| Moved OpenCity dataset | `bengaluru-revised-master-plan-2031` holds one PDF, byte-identical to `BDA-RMP2031-DBINFO`; no Proposed Land Use pages. BDA's site (kbda.karnataka.gov.in) failed TLS and was not used. |
+
+### Georeferencing PLUCOMP (`infra/scripts/planning/georef_plucomp.py`)
+
+1. Coarse affine from lakes: raster water blobs matched to OSM water polygons, seeded by the 5 lakes labelled on the sheet that match OSM names, then RANSAC (60 lake points).
+2. Check points fixed before the fine fit: 72 road junctions (degree >= 3) on the sheet's vector road network paired with OSM junctions, isolated by 250 m. Road samples within 200 m of them are excluded from the fit.
+3. Fine fit: trimmed ICP (affine) of the sheet's grey vector road network onto OSM motorway..tertiary lines (85k pairs, pair RMSE 4.0 m, converged).
+4. Result: scale 1:57,340, rotation 0.00 deg, anisotropy 0.9998, `m_per_px` 4.86. Check points: median 5.8 m; 58 of 72 within 25 m (RMSE 8.0 m); 11 at 50-126 m, likely mispaired junctions or realigned roads (not yet verified). No quadrant pattern (mean residuals under 10 m); 2nd-order polynomial no better, so affine is kept.
+5. Independent check: the LPA boundary polygonised from the sheet's 1.92 pt black lines measures 1,207 km2 at the fitted scale (official 1,206.97 km2).
+6. Rail is not vector on the sheet, so level crossings could not be used. Sources: OpenStreetMap only. No KGIS, Dishaank or Land Beat.
+
+### Contract
+
+- 1.9.0: `SheetQA.m_per_px`, `SheetQA.georef_method`.
+- 1.10.0: `raster_palette` in `SheetQA.extraction`; examples use real doc_ids (`ELU-PD<n>`, `PLUCOMP`).
+
+### Legend defaults for BDA-RMP2031 (`infra/planning/legend_map.csv`, uncommitted until SME review)
+
+All rows are "default, SME to confirm".
+
+- White inside the LPA boundary: class `uncoloured`, never guessed. 14.2% of LPA pixels; 16% of that white lies within about 10 m of a road line; 11.9% of the LPA is white away from roads.
+- Two "Streams" legend rows (`#0084a8` and `#97dbf2`) both kept with native label, class `stream`. `#97dbf2` is also Water Bodies, so those pixels are classed water unless the SME decides otherwise.
+- NGT Buffer (`#38a800` hatch): stored as a separate overlay layer. The zone underneath is filled from surrounding non-hatch pixels of the same area; those polygons are marked "zone inferred under hatch".
+- Forest (`#55ff00` tree glyphs): extent = glyph pixels closed and dilated to a solid area; method recorded.
+- Blend colours (24 colours, 0.19%): nearest main class.
+
+### Deferred
+
+- Snapping zone edges to ELU road, lake and drain lines.
+- RMP 2015, `/classify` and all other layers until Phase 1 sign-off.
