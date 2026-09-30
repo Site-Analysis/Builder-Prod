@@ -248,14 +248,24 @@ def search_villages(q: str, limit: int = 20) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     seen: set[tuple] = set()
     for key, name in _NAMES.items():
-        if len(key) == 4 and key in _PARQUET_VLGS and name.lower().startswith(q_lower) and key not in seen:
+        if (
+            len(key) == 4
+            and key in _PARQUET_VLGS
+            and name.lower().startswith(q_lower)
+            and key not in seen
+        ):
             seen.add(key)
-            results.append({
+            results.append(
+                {
                     "village_name": name,
-                    "dist": key[0], "taluk": key[1], "hobli": key[2], "vlg": key[3],
+                    "dist": key[0],
+                    "taluk": key[1],
+                    "hobli": key[2],
+                    "vlg": key[3],
                     "dist_name": _NAMES.get((key[0],), key[0]),
                     "taluk_name": _NAMES.get((key[0], key[1]), key[1]),
-                })
+                }
+            )
     results.sort(key=lambda x: x["village_name"])
     return results[:limit]
 
@@ -389,7 +399,9 @@ def _load_lgd_support() -> None:
     elif os.path.isfile(_LGD_PARQUET):
         _load_lgd_from_parquet()
     else:
-        logger.info("No LGD data source found (lgd_index.db or lgd_villages.parquet) — /nearby returns empty")
+        logger.info(
+            "No LGD data source found (lgd_index.db or lgd_villages.parquet) — /nearby returns empty"
+        )
         _LGD_CENTROIDS_READY.set()
         return
 
@@ -443,7 +455,9 @@ def _load_lgd_from_parquet() -> None:
         try:
             code = int(row["vil_lgd"])
             geom_ser = gpd.GeoSeries([row.geometry], crs=gdf.crs)
-            _LGD_GEOM_CACHE[code] = json.loads(geom_ser.to_json())["features"][0]["geometry"]
+            _LGD_GEOM_CACHE[code] = json.loads(geom_ser.to_json())["features"][0][
+                "geometry"
+            ]
         except Exception:  # noqa: BLE001, S110
             pass
 
@@ -476,7 +490,12 @@ def _finish_lgd_load() -> None:
                 "SELECT lgd_code, dist, taluk, hobli, vlg FROM village_roster"
             ).fetchall()
             for r in rows:
-                _LGD_TO_ECHADAWI[int(r[0])] = (str(r[1]), str(r[2]), str(r[3]), str(r[4]))
+                _LGD_TO_ECHADAWI[int(r[0])] = (
+                    str(r[1]),
+                    str(r[2]),
+                    str(r[3]),
+                    str(r[4]),
+                )
         except Exception as e:  # noqa: BLE001
             logger.warning("village_roster.db read failed: %s", e)
         finally:
@@ -493,7 +512,9 @@ def _finish_lgd_load() -> None:
             norm = vname_lgd.lower().strip().replace(" ", "")
             if norm in name_to_echadawi:
                 _LGD_TO_ECHADAWI[lgd_code] = name_to_echadawi[norm]
-        logger.info("LGD: name-matched %d villages from echawadi", len(_LGD_TO_ECHADAWI))
+        logger.info(
+            "LGD: name-matched %d villages from echawadi", len(_LGD_TO_ECHADAWI)
+        )
 
     # Which echadawi (dist,taluk,hobli,vlg) tuples have parquet data
     parquet_vlgs: set[tuple[str, str, str, str]] = set()
@@ -501,12 +522,14 @@ def _finish_lgd_load() -> None:
         parts = p.replace("\\", "/").split("/")
         try:
             di = next(i for i, s in enumerate(parts) if s.startswith("dist_"))
-            parquet_vlgs.add((
-                parts[di].replace("dist_", ""),
-                parts[di + 1].replace("taluk_", ""),
-                parts[di + 2].replace("hobli_", ""),
-                os.path.splitext(parts[di + 3])[0].replace("vlg_", ""),
-            ))
+            parquet_vlgs.add(
+                (
+                    parts[di].replace("dist_", ""),
+                    parts[di + 1].replace("taluk_", ""),
+                    parts[di + 2].replace("hobli_", ""),
+                    os.path.splitext(parts[di + 3])[0].replace("vlg_", ""),
+                )
+            )
         except (StopIteration, IndexError):
             continue
 
@@ -517,7 +540,9 @@ def _finish_lgd_load() -> None:
     _LGD_CENTROIDS_READY.set()
     logger.info(
         "LGD support loaded: %d villages, %d mapped, %d with parquet data",
-        len(_LGD_CENTROID_DF), len(_LGD_TO_ECHADAWI), len(_LGD_CODES_WITH_DATA),
+        len(_LGD_CENTROID_DF),
+        len(_LGD_TO_ECHADAWI),
+        len(_LGD_CODES_WITH_DATA),
     )
 
 
@@ -531,12 +556,14 @@ def _build_parquet_village_set() -> None:
         parts = p.replace("\\", "/").split("/")
         try:
             di = next(i for i, s in enumerate(parts) if s.startswith("dist_"))
-            vlgs.add((
-                parts[di].replace("dist_", ""),
-                parts[di + 1].replace("taluk_", ""),
-                parts[di + 2].replace("hobli_", ""),
-                os.path.splitext(parts[di + 3])[0].replace("vlg_", ""),
-            ))
+            vlgs.add(
+                (
+                    parts[di].replace("dist_", ""),
+                    parts[di + 1].replace("taluk_", ""),
+                    parts[di + 2].replace("hobli_", ""),
+                    os.path.splitext(parts[di + 3])[0].replace("vlg_", ""),
+                )
+            )
         except (StopIteration, IndexError):
             continue
     _PARQUET_VLGS = vlgs
@@ -581,7 +608,9 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     dlon = math.radians(lon2 - lon1)
     a = (
         math.sin(dlat / 2) ** 2
-        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlon / 2) ** 2
     )
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
@@ -602,7 +631,9 @@ def build_nearby_boundaries(lat: float, lng: float, radius_km: float) -> str:
         if d > radius_km:
             continue
         echadawi = _LGD_TO_ECHADAWI.get(lgd_code)
-        vname = _LGD_VILLAGE_NAMES.get(lgd_code) or (_NAMES.get(echadawi, "") if echadawi else "")
+        vname = _LGD_VILLAGE_NAMES.get(lgd_code) or (
+            _NAMES.get(echadawi, "") if echadawi else ""
+        )
         feat: dict = {
             "type": "Feature",
             "geometry": _LGD_GEOM_CACHE.get(lgd_code),
@@ -619,7 +650,9 @@ def build_nearby_boundaries(lat: float, lng: float, radius_km: float) -> str:
         results.append((d, feat))
 
     results.sort(key=lambda x: x[0])
-    return json.dumps({"type": "FeatureCollection", "features": [f for _, f in results]})
+    return json.dumps(
+        {"type": "FeatureCollection", "features": [f for _, f in results]}
+    )
 
 
 # ─── Live RCCMS / RTC proxy ──────────────────────────────────────────────────
@@ -634,7 +667,9 @@ _rtc_cache: dict[str, tuple[float, dict]] = {}
 _RTC_TTL = 300.0
 
 
-async def _echawadi_post(client: httpx.AsyncClient, endpoint: str, payload: dict) -> list[dict]:
+async def _echawadi_post(
+    client: httpx.AsyncClient, endpoint: str, payload: dict
+) -> list[dict]:
     """POST to one eChhawadi endpoint; return list of records or []."""
     try:
         r = await client.post(f"{_ECHAWADI_BASE}/{endpoint}", json=payload, timeout=15)
@@ -669,9 +704,19 @@ async def fetch_rtc_village(
 
     async with httpx.AsyncClient(headers=_ECHAWADI_HEADERS) as client:
         rccms_p, rccms_d, mutations_raw = await asyncio.gather(
-            _echawadi_post(client, "GetActiveRCCMS", {"paramObj": {**parcel_data, "RCCMSSearchtype": "P"}}),
-            _echawadi_post(client, "GetActiveRCCMS", {"paramObj": {**parcel_data, "RCCMSSearchtype": "D"}}),
-            _echawadi_post(client, "GetActiveCasesofMutationStatus", {"paramObj": parcel_data}),
+            _echawadi_post(
+                client,
+                "GetActiveRCCMS",
+                {"paramObj": {**parcel_data, "RCCMSSearchtype": "P"}},
+            ),
+            _echawadi_post(
+                client,
+                "GetActiveRCCMS",
+                {"paramObj": {**parcel_data, "RCCMSSearchtype": "D"}},
+            ),
+            _echawadi_post(
+                client, "GetActiveCasesofMutationStatus", {"paramObj": parcel_data}
+            ),
         )
 
     # Merge RCCMS P + D, deduplicate by ack_no
@@ -686,20 +731,22 @@ async def fetch_rtc_village(
         sno = str(rec.get("Survey_no", ""))
         surnoc = str(rec.get("surnoc") or "-")
         hissa = str(rec.get("hissano") or "-")
-        owners.append({
-            "survey_no":   f"{sno}/{surnoc}/{hissa}",
-            "owner_name":  str(rec.get("ownername") or ""),
-            "case_status": str(rec.get("Case_Status") or ""),
-            "ack_no":      ack,
-        })
+        owners.append(
+            {
+                "survey_no": f"{sno}/{surnoc}/{hissa}",
+                "owner_name": str(rec.get("ownername") or ""),
+                "case_status": str(rec.get("Case_Status") or ""),
+                "ack_no": ack,
+            }
+        )
 
     mutations: list[dict] = [
         {
-            "mr_number":        str(rec.get("MRNumber") or ""),
+            "mr_number": str(rec.get("MRNumber") or ""),
             "transaction_type": str(rec.get("TypeofTransaction") or ""),
-            "survey_numbers":   str(rec.get("SurveyNumbers") or ""),
-            "status":           str(rec.get("status") or ""),
-            "applicant":        str(rec.get("applicant") or ""),
+            "survey_numbers": str(rec.get("SurveyNumbers") or ""),
+            "status": str(rec.get("status") or ""),
+            "applicant": str(rec.get("applicant") or ""),
         }
         for rec in mutations_raw
     ]
