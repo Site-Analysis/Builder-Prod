@@ -5,7 +5,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,1,14,NAGAVARA,BDA,BDA-RMP2031,full,100.0,8,both,full,Nagavara,
 20,1,1,15,HENNURU,BDA,BDA-RMP2031,full,100.0,,both,full,Hennuru,
 20,1,1,16,KAJARAKANAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
-20,1,1,17,BYATEGUTTEPALYA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,1,17,BYATEGUTTEPALYA,BDA,BDA-RMP2031,full,100.0,,both,full,Byataguttapalya,alias: name 0.86 (next 0.69); map share 100.0%; no PD in text; taluk agrees
 20,1,2,1,GEDDALA HALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Geddalahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,1,2,2,NAGASHETTI HALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nagashettihalli,
 20,1,2,3,BHUPA SANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Bupasandra,
@@ -18,7 +18,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,2,10,SHAMPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Shyamapura,
 20,1,2,18,HEBBALA,BDA,BDA-RMP2031,full,,,text,full,Hebbala,no parcel geometry in our data; coverage from the text list
 20,1,2,19,HEBBALA AMANI KERE,BDA,BDA-RMP2031,full,100.0,,both,full,Hebbala Amanikere,
-20,1,3,1,ABBAGERE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,3,1,ABBAGERE,BDA,BDA-RMP2031,full,100.0,,both,full,Abbigere,alias: name 0.86 (next 0.77); map share 100.0%; no PD in text; taluk agrees
 20,1,3,2,LAKSHMEEPURA,BDA,BDA-RMP2031,full,100.0,30,both,full,Lakshmipura,
 20,1,3,3,SOMASHETTIHALLI,BDA,BDA-RMP2031,full,100.0,34,both,full,Somashettahalli,
 20,1,3,4,KEREGULLADAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
@@ -31,7 +31,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,3,11,MALLASANDRA,BDA,BDA-RMP2031,full,100.0,30,both,full,Mallasandra,
 20,1,3,12,TIRUMALAPURA,BDA,BDA-RMP2031,partial,36.31,33,both,partial,Thirumalapura,
 20,1,3,17,PEENYA,BDA,BDA-RMP2031,full,100.0,,both,full,Peenya,
-20,1,3,18,LAGGERE,BDA,BDA-RMP2031,full,100.0,18,spatial,,,not in the text list; map share 100.0%
+20,1,3,18,LAGGERE,BDA,BDA-RMP2031,full,100.0,,both,full,Laggeri,alias: name 0.83 (next 0.71); map share 100.0%; no PD in text; taluk agrees
 20,1,3,20,JALAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Jyalahalli,
 20,1,3,21,TANNEERANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Thanneeranahalli,
 20,1,3,22,MYAKALA CHENNAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Myakalachinnenahalli,
@@ -44,7 +44,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,4,15,NELAGADARANAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,1,4,16,KARIVABANAHALLI,BDA,BDA-RMP2031,full,99.77,,both,full,Karivobanahalli,
 20,1,4,25,HEROHALLI,BDA,BDA-RMP2031,partial,89.6,33,both,partial,Herohalli,
-20,1,4,26,ANDRAHALLI,BDA,BDA-RMP2031,partial,92.6,,spatial,,,not in the text list; map share 92.6%
+20,1,4,26,ANDRAHALLI,BDA,BDA-RMP2031,partial,92.6,,both,partial,Handrahalli,alias: name 0.95 (next 0.86); map share 92.6%; no PD in text; taluk agrees
 20,1,4,27,LINGADHEERANAHALLI,BDA,BDA-RMP2031,partial,91.51,,both,partial,Lingadeeranahalli,
 20,1,4,28,MALAGALU,BDA,BDA-RMP2031,full,100.0,,both,full,Malagala,
 20,1,4,29,SAJJEPALYA,BDA,BDA-RMP2031,full,100.0,,both,full,Sajjipalya,
@@ -53,7 +53,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,4,32,NAGARABAVI,BDA,BDA-RMP2031,full,100.0,17,both,full,Nagarabhavi,
 20,1,4,33,GIDDADAKONENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Giddadakonehalli,
 20,1,4,34,KODIGEHALLI,BDA,BDA-RMP2031,partial,57.26,7,spatial,,,not in the text list; map share 57.26%
-20,1,4,35,KANNALLI,BDA,BDA-RMP2031,full,99.84,,spatial,,,not in the text list; map share 99.84%
+20,1,4,35,KANNALLI,BDA,BDA-RMP2031,full,99.84,39,both,full,Kannelli,alias: name 0.83 (next 0.67); map share 99.8%; PD 39 ok
 20,1,4,36,SHEEGEHALLI,BDA,BDA-RMP2031,full,99.46,23,both,full,Sheegehalli,
 20,1,4,37,HOSALLI GOLLARAPALYA,BDA,BDA-RMP2031,partial,55.93,,both,partial,Hosahalli Gollarapalya,
 20,1,4,38,SANEGURUVANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Saneguruvanahalli,
@@ -63,10 +63,10 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,5,1,DASANAPURA,BDA,BDA-RMP2031,full,99.42,40,both,full,Dasanapura,
 20,1,5,2,ADAKAMARANAHALLI,BDA,BDA-RMP2031,full,100.0,40,both,full,Adakimaranahalli,
 20,1,5,3,HAROKYATANA HALLI,BDA,BDA-RMP2031,full,99.61,40,both,full,Harokyathanahalli,
-20,1,5,4,NARAYANAPPANAPALYA,BDA,BDA-RMP2031,full,99.35,,spatial,,,not in the text list; map share 99.35%
+20,1,5,4,NARAYANAPPANAPALYA,BDA,BDA-RMP2031,full,99.35,40,both,full,Narayanapalya,alias: name 0.87 (next 0.77); map share 99.4%; PD 40 ok
 20,1,5,5,KODIPALYA,,,none,0.0,,,,,
 20,1,5,6,MAKALI,BDA,BDA-RMP2031,full,100.0,40,both,full,Makali,
-20,1,5,7,MATTAHALLI,BDA,BDA-RMP2031,partial,2.85,,spatial,,,not in the text list; map share 2.85%
+20,1,5,7,MATTAHALLI,,,none,2.85,,,,,edge noise: not in the text list and map share 2.85% (< 5%)
 20,1,5,8,NARASEEPURA,BDA,BDA-RMP2031,full,99.64,41,both,full,Narasipura,
 20,1,5,9,HONNASANDRA,,,none,0.0,,,,,
 20,1,5,10,TORENAGASANDRA,BDA,BDA-RMP2031,full,99.88,41,both,full,Thore Nagasandra,
@@ -94,7 +94,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,5,32,RAMAPALYA,,,none,0.0,,,,,
 20,1,5,33,HUCHCHANAPALYA,,,none,,,,,,no parcel geometry in our data
 20,1,6,34,MADAVARA,BDA,BDA-RMP2031,partial,45.9,40,both,partial,Madavara,
-20,1,6,35,MADANAYKANAHALLI,BDA,BDA-RMP2031,partial,2.28,,spatial,,,not in the text list; map share 2.28%
+20,1,6,35,MADANAYKANAHALLI,,,none,2.28,,,,,edge noise: not in the text list and map share 2.28% (< 5%)
 20,1,6,36,CHIKKABIDARAKALLU,BDA,BDA-RMP2031,full,99.93,33,both,partial,Chikkabidarakallu,"text says part village (Part Village [Sy. No. 1 to 21, 23 to 51, Gramathana]); map share 99.93%"
 20,1,6,37,SIDDANAHOSAHALLI,BDA,BDA-RMP2031,full,99.89,40,both,full,Siddanahosahalli,
 20,1,6,38,TOTADAGUDDADAHALLI,,,none,1.65,,,,,
@@ -107,13 +107,13 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,6,45,KH GH SHREEKANTAPURA,BDA,BDA-RMP2031,partial,44.49,,spatial,,,not in the text list; map share 44.49%
 20,1,6,46,GAVIPALYA,BDA,BDA-RMP2031,full,100.0,40,both,full,Gavipalya,
 20,1,6,47,DOMBARAHALLI,BDA,BDA-RMP2031,full,,40,text,full,Dombarahalli,no parcel geometry in our data; coverage from the text list
-20,1,6,50,BAYYANDAHALLI,BDA,BDA-RMP2031,partial,92.18,40,both,full,Byandahalli,text says full village; map share 92.18%
+20,1,6,50,BAYYANDAHALLI,BDA,BDA-RMP2031,full,92.18,40,both,full,Byandahalli,boundary drawing differs at the edge (map share 92.18%)
 20,1,6,51,BETTAHALLI,,,none,0.01,,,,,
 20,1,6,52,MACHOHALLI,BDA,BDA-RMP2031,full,99.78,40,both,full,Machohalli,
 20,1,6,53,KACHOHALLI,BDA,BDA-RMP2031,partial,91.86,40,both,partial,Kachohalli,
 20,1,6,54,BAILUKONENAHALLI,BDA,BDA-RMP2031,partial,95.5,40,both,partial,Bylakonenahalli,
 20,1,6,55,VADDARAHALLI,BDA,BDA-RMP2031,full,98.97,22,both,full,Vaddarahalli,
-20,1,6,57,KH GH LAKKENAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,1,6,57,KH GH LAKKENAHALLI,BDA,BDA-RMP2031,full,100.0,40,both,full,Lakkenahalli,re-pointed from 20/1/7/70 (map share 0.0%) to the same-named village; PD 40 ok; map share 100.0%
 20,1,6,74,KADABAGERE,,,none,1.76,,,,,
 20,1,6,75,GIDDENAHALLI,,,none,0.0,,,,,
 20,1,7,58,SHIVANAPURA,,,none,0.01,,,,,
@@ -128,7 +128,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,7,67,GATTISIDDANAHALLI,,,none,0.0,,,,,
 20,1,7,68,NAGASANDRA,,,none,0.0,,,,,
 20,1,7,69,GULLARAPALYA,,,none,,,,,,no parcel geometry in our data
-20,1,7,70,LAKKENAHALLI,BDA,BDA-RMP2031,partial,0.0,40,text,full,Lakkenahalli,text lists it (Full Village); map share 0.0%
+20,1,7,70,LAKKENAHALLI,,,none,0.0,,,,,
 20,1,7,71,HULLEGOWDANAHALLI,,,none,0.0,,,,,
 20,1,7,72,VANKATAPURA,,,none,0.0,,,,,
 20,1,7,73,BAIREGOWDANAHALLI,,,none,0.0,,,,,
@@ -140,7 +140,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,40,404,AGRAHARADASARAHALLI,BDA,BDA-RMP2031,full,,5,text,full,Agrahara Dasarahalli,no parcel geometry in our data; coverage from the text list
 20,1,40,405,GANGONDANAHALLI,BDA,BDA-RMP2031,full,,40,text,full,Gangondanahalli,no parcel geometry in our data; coverage from the text list
 20,1,41,400,MATTHIKERE,BDA,BDA-RMP2031,full,,6,text,full,Matthikere,no parcel geometry in our data; coverage from the text list
-20,1,41,401,CHIKKAMARANAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,401,CHIKKAMARANAHALLI,BDA,BDA-RMP2031,full,,,text,full,Chikkamaranahalli,no parcel geometry in our data; coverage from the text list; re-pointed from 21/1/1/51 (map share 0.0%) to the same-named village; same taluk (BANGALORE-NORTH); no parcel geometry
 20,1,41,402,GANGENAHALLI,BDA,BDA-RMP2031,full,,7,text,full,Gangenahalli,no parcel geometry in our data; coverage from the text list
 20,1,41,403,GURIHOIDEYUVAMYDANA,BDA,BDA-RMP2031,full,,,text,full,Gurihodeyuvamaidana,no parcel geometry in our data; coverage from the text list
 20,1,41,404,MATADAHALLI,BDA,BDA-RMP2031,full,,,text,full,Matadahalli,no parcel geometry in our data; coverage from the text list
@@ -153,7 +153,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,1,41,411,TATA RESERCH INSTITUTE,BDA,BDA-RMP2031,full,,,text,full,Tata Research Institute,no parcel geometry in our data; coverage from the text list
 20,1,41,412,JAKKASANDRA,,,none,,,,,,no parcel geometry in our data
 20,1,41,413,DODDAKUNTE,,,none,,,,,,no parcel geometry in our data
-20,1,41,414,BYADARAHALLI,,,none,,,,,,no parcel geometry in our data
+20,1,41,414,BYADARAHALLI,BDA,BDA-RMP2031,full,,,text,full,Byadarahalli,no parcel geometry in our data; coverage from the text list; re-pointed from 21/1/1/74 (map share 0.0%) to the same-named village; same taluk (BANGALORE-NORTH); no parcel geometry
 20,1,41,415,MALENAHALLI,,,none,,,,,,no parcel geometry in our data
 20,1,41,416,ULSURU,,,none,,,,,,no parcel geometry in our data
 20,1,41,417,BINNAMANGALA,,,none,,,,,,no parcel geometry in our data
@@ -247,7 +247,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,2,14,99,JHUNK,,,none,,,,,,no parcel geometry in our data
 20,2,15,1,KORAMANGALA,BDA,BDA-RMP2031,full,100.0,3,both,full,Koramangala,
 20,2,15,5,RUPENA AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Rupena Agrahara,
-20,2,15,6,ADUGODI,BDA,BDA-RMP2031,full,100.0,3,spatial,,,not in the text list; map share 100.0%
+20,2,15,6,ADUGODI,BDA,BDA-RMP2031,full,100.0,,both,full,Haadagodi,alias: name 0.80 (next 0.75); map share 100.0%; no PD in text; taluk agrees
 20,2,15,7,TAVAREKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Tavarekere,
 20,2,15,8,VANKOJIRAV KHANE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,2,15,9,MADIVALA,BDA,BDA-RMP2031,full,100.0,27,both,full,Madivala,
@@ -255,14 +255,14 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,2,15,11,AGARA,BDA,BDA-RMP2031,full,100.0,31,both,full,Agara,
 20,2,15,12,IBBALURU,BDA,BDA-RMP2031,full,100.0,,both,full,Ibbaluru,
 20,2,15,39,JAKKASANDRA,BDA,BDA-RMP2031,full,100.0,3,both,full,Jakkasandra,
-20,2,15,40,SHREENIVAGILU,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
-20,2,15,41,SHREENIVAGILUKERE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
-20,2,15,42,EEJIPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,15,40,SHREENIVAGILU,BDA,BDA-RMP2031,full,100.0,,both,full,Shinivagalu,alias: name 0.86 (next 0.72); map share 100.0%; no PD in text; taluk agrees
+20,2,15,41,SHREENIVAGILUKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Shinivagala Kere,alias: name 0.83 (next 0.64); map share 100.0%; no PD in text; taluk agrees
+20,2,15,42,EEJIPURA,BDA,BDA-RMP2031,full,100.0,3,both,full,Ejipura,alias: name 0.86 (next 0.67); map share 100.0%; PD 3 ok
 20,2,16,2,CHIKKATOGURU,BDA,BDA-RMP2031,partial,24.47,,both,partial,Chikkathoguru,
 20,2,16,3,BETTADASANAPURA,BDA,BDA-RMP2031,full,100.0,28,both,full,Bettadasanapura,
 20,2,16,4,VITTASANDRA,BDA,BDA-RMP2031,full,99.73,28,both,full,Vittasandra,
 20,2,16,13,BOMMANAHALLI,BDA,BDA-RMP2031,full,100.0,14,both,full,Bommanahalli,
-20,2,16,14,HARALUKUNTE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,2,16,14,HARALUKUNTE,BDA,BDA-RMP2031,full,100.0,,both,full,Haralakunti,alias: name 0.82 (next 0.70); map share 100.0%; no PD in text; taluk agrees
 20,2,16,15,KODICHIKKANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kodichikkanahalli,
 20,2,16,16,ELLUKUNTE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,2,16,17,BASAPURA,BDA,BDA-RMP2031,partial,72.2,,both,partial,Basapura,
@@ -307,7 +307,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,2,18,16,SONNENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Sonnenahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,2,18,17,NAGADEVANAHALLI,BDA,BDA-RMP2031,full,,,text,full,Nagadevanahalli,no parcel geometry in our data; coverage from the text list
 20,2,18,18,B R SAGARA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
-20,2,18,19,K KRUSHNASAGARA,BDA,BDA-RMP2031,full,99.72,42,spatial,,,not in the text list; map share 99.72%
+20,2,18,19,K KRUSHNASAGARA,BDA,BDA-RMP2031,full,99.72,,both,full,Kommagatta Krishnasagara,alias: name 1.00 (next 0.76); map share 99.7%; no PD in text; taluk agrees
 20,2,19,20,RAMOHALLI,BDA,BDA-RMP2031,full,100.0,38,both,full,Ramohalli,
 20,2,19,21,BHEEMANAKUPPE,BDA,BDA-RMP2031,full,100.0,38,both,full,Bheemanakuppe,
 20,2,19,22,CHALLAGHATTA,BDA,BDA-RMP2031,full,99.83,,both,full,Challaghatta,
@@ -315,7 +315,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,2,19,24,EM KRUSHNASAGARA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,2,19,25,MALIGONDANAHALLI,BDA,BDA-RMP2031,full,98.72,,both,full,Maligowdanahalli,
 20,2,19,26,KUMBALAGODU,BDA,BDA-RMP2031,full,99.93,36,both,full,Kumbalagodu,
-20,2,19,27,KANIMINIKE,BDA,BDA-RMP2031,full,98.75,,spatial,,,not in the text list; map share 98.75%
+20,2,19,27,KANIMINIKE,BDA,BDA-RMP2031,full,98.75,36,both,full,Kanaminake,alias: name 0.80 (next 0.67); map share 98.8%; PD 36 ok
 20,2,19,28,KAMBEEPURA,BDA,BDA-RMP2031,full,99.65,36,both,full,Kambipura,
 20,2,19,29,GONIPURA,,,none,0.0,,,,,
 20,2,19,30,CHINNAKURCHI,,,none,,,,,,no parcel geometry in our data
@@ -326,19 +326,19 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,2,19,35,KRUSHNARAJAPURA,,,none,0.0,,,,,
 20,2,20,36,HAMMIGEPURA,BDA,BDA-RMP2031,partial,65.69,32,both,partial,Hemmigepura,
 20,2,20,37,SOMPURA,,,none,0.01,,,,,
-20,2,20,38,LINGADEERANAHALLI,BDA,BDA-RMP2031,partial,95.63,,both,full,Lingadheeranahalli,text says full village; map share 95.63%
+20,2,20,38,LINGADEERANAHALLI,BDA,BDA-RMP2031,full,95.63,,both,full,Lingadheeranahalli,boundary drawing differs at the edge (map share 95.63%)
 20,2,20,39,RACHANAMADU,,,none,0.08,,,,,
 20,2,20,40,VARAHASANDRA,,,none,0.67,,,,,
-20,2,20,41,K GOLLAHALLI,BDA,BDA-RMP2031,partial,2.51,,spatial,,,not in the text list; map share 2.51%
+20,2,20,41,K GOLLAHALLI,,,none,2.51,,,,,edge noise: not in the text list and map share 2.51% (< 5%)
 20,2,20,42,DODDABELE,BDA,BDA-RMP2031,partial,90.32,36,both,partial,Doddabele,
 20,2,20,43,VENKATAPURA,BDA,BDA-RMP2031,full,100.0,36,both,full,Venkatapura,
 20,2,20,44,KERE ITNAHALLI,,,none,,,,,,no parcel geometry in our data
-20,2,20,45,GUDIMAVU,BDA,BDA-RMP2031,full,99.22,36,spatial,,,not in the text list; map share 99.22%
-20,2,20,46,TAGACHAGUPPE,BDA,BDA-RMP2031,full,99.55,,spatial,,,not in the text list; map share 99.55%
+20,2,20,45,GUDIMAVU,BDA,BDA-RMP2031,full,99.22,,both,full,Gudamava,alias: name 0.75 (next 0.67); map share 99.2%; no PD in text; taluk agrees
+20,2,20,46,TAGACHAGUPPE,BDA,BDA-RMP2031,full,99.55,,both,full,Thagachikuppi,alias: name 0.73 (next 0.60); map share 99.5%; no PD in text; taluk agrees
 20,2,20,47,GANGASANDRA,,,none,0.23,,,,,
 20,2,20,48,DEVAGERE,BDA,BDA-RMP2031,full,99.77,36,both,full,Devageri,
 20,2,20,49,B EM KAVALE,BDA,BDA-RMP2031,partial,10.11,,spatial,,,not in the text list; map share 10.11%
-20,2,20,50,AGARA,BDA,BDA-RMP2031,partial,95.29,31,both,full,Agara,text says full village; map share 95.29%
+20,2,20,50,AGARA,BDA,BDA-RMP2031,full,95.29,31,both,full,Agara,boundary drawing differs at the edge (map share 95.29%)
 20,2,20,51,KUMBALAGODU GOLLAHALLI,,,none,0.87,,,,,
 20,2,21,1,CHOLANAYAKANAHALLI,,,none,0.0,,,,,
 20,2,21,2,GANGAPPANAHALLI,,,none,,,,,,no parcel geometry in our data
@@ -384,7 +384,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,2,23,30,PURADAPALYA,,,none,0.0,,,,,
 20,2,23,31,KARIGIRIPURA,,,none,0.0,,,,,
 20,2,23,32,PUNAGAMARANAHALLI,,,none,1.07,,,,,
-20,2,23,44,KOLURU,BDA,BDA-RMP2031,partial,96.88,37,both,full,Koluru,text says full village; map share 96.88%
+20,2,23,44,KOLURU,BDA,BDA-RMP2031,full,96.88,37,both,full,Koluru,boundary drawing differs at the edge (map share 96.88%)
 20,2,23,45,CHIKKALLURU,BDA,BDA-RMP2031,full,99.96,37,both,full,Chikkeluru,
 20,2,23,46,KOLURU NANJUNDAPURA,BDA,BDA-RMP2031,full,100.0,37,both,full,Koluru Nanjundapura,
 20,2,23,47,BYALALU,,,none,0.0,,,,,
@@ -674,10 +674,10 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,3,8,5,BEGIHALLI,BDA,BDA-RMP2031,full,99.17,30,both,full,Begihalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,6,AMANIBIDARAKERE,,,none,1.79,,,,,
 20,3,8,7,HULLUKASAVANA HALLI,BDA,BDA-RMP2031,full,100.0,30,both,full,Hullakasavanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
-20,3,8,8,AMANIBHUJANGADASANAKE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
-20,3,8,9,BANNERUGHATTA,BDA,BDA-RMP2031,partial,97.35,30,both,full,Bannerugatta,text says full village; map share 97.35%; same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,8,AMANIBHUJANGADASANAKE,BDA,BDA-RMP2031,full,100.0,,both,full,Bhujangadasana Amanikere,alias: name 0.73 (next 0.63); map share 100.0%; no PD in text; taluk agrees
+20,3,8,9,BANNERUGHATTA,BDA,BDA-RMP2031,full,97.35,30,both,full,Bannerugatta,boundary drawing differs at the edge (map share 97.35%); same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,10,GOLLAHALLI,BDA,BDA-RMP2031,full,100.0,27,both,full,Gollahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
-20,3,8,11,BHUTANAHALLI,BDA,BDA-RMP2031,partial,89.47,30,both,full,Bhoothanahalli,text says full village; map share 89.47%; same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,11,BHUTANAHALLI,BDA,BDA-RMP2031,full,89.47,30,both,full,Bhoothanahalli,boundary drawing differs at the edge (map share 89.47%); same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,12,BAIRAPPANA HALLI,BDA,BDA-RMP2031,full,99.61,30,both,full,Bhyrappanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,13,KANNANAYAKANAGRAHARA,BDA,BDA-RMP2031,full,99.97,30,both,full,Kannaikana Agrahara,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,14,RAMASANDRA,BDA,BDA-RMP2031,full,99.12,30,both,full,Ramasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
@@ -688,14 +688,14 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,3,8,19,MANTAPA,BDA,BDA-RMP2031,full,99.55,30,both,full,Mantapa,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,20,HULLA HALLI,BDA,BDA-RMP2031,full,99.89,30,both,full,Hullahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,21,VADERA HALLI,BDA,BDA-RMP2031,full,100.0,30,both,full,Vaderahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
-20,3,8,22,S  BINGEEPURA,BDA,BDA-RMP2031,full,99.97,,spatial,,,not in the text list; map share 99.97%
+20,3,8,22,S  BINGEEPURA,BDA,BDA-RMP2031,full,99.97,,both,full,Sarvamanya Bingipura,alias: name 1.00 (next 0.71); map share 100.0%; no PD in text; taluk agrees
 20,3,8,23,SAKALAVARA,BDA,BDA-RMP2031,full,100.0,30,both,full,Sakalavara,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,24,RAGI HALLI,,,none,0.0,,,,,
 20,3,8,25,SHIVANA HALLI,,,none,0.0,,,,,
 20,3,9,1,CHIKKATIMMASANDRA,,,none,0.41,,,,,
 20,3,9,2,SAMANAHALLI,,,none,0.0,,,,,
 20,3,9,3,CHAMBENAHALLI,,,none,1.2,,,,,
-20,3,9,4,YAMARE,BDA,BDA-RMP2031,partial,4.1,,spatial,,,not in the text list; map share 4.1%
+20,3,9,4,YAMARE,,,none,4.1,,,,,edge noise: not in the text list and map share 4.1% (< 5%)
 20,3,9,5,KOMMASANDRA,BDA,BDA-RMP2031,full,99.25,27,both,full,Kommasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,9,6,DOMMASANDRA,BDA,BDA-RMP2031,full,99.57,23,both,full,Dommasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,9,7,KATRIGUPPE,BDA,BDA-RMP2031,full,98.83,26,both,full,Kathriguppe,same name listed 2x in our data; picked the one with parcels / larger LPA share
@@ -718,7 +718,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,4,1,6,VIJANAPURA,BDA,BDA-RMP2031,full,,,text,full,Vijanapura,no parcel geometry in our data; coverage from the text list
 20,4,1,10,KOWDENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kavudenahalli,
 20,4,1,11,SANNATAMMANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Sonathammanahalli,
-20,4,1,12,DEVASANDRA,BDA,BDA-RMP2031,full,100.0,10,spatial,,,not in the text list; map share 100.0%
+20,4,1,12,DEVASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Dyavasandra,alias: name 0.86 (next 0.76); map share 100.0%; no PD in text; taluk agrees
 20,4,1,13,KRUSHNARAJAPURA,BDA,BDA-RMP2031,full,100.0,42,both,full,Krishnarajapura,
 20,4,1,14,BASAVANAPURA,BDA,BDA-RMP2031,full,100.0,10,both,full,Basavanapura,
 20,4,1,15,SHEEGEHALLI,BDA,BDA-RMP2031,full,,23,text,full,Sheegehalli,no parcel geometry in our data; coverage from the text list
@@ -731,14 +731,14 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,4,1,27,MAHADEVAPURA,BDA,BDA-RMP2031,full,,,text,full,Mahadevapura,no parcel geometry in our data; coverage from the text list
 20,4,1,28,B NARAYANAPURA,,,none,,,,,,no parcel geometry in our data
 20,4,2,1,KYALASANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kyalasanahalli,
-20,4,2,2,K NARAYANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,2,2,K NARAYANAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Kotthanuru Narayanapura,alias: name 1.00 (next 0.83); map share 100.0%; no PD in text; taluk agrees
 20,4,2,3,KOTTANURU,BDA,BDA-RMP2031,full,100.0,,both,full,Kotthanooru,
 20,4,2,4,GEDDALAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Gedlahalli,
 20,4,2,5,NAGARESHVARA NAGENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nagareshwaranaganahal li,
 20,4,2,31,KALKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Kalkere,
 20,4,2,32,HORAMAVU,BDA,BDA-RMP2031,full,100.0,9,both,full,Horamavu,
 20,4,2,33,HORAMAVUAGARA,BDA,BDA-RMP2031,full,100.0,,both,full,Horamavu Agara,
-20,4,2,34,AMANI BAIRATIKHANE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,2,34,AMANI BAIRATIKHANE,BDA,BDA-RMP2031,full,100.0,,both,full,Byrathikane,alias: name 0.80 (next 0.75); map share 100.0%; no PD in text; taluk agrees
 20,4,2,35,K CHENNASANDRA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,4,2,38,RACHENAHALLI,BDA,BDA-RMP2031,full,,,text,full,Rachenahalli,no parcel geometry in our data; coverage from the text list
 20,4,2,39,DASARAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Dasarahalli,
@@ -746,12 +746,12 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,4,3,7,KODIGEHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kodagehalli,
 20,4,3,8,SADARAMANGALA,BDA,BDA-RMP2031,full,100.0,,both,full,Sadaramangala,
 20,4,3,9,HUDI,BDA,BDA-RMP2031,full,,9,text,full,Hudi,no parcel geometry in our data; coverage from the text list
-20,4,3,18,R NARAYANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,3,18,R NARAYANAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Ramagondahalli Narayanapura,alias: name 1.00 (next 0.65); map share 100.0%; no PD in text; taluk agrees
 20,4,3,19,NALLURAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Nallurahalli,
 20,4,3,20,CHINNAPPANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Chinnappanahalli,
 20,4,3,21,KUNDALAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kundarahalli,
 20,4,3,22,SONNENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Sonnenahalli,
-20,4,3,29,VAIT FEELD,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,3,29,VAIT FEELD,BDA,BDA-RMP2031,full,100.0,,both,full,Whitefield,alias: name 0.71 (next 0.42); map share 100.0%; no PD in text; taluk agrees
 20,4,3,30,PATTANDURU AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Pattanduru Agrahara,
 20,4,3,36,HAGADURU,BDA,BDA-RMP2031,full,99.96,11,both,full,Hagadooru,
 20,4,3,37,NAGONDANAHALLI,BDA,BDA-RMP2031,full,98.34,,both,full,Nagondanahalli,
@@ -788,13 +788,13 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,4,5,24,DEVARA BEESANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Devarabisanahalli,
 20,4,5,25,AMBALEEPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Ambalipura,
 20,4,5,26,HARALURU,BDA,BDA-RMP2031,full,100.0,,both,full,Haraluru,
-20,4,5,27,SULIKUNTE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,5,27,SULIKUNTE,BDA,BDA-RMP2031,full,100.0,25,both,full,Soolakunte,alias: name 0.89 (next 0.71); map share 100.0%; PD 25 ok
 20,4,5,28,MULLURU,BDA,BDA-RMP2031,full,100.0,,both,full,Mulluru,
 20,4,5,29,KODATI,BDA,BDA-RMP2031,full,100.0,25,both,full,Kodathi,
 20,4,5,30,CHIKKABELLANDURU,BDA,BDA-RMP2031,full,100.0,,both,full,Chikkabellanduru,
 20,4,5,33,DODDAKANNALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Doddakannelli,
 20,4,5,34,KASAVANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kasavanahalli,
-20,4,5,35,CHIKKANNALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,5,35,CHIKKANNALLI,BDA,BDA-RMP2031,full,100.0,25,both,full,Chikkakannelli,alias: name 0.80 (next 0.75); map share 100.0%; PD 25 ok
 20,4,5,36,JUNNASANDRA,BDA,BDA-RMP2031,full,100.0,,both,full,Junnasandra,
 20,4,5,37,HALANAYAKANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Halanayikanahalli,
 20,4,5,38,CHIKKANAYAKANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Chikkanayikanahalli,
@@ -808,11 +808,11 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,4,6,45,NIMBEKAYIPURA,BDA,BDA-RMP2031,full,99.82,,both,full,Nimbekayipura,
 20,4,6,46,RAGHUVANAHALLI,,,none,0.0,,,,,
 20,4,6,47,KANNAMANGALA,BDA,BDA-RMP2031,full,99.91,23,both,full,Kannamangala,
-20,4,6,48,KHAJISONNENAHALLI,BDA,BDA-RMP2031,partial,97.38,23,both,full,Khajisonnenahalli,text says full village; map share 97.38%
+20,4,6,48,KHAJISONNENAHALLI,BDA,BDA-RMP2031,full,97.38,23,both,full,Khajisonnenahalli,boundary drawing differs at the edge (map share 97.38%)
 20,4,6,49,DODDABANAHALLI,BDA,BDA-RMP2031,full,100.0,23,both,full,Doddabanahalli,
-20,4,6,50,KATANNALLURU,BDA,BDA-RMP2031,partial,92.47,,both,full,Katamnalluru,text says full village; map share 92.47%
+20,4,6,50,KATANNALLURU,BDA,BDA-RMP2031,full,92.47,,both,full,Katamnalluru,boundary drawing differs at the edge (map share 92.47%)
 20,4,6,51,GORAVIGERE,BDA,BDA-RMP2031,full,99.49,,both,full,Goravigeri,
-20,4,6,52,BIDARE AGRAHARA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,6,52,BIDARE AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Bidare Agrahara urf Chikkanagenahalli,alias: name 1.00 (next 0.74); map share 100.0%; no PD in text; taluk agrees
 20,4,6,53,BANDAPURA,BDA,BDA-RMP2031,full,100.0,23,both,full,Bhandapura,
 20,4,6,54,SHEEGEHALLI,BDA,BDA-RMP2031,full,99.94,,both,full,Sheegihalli,
 20,4,6,55,BELATTURU,BDA,BDA-RMP2031,full,100.0,,both,full,Belathuru,
@@ -865,8 +865,8 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,4,7,39,VANAJENAHALLI,,,none,0.0,,,,,
 20,4,8,1,BAIYAPPANAHALLI,BDA,BDA-RMP2031,full,100.0,22,spatial,,,not in the text list; map share 100.0%
 20,4,8,2,BENNIGANAHALLI,BDA,BDA-RMP2031,full,100.0,2,spatial,,,not in the text list; map share 100.0%
-20,4,8,3,BINNAMANGALA MA KA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
-20,4,8,4,BAIYAPPANAHALLI MA KA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,8,3,BINNAMANGALA MA KA,BDA,BDA-RMP2031,full,100.0,,both,full,Binnamangala Manavarthe Kavalu,alias: name 1.00 (next 0.77); map share 100.0%; no PD in text; taluk agrees
+20,4,8,4,BAIYAPPANAHALLI MA KA,BDA,BDA-RMP2031,full,100.0,,both,full,Byappanahalli Manavartha Kavalu,alias: name 0.96 (next 0.77); map share 100.0%; no PD in text; taluk agrees
 20,4,8,5,VIJANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,4,8,6,MAHADEVAPURA,,,none,,,,,,no parcel geometry in our data
 20,4,8,7,B NARAYANAPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
@@ -877,7 +877,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,4,9,5,BELURU NAGASANDRA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,4,9,6,YAMALURU,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,4,9,7,CHALLAGHATTA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
-20,4,9,8,VIBHUTIPURA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,4,9,8,VIBHUTIPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Vibhuthipura,alias: name 1.00 (next 0.71); map share 100.0%; no PD in text; taluk agrees
 20,4,9,9,TIPPASANDRA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
 20,4,9,10,BAIRASANDRA,BDA,BDA-RMP2031,full,100.0,4,spatial,,,not in the text list; map share 100.0%
 20,4,9,11,DODDANEKUNDI,BDA,BDA-RMP2031,full,100.0,11,spatial,,,not in the text list; map share 100.0%
@@ -923,8 +923,8 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,5,1,34,KENCHENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kenchenahalli,
 20,5,1,39,HAROHALLI,BDA,BDA-RMP2031,full,100.0,27,both,full,Harohalli,
 20,5,1,41,YALAHANKA,BDA,BDA-RMP2031,full,100.0,,both,full,Yelahanka,
-20,5,1,43,YALAHANKA A  KERE,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
-20,5,1,44,LAKSHEESAGARA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,1,43,YALAHANKA A  KERE,BDA,BDA-RMP2031,full,100.0,,both,full,Yelahanka Amanikere,alias: name 0.80 (next 0.71); map share 100.0%; no PD in text; taluk agrees
+20,5,1,44,LAKSHEESAGARA,BDA,BDA-RMP2031,full,100.0,35,both,full,Lakshmisagara,alias: name 0.96 (next 0.73); map share 100.0%; PD 35 ok
 20,5,1,53,MANCHENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Manchenahalli,
 20,5,1,57,VADERAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Vaderapura,
 20,5,1,58,AVALAHALLI,BDA,BDA-RMP2031,full,100.0,23,both,full,Aavalahalli,
@@ -932,9 +932,9 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,5,2,2,BYATARAYAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Byatarayapura,
 20,5,2,22,AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Agrahara,
 20,5,2,25,GASTIKEMPANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Gasthikempanahalli,
-20,5,2,35,CHOKKANAHALLI,BDA,BDA-RMP2031,partial,86.0,,both,full,Chokkanahalli,text says full village; map share 86.0%
+20,5,2,35,CHOKKANAHALLI,BDA,BDA-RMP2031,full,86.0,,both,full,Chokkanahalli,boundary drawing differs at the edge (map share 86.0%)
 20,5,2,36,TINDLU,BDA,BDA-RMP2031,full,100.0,,both,full,Thindlu,
-20,5,2,37,JAKKURU PLANTESHAN,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,2,37,JAKKURU PLANTESHAN,BDA,BDA-RMP2031,full,100.0,,both,full,Jakkuru Plantation,alias: name 0.84 (next 0.55); map share 100.0%; no PD in text; taluk agrees
 20,5,2,50,JAKKURU,BDA,BDA-RMP2031,full,100.0,,both,full,Jakkuru,
 20,5,2,54,VENKATESHAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Venkateshapura,
 20,5,2,55,SAMPIGEHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Sampigehalli,
@@ -988,7 +988,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,5,4,53,BILLAMARANAHALLI,,,none,,,,,,no parcel geometry in our data
 20,5,4,54,HUTTANAHALLI,,,none,0.0,,,,,
 20,5,4,55,CHIKKAJALA,,,none,0.0,,,,,
-20,5,4,56,CHOKKANAHALLI,BDA,BDA-RMP2031,partial,3.39,,spatial,,,not in the text list; map share 3.39%
+20,5,4,56,CHOKKANAHALLI,,,none,3.39,,,,,edge noise: not in the text list and map share 3.39% (< 5%)
 20,5,4,57,NAVARATNAGRAHARA,,,none,0.0,,,,,
 20,5,4,58,CHANNAHALLI,,,none,0.0,,,,,
 20,5,4,59,MEENAKUNTE,,,none,0.0,,,,,
@@ -996,7 +996,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,5,4,61,BAIYYANAHALLI,,,none,0.65,,,,,
 20,5,5,1,TARAHUNASE,,,none,0.38,,,,,
 20,5,5,2,KATTIGENAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Kattigenahalli,
-20,5,5,3,SUGGUTA,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,5,3,SUGGUTA,BDA,BDA-RMP2031,full,100.0,35,both,full,Sugatta,alias: name 0.83 (next 0.75); map share 100.0%; PD 35 ok
 20,5,5,7,CHOKKANAHALLI,,,none,,,,,,no parcel geometry in our data
 20,5,5,10,BILLAMARANAHALLI,,,none,,,,,,no parcel geometry in our data
 20,5,5,11,NAVARATNAGRAHARA,,,none,,,,,,no parcel geometry in our data
@@ -1025,10 +1025,10 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,5,6,18,KASAGHATTAPURA,BDA,BDA-RMP2031,full,100.0,34,both,full,Kasagattapura,
 20,5,6,21,HURALICHIKKANAHALLI,BDA,BDA-RMP2031,full,98.95,41,both,full,Hurlichikkanahalli,
 20,5,6,22,SASUVEGHATTA,BDA,BDA-RMP2031,full,100.0,41,both,full,Sasiveghatta,
-20,5,6,23,ITTEGALAPURA,BDA,BDA-RMP2031,full,99.32,,spatial,,,not in the text list; map share 99.32%
+20,5,6,23,ITTEGALAPURA,BDA,BDA-RMP2031,full,99.32,42,both,full,Ittagalpura,alias: name 0.86 (next 0.80); map share 99.3%; PD 42 ok
 20,5,6,27,TAMMARASANAHALLI,BDA,BDA-RMP2031,full,100.0,41,both,full,Thammarasanahalli,
 20,5,6,28,MADUGIRIHALLI,BDA,BDA-RMP2031,full,100.0,42,both,full,Maddagirihalli,
-20,5,6,29,SULADEVANAHALLI,BDA,BDA-RMP2031,full,100.0,,spatial,,,not in the text list; map share 100.0%
+20,5,6,29,SULADEVANAHALLI,BDA,BDA-RMP2031,full,100.0,34,both,full,Soladevanahalli,alias: name 0.93 (next 0.86); map share 100.0%; PD 34 ok
 20,5,6,31,DIBBURU,,,none,0.29,,,,,
 20,5,6,32,KALATAMMANAHALLI,BDA,BDA-RMP2031,full,100.0,34,both,full,Kalathammanahalli,
 20,5,6,33,BYALAKERE,BDA,BDA-RMP2031,full,100.0,,both,full,Bylakere,
@@ -1144,7 +1144,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 21,1,1,48,TYAGADAHALLI,,,none,0.0,,,,,
 21,1,1,49,MAHADEVAPURA,,,none,0.0,,,,,
 21,1,1,50,BHUSANDRA,,,none,0.0,,,,,
-21,1,1,51,CHIKKAMARANAHALLI,BDA,BDA-RMP2031,partial,0.0,,text,full,Chikkamaranahalli,text lists it (Full Village); map share 0.0%; same name listed 2x in our data; picked the one with parcels / larger LPA share
+21,1,1,51,CHIKKAMARANAHALLI,,,none,0.0,,,,,
 21,1,1,52,KADUKARENAHALLI,,,none,0.0,,,,,
 21,1,1,53,LINGENAHALLI,,,none,0.0,,,,,
 21,1,1,54,BALAGURUVANAHALLI,,,none,0.0,,,,,
@@ -1166,7 +1166,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 21,1,1,71,GORAVANAHALLI,,,none,0.0,,,,,
 21,1,1,72,NELAMANGALA,,,none,0.0,,,,,
 21,1,1,73,BASAVANAHALLI,,,none,0.0,,,,,
-21,1,1,74,BYADARAHALLI,BDA,BDA-RMP2031,partial,0.0,,text,full,Byadarahalli,text lists it (Full Village); map share 0.0%; same name listed 2x in our data; picked the one with parcels / larger LPA share
+21,1,1,74,BYADARAHALLI,,,none,0.0,,,,,
 21,1,1,75,KANEGOWDANAHALLI,,,none,0.0,,,,,
 21,1,1,76,VISHVESHVARAPURA,,,none,0.0,,,,,
 21,1,1,77,YANTAGANAHALLI,,,none,0.0,,,,,
@@ -1836,7 +1836,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 21,3,2,15,BAICHAPURA,,,none,0.0,,,,,
 21,3,2,16,AVATI,,,none,0.0,,,,,
 21,3,2,17,BAIRAPPANAHALLI,,,none,0.0,,,,,
-21,3,2,18,LALAGONDANAHALLI,BDA,BDA-RMP2031,partial,0.0,,text,full,Kalagondanahalli,text lists it (Full Village); map share 0.0%
+21,3,2,18,LALAGONDANAHALLI,,,none,0.0,,,,,
 21,3,2,19,ABACHIKKANAHALLI,,,none,0.0,,,,,
 21,3,2,20,ATTIBELE,,,none,0.0,,,,,
 21,3,2,21,GOBBARAGUNTE,,,none,0.0,,,,,
@@ -2205,7 +2205,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 21,4,4,59,DIMBAHALLI BE,,,none,0.0,,,,,
 21,4,4,60,EE HOSAHALLI,,,none,0.0,,,,,
 21,4,4,61,ANUPAHALLI,,,none,0.0,,,,,
-21,4,4,62,RALAKUNTE,BDA,BDA-RMP2031,partial,0.0,,text,full,Yalakunte,text lists it (Full Village); map share 0.0%
+21,4,4,62,RALAKUNTE,,,none,0.0,,,,,
 21,4,4,63,CHEEMASANDRA,,,none,0.0,,,,,
 21,4,4,64,ATTIBELE,,,none,0.0,,,,,
 21,4,4,65,ETTINAVADEYAPURA,,,none,0.0,,,,,

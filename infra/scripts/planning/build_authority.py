@@ -44,6 +44,10 @@ OUT_CSV = os.path.join(REPO, "infra", "planning", "authority_villages.csv")
 PLAN_ID = "BDA-RMP2031"
 DISTS = ("20", "21")  # Bengaluru Urban, Bengaluru Rural
 FULL_PCT, NOISE_PCT = 98.0, 2.0
+NOISE_UNLISTED_PCT = 5.0  # a village the text does not list needs 5 % to count
+EDGE_FULL_MIN = 75.0  # text says full and map 75-97 %: full, edge drawing differs
+ALIAS_NAME_MIN, ALIAS_SHARE_MIN, PD_NEAR_M = 0.7, 50.0, 500.0
+ALIAS_CSV = os.path.join(REPO, "infra", "planning", "village_aliases.csv")
 SKIPPED: list[str] = []
 MATCH_MIN, MATCH_MARGIN = 0.86, 0.04
 FIELDS = [
@@ -205,6 +209,7 @@ def village_shares(cad_dir, lpa):
             out[key] = {
                 "share": 100 * a_in / total,
                 "name": next((n for n in vn if n), ""),
+                "hull": shapely.convex_hull(shapely.GeometryCollection(list(g))),
             }
     return out
 
@@ -212,6 +217,149 @@ def village_shares(cad_dir, lpa):
 def _swap(g):
     """Parquets store (Northing, Easting): the [0,1,1,0,0,0] fix from CLAUDE.md."""
     return shapely.transform(g, lambda xy: xy[:, ::-1])
+
+
+# ---------------------------------------------------------------- aliases
+# abbreviations in our (e-Chawadi) names; KH GH is a record-type prefix, not part of the name
+ABBREV = {"ma ka": "manavarthe kavalu", "kh gh": "", "a kere": "amanikere"}
+# text taluk -> our taluk names (Yelahanka taluks were carved out of Bengaluru North)
+TALUKS = {
+    "Bengaluru North": {"BANGALORE-NORTH", "YALAHANKA", "BANGALORE NORTH(ADDITIONAL)"},
+    "Bengaluru East": {"BANGALORE-EAST"},
+    "Bengaluru South": {"BANGALORE-SOUTH"},
+    "Anekal Taluk": {"ANEKAL"},
+}
+NOT_VILLAGES = ("city survey",)
+
+
+def expand(our_name):
+    o = " " + our_name.lower() + " "
+    for a, b in ABBREV.items():
+        o = o.replace(f" {a} ", f" {b} ")
+    return " ".join(o.split())
+
+
+def text_core(text_name):
+    """Drop '(alias)' and 'urf ...' tails from a text name."""
+    t = re.sub(r"\(.*?\)", " ", text_name)
+    t = re.split(r"\burf\b", t, flags=re.IGNORECASE)[0]
+    return " ".join(t.split())
+
+
+def name_closeness(text_name, our_name):
+    """Whole-name similarity, or, when our name abbreviates words to initials
+    (S BINGEEPURA ~ Sarvamanya Bingipura), token by token: same token count, each
+    initial is the first letter of the text word in that position, each full word
+    matches its text word."""
+    o = expand(our_name)
+    t = text_core(text_name)
+    whole = sim(norm(t), norm(o))
+    tt = [w for w in re.split(r"[\s\-]+", t) if norm(w)]
+    ot = [w for w in o.split() if w]
+    if len(tt) != len(ot) or not any(len(w) == 1 for w in ot):
+        return whole
+    parts = []
+    for a, b in zip(tt, ot):
+        if len(b) == 1:
+            if not a.lower().startswith(b):
+                return whole
+        else:
+            parts.append(sim(norm(a), norm(b)))
+    return max(whole, min(parts) if parts else 0.0)
+
+
+def pd_near(key, text_pd, shares, pd_hulls):
+    """In or next to the PD: our village outline within PD_NEAR_M of a village already
+    matched to that PD (PD boundaries themselves are not available)."""
+    if not text_pd:
+        return "n/a"
+    hull = shares.get(key, {}).get("hull")
+    hulls = pd_hulls.get(text_pd, [])
+    if hull is None or not hulls:
+        return "unknown"
+    d = min(hull.distance(h) for h in hulls)
+    return "ok" if d <= PD_NEAR_M else f"fail ({d:.0f} m from PD {text_pd})"
+
+
+def propose_aliases(unmatched_rows, names, shares, taken, pds, pd_hulls):
+    """One proposal per unmatched text row. Accepted only when: name closeness
+    >= ALIAS_NAME_MIN and clear of the runner-up; map share > ALIAS_SHARE_MIN;
+    PD check ok where the text gives a PD, taluk agrees where it does not; and the
+    village is not already taken by another match or alias."""
+    out, taken = [], set(taken)
+    for r in unmatched_rows:
+        text_pd = pds.get(norm(r["village"]))
+        base = {
+            "text": r,
+            "key": None,
+            "closeness": 0,
+            "pd_check": "",
+            "text_pd": text_pd,
+        }
+        if r["village"].lower().startswith(NOT_VILLAGES):
+            out.append(
+                {
+                    **base,
+                    "accepted": False,
+                    "evidence": "not a village (city survey sheets)",
+                }
+            )
+            continue
+        best = []
+        for k, v in names.items():
+            if k[0] not in DISTS:
+                continue
+            sh = shares.get(k, {}).get("share")
+            if sh is None or sh <= ALIAS_SHARE_MIN:
+                continue
+            best.append((name_closeness(r["village"], v["village"]), k))
+        best.sort(reverse=True)
+        if not best or best[0][0] < 0.5:
+            out.append(
+                {
+                    **base,
+                    "accepted": False,
+                    "evidence": "no village inside the LPA with a close name",
+                }
+            )
+            continue
+        c, k = best[0]
+        runner = best[1][0] if len(best) > 1 else 0.0
+        pd_check = pd_near(k, text_pd, shares, pd_hulls)
+        taluk_ok = names[k]["taluk"] in TALUKS.get(r["taluk"], set())
+        fails = []
+        if c < ALIAS_NAME_MIN:
+            fails.append(f"name not close (< {ALIAS_NAME_MIN})")
+        if c - runner < 0.05:
+            fails.append("runner-up name as close")
+        if text_pd and pd_check != "ok":
+            fails.append(f"PD {pd_check}")
+        if not text_pd and not taluk_ok:
+            fails.append(
+                f"no PD in text and taluk differs ({r['taluk']} vs {names[k]['taluk']})"
+            )
+        if k in taken:
+            fails.append("village already matched")
+        accepted = not fails
+        if accepted:
+            taken.add(k)
+        check = (
+            f"PD {text_pd} {pd_check}"
+            if text_pd
+            else f"no PD in text; taluk {'agrees' if taluk_ok else 'differs'}"
+        )
+        out.append(
+            {
+                **base,
+                "key": k,
+                "closeness": round(c, 2),
+                "pd_check": pd_check,
+                "accepted": accepted,
+                "evidence": f"name {c:.2f} (next {runner:.2f}); map share {shares[k]['share']:.1f}%; {check}"
+                + (f"; FAIL: {', '.join(fails)}" if fails else ""),
+            }
+        )
+    return out
 
 
 # ---------------------------------------------------------------- matching
@@ -312,6 +460,140 @@ def main():
             )
         by_key[k] = (r, score, _tie)
 
+    # PD outlines proxy: villages already matched to a PD
+    pd_hulls = {}
+    for k, (r, _score, _tie) in by_key.items():
+        pd = pds.get(norm(r["village"]))
+        if pd and shares.get(k, {}).get("hull") is not None:
+            pd_hulls.setdefault(pd, []).append(shares[k]["hull"])
+
+    # text-listed villages the map puts outside: is a same-named village in another hobli
+    # the right one? Decide with the text's PD.
+    zero_checks = []
+    for k, (r, score, tie) in list(by_key.items()):
+        sh = shares.get(k, {}).get("share")
+        if sh is None or sh >= NOISE_PCT:
+            continue
+        text_pd = pds.get(norm(r["village"]))
+        taluks = TALUKS.get(r["taluk"], set())
+
+        def fits(kk, text_pd=text_pd, taluks=taluks):
+            # inside the LPA and in/next to the text's PD, or, with no PD in the text,
+            # in the text's taluk (a village without parcel geometry has no share to test)
+            s = shares.get(kk, {}).get("share")
+            if text_pd:
+                return (s or 0) > ALIAS_SHARE_MIN and pd_near(
+                    kk, text_pd, shares, pd_hulls
+                ) == "ok"
+            return names[kk]["taluk"] in taluks and (s is None or s > ALIAS_SHARE_MIN)
+
+        alts = [
+            kk
+            for kk, v in names.items()
+            if kk[0] in DISTS
+            and kk != k
+            and kk not in by_key
+            and norm(expand(v["village"])) == norm(r["village"])
+        ]
+        passing = [kk for kk in alts if fits(kk)]
+        line = {
+            "text": r["village"],
+            "text_taluk": r["taluk"],
+            "text_hobli": r["hobli"],
+            "text_pd": text_pd,
+            "from": "/".join(k),
+            "from_name": f"{names[k]['village']} ({names[k]['hobli']}, {names[k]['taluk']})",
+            "from_share": round(sh, 1),
+        }
+        if len(passing) == 1:
+            kk = passing[0]
+            s2 = shares.get(kk, {}).get("share")
+            why = (
+                f"PD {text_pd} ok" if text_pd else f"same taluk ({names[kk]['taluk']})"
+            )
+            del by_key[k]
+            by_key[kk] = (
+                r,
+                score,
+                f"re-pointed from {'/'.join(k)} (map share {sh:.1f}%) to the same-named village; {why}"
+                + ("; no parcel geometry" if s2 is None else f"; map share {s2:.1f}%"),
+            )
+            zero_checks.append(
+                {
+                    **line,
+                    "result": "re-pointed",
+                    "to": "/".join(kk),
+                    "to_name": f"{names[kk]['village']} ({names[kk]['hobli']}, {names[kk]['taluk']})",
+                    "to_share": None if s2 is None else round(s2, 1),
+                    "why": why,
+                }
+            )
+        elif not passing and not text_pd and names[k]["taluk"] not in taluks:
+            del by_key[k]
+            zero_checks.append(
+                {
+                    **line,
+                    "result": "dropped",
+                    "why": f"fuzzy match in the wrong taluk ({names[k]['taluk']}); no same-named village in {r['taluk']}",
+                }
+            )
+        else:
+            zero_checks.append(
+                {
+                    **line,
+                    "result": "kept, flagged"
+                    if not passing
+                    else f"ambiguous: {len(passing)} pass",
+                    "alternatives": ["/".join(a) for a in alts],
+                }
+            )
+
+    matched_texts = {id(v[0]) for v in by_key.values()}
+    unmatched_rows = [r for r in text_rows if id(r) not in matched_texts]
+    aliases = propose_aliases(unmatched_rows, names, shares, set(by_key), pds, pd_hulls)
+    with open(ALIAS_CSV, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(
+            [
+                "text_name",
+                "text_hobli",
+                "text_taluk",
+                "text_pd",
+                "dist",
+                "taluk",
+                "hobli",
+                "vlg",
+                "our_name",
+                "our_hobli",
+                "share_pct",
+                "name_closeness",
+                "pd_check",
+                "accepted",
+                "evidence",
+            ]
+        )
+        for a in aliases:
+            k = a["key"]
+            w.writerow(
+                [
+                    a["text"]["village"],
+                    a["text"]["hobli"],
+                    a["text"]["taluk"],
+                    a["text_pd"] or "",
+                    *(k if k else ("", "", "", "")),
+                    names[k]["village"] if k else "",
+                    names[k]["hobli"] if k else "",
+                    round(shares[k]["share"], 1) if k else "",
+                    a["closeness"],
+                    a["pd_check"],
+                    "yes" if a["accepted"] else "no",
+                    a["evidence"],
+                ]
+            )
+    for a in aliases:
+        if a["accepted"] and a["key"] not in by_key:
+            by_key[a["key"]] = (a["text"], a["closeness"], f"alias: {a['evidence']}")
+
     rows, disagree = [], []
     # every village in our list for these districts gets a row (404 means unknown codes)
     keys = set(shares) | set(by_key) | {k for k in names if k[0] in DISTS}
@@ -344,10 +626,21 @@ def main():
         elif t and spatial_cov == "none":
             cov = "partial"
             note = f"text lists it ({t[0]['coverage_text'][:60]}); map share {share}%"
+        elif (
+            t
+            and text_cov == "full"
+            and spatial_cov == "partial"
+            and share >= EDGE_FULL_MIN
+        ):
+            cov = "full"
+            note = f"boundary drawing differs at the edge (map share {share}%)"
         elif t and text_cov == "full" and spatial_cov == "partial":
             note = f"text says full village; map share {share}%"
         elif t and text_cov == "partial" and spatial_cov == "full":
             note = f"text says part village ({t[0]['coverage_text'][:60]}); map share {share}%"
+        elif not t and spatial_cov == "partial" and share < NOISE_UNLISTED_PCT:
+            cov = "none"
+            note = f"edge noise: not in the text list and map share {share}% (< {NOISE_UNLISTED_PCT:.0f}%)"
         elif not t and spatial_cov != "none":
             note = f"not in the text list; map share {share}%"
         if note and spatial_cov != "no_data":
@@ -432,6 +725,12 @@ def main():
         "duplicate_matches": dup,
         "unmatched_spatial": unmatched_spatial,
         "disagreements": disagree,
+        "zero_share_checks": zero_checks,
+        "aliases_proposed": len(aliases),
+        "aliases_accepted": sum(1 for a in aliases if a["accepted"]),
+        "unmatched_text_after_aliases": [
+            a["text"]["village"] for a in aliases if not a["accepted"]
+        ],
     }
     with open(
         os.path.join(args.data_root, "planning", "authority_report.json"), "w"
