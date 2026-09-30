@@ -133,7 +133,7 @@ One row per (plan_id, native label): native label, colour sampled from the legen
 
 ## 4. Pipeline: from PDF sheet to zone layer
 
-### 4a. Acquire and register (script: `scripts/planning/fetch_sources.py`)
+### 4a. Acquire and register (script: `infra/scripts/planning/fetch_sources.py`)
 
 1. Download every file in the OpenCity RMP 2031 dataset (RMP 2015 later, same script) (CKAN API `package_show`), save under the data mount (`/data/planning/raw/<plan_id>/`), record `sha256` and `retrieved_on`.
 2. Add one register row per file. Status comes from the plan registry, not from the file name.
@@ -228,8 +228,8 @@ The existing `NEXT_PUBLIC_ENABLE_CADASTRAL_EXPLORER` is not read by any code; wi
 |---|---|---|
 | 0.1 | Fix `CLAUDE.md` datum claim (no Kalianpur; raw 32643 after swap) and fill the 1.3 / 1.4 gap in `contracts/CHANGELOG.md` | Docs match code |
 | 0.2 | `contracts/planning.yaml` v0.1.0 + changelog entry, reviewed before any code | Contract merged |
-| 0.3 | `scripts/planning/fetch_sources.py` + `plan_docs.csv` + `plans.csv` for Phase 1 plans | All OpenCity RMP 2031 files downloaded with hashes; one register row each |
-| 0.4 | `scripts/planning/probe_pdfs.py`: vector or raster per sheet | A table of 41 RMP 2031 sheets with fill-path counts |
+| 0.3 | `infra/scripts/planning/fetch_sources.py` + `plan_docs.csv` + `plans.csv` for Phase 1 plans | All OpenCity RMP 2031 files downloaded with hashes; one register row each |
+| 0.4 | `infra/scripts/planning/probe_pdfs.py`: vector or raster per sheet | A table of 41 RMP 2031 sheets with fill-path counts |
 
 ### Phase 1: 2031 layers, built properly
 
@@ -314,7 +314,7 @@ Overlays are separate constraint flags; they change what can be built, not how r
 
 ## 10. First prompt for Claude Code in VS Code
 
-> Read `plans/bengaluru-2031-planning-layers-build-plan.md` (this file). Do Phase 0 only: fix the CLAUDE.md datum note and the contract changelog gap, draft `contracts/planning.yaml` v0.1.0 with the endpoints and response shape in section 5, then write `scripts/planning/fetch_sources.py` and `probe_pdfs.py` and run them on the OpenCity BDA RMP 2031 dataset only (RMP 2015 and other layers come after the 2031 layers are done). Show me the probe table (vector vs raster per sheet) before extracting anything. Rules: contract first, feature flags per section 5, no KGIS or KSRSAC Dishaank in any form, never commit secrets, work on a branch and do not push until I say so.
+> Read `plans/bengaluru-2031-planning-layers-build-plan.md` (this file). Do Phase 0 only: fix the CLAUDE.md datum note and the contract changelog gap, draft `contracts/planning.yaml` v0.1.0 with the endpoints and response shape in section 5, then write `infra/scripts/planning/fetch_sources.py` and `probe_pdfs.py` and run them on the OpenCity BDA RMP 2031 dataset only (RMP 2015 and other layers come after the 2031 layers are done). Show me the probe table (vector vs raster per sheet) before extracting anything. Rules: contract first, feature flags per section 5, no KGIS or KSRSAC Dishaank in any form, never commit secrets, work on a branch and do not push until I say so.
 
 ---
 

@@ -14,7 +14,7 @@ services/cadastral/        FastAPI cadastral service (port 8011)
 contracts/                 OpenAPI YAML — one per service + CHANGELOG.md
 infra/supabase/            Supabase SQL setup scripts
 tests/                     Smoke tests (one file per service, run per-process)
-scripts/planning/          Planning-layer data scripts (fetch sources, probe PDFs)
+infra/scripts/             One-off data build scripts (LGD index; planning/ = fetch sources, probe PDFs)
 data/planning/             Planning source register CSVs (plans.csv, plan_docs.csv); raw PDFs NOT committed
 docs/plans/                Build plans
 docker-compose.yml         Local dev: cadastral backend only; web runs outside
@@ -52,7 +52,7 @@ No external database for parcel data. Pure filesystem:
 
 Every parquet stores `Polygon(Northing, Easting)` instead of `Polygon(Easting, Northing)` — upstream scraper bug. `load_village()` in `cadastral_service.py` fixes this with `affine_transform([0,1,1,0,0,0])` before reprojecting to WGS84. Never read parquets directly without this fix.
 
-**Datum**: Parcels are raw **EPSG:32643** (WGS84 / UTM 43N) after the `[0,1,1,0,0,0]` X/Y swap. `load_village()` applies the swap, then `set_crs(32643).to_crs(4326)`. No Kalianpur correction and no `CADASTRAL_DATUM` env var — the earlier Kalianpur shift added a ~60–100 m synthetic offset and was removed.
+**Datum**: Parcels are raw **EPSG:32643** (WGS84 / UTM 43N) after the `[0,1,1,0,0,0]` X/Y swap. `load_village()` applies the swap, then `set_crs(32643).to_crs(4326)`. No Kalianpur correction and no `CADASTRAL_DATUM` env var — the earlier Kalianpur shift was removed (size of the resulting coordinate shift not measured).
 
 ### Request flow
 
