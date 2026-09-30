@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.11.0"
+  version: "1.12.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -143,6 +143,14 @@ paths:
             pattern: "^-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?$"
           description: "minLng,minLat,maxLng,maxLat in WGS84; at most 0.05 degrees per side"
           example: "77.60,12.95,77.65,13.00"
+        - name: simplify_m
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/SimplifyM" }
+          description: >
+            Geometry pre-simplified at startup with this tolerance in metres (topology kept).
+            Default 8. Suggested by map zoom: 2 at zoom >= 16, 8 at 13-15, 25 at <= 12.
+            /zones/at always uses full geometry.
       responses:
         "200":
           description: GeoJSON FeatureCollection of zones
@@ -185,6 +193,14 @@ paths:
           in: query
           required: true
           schema: { $ref: "#/components/schemas/OverlayKind" }
+        - name: simplify_m
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/SimplifyM" }
+          description: >
+            Geometry pre-simplified at startup with this tolerance in metres (topology kept).
+            Default 8. Suggested by map zoom: 2 at zoom >= 16, 8 at 13-15, 25 at <= 12.
+            /zones/at always uses full geometry.
       responses:
         "200":
           description: GeoJSON FeatureCollection of overlay features
@@ -399,12 +415,18 @@ components:
             surrounding land: "zone inferred under hatch" or "zone inferred under stream symbol".
         qa: { $ref: "#/components/schemas/SheetQA" }
 
+    SimplifyM:
+      type: integer
+      enum: [2, 8, 25]
+      default: 8
+
     ZoneFeatureCollection:
       type: object
-      required: [type, plan, features]
+      required: [type, plan, simplify_m, features]
       properties:
         type: { type: string, enum: [FeatureCollection] }
         plan: { $ref: "#/components/schemas/PlanRef" }
+        simplify_m: { $ref: "#/components/schemas/SimplifyM" }
         features:
           type: array
           items:
@@ -496,11 +518,12 @@ components:
 
     OverlayFeatureCollection:
       type: object
-      required: [type, plan, kind, features]
+      required: [type, plan, kind, simplify_m, features]
       properties:
         type: { type: string, enum: [FeatureCollection] }
         plan: { $ref: "#/components/schemas/PlanRef" }
         kind: { $ref: "#/components/schemas/OverlayKind" }
+        simplify_m: { $ref: "#/components/schemas/SimplifyM" }
         features:
           type: array
           items:
@@ -556,7 +579,7 @@ components:
 
     ZonesAtResult:
       type: object
-      required: [parcel, zones, plans_skipped, overlays_nearby]
+      required: [parcel, zones, trace_hits, plans_skipped, overlays_nearby]
       properties:
         parcel:
           type: object
@@ -572,6 +595,14 @@ components:
         zones:
           type: array
           items: { $ref: "#/components/schemas/ZoneHit" }
+          description: Hits covering at least 1 % of the parcel and at least 20 m2
+        trace_hits:
+          type: array
+          items: { $ref: "#/components/schemas/ZoneHit" }
+          description: >
+            Hits under 1 % of the parcel area or under 20 m2 (edge noise at ~5 m pixels).
+            They are ignored when measuring edge_distance_m and near_edge of the hits in
+            `zones`: a trace zone inside the parcel does not create an edge there.
         plans_skipped:
           type: array
           items: { type: string }

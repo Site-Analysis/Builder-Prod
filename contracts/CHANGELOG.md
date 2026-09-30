@@ -4,6 +4,18 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.12.0 — 2026-09-30 — planning
+
+Additive.
+- `GET /zones/at`: new `trace_hits` list for hits under 1 % of the parcel area or under 20 m2.
+  They no longer appear in `zones`, and they are ignored when measuring `edge_distance_m` /
+  `near_edge` of the remaining hits.
+- `GET /zones` and `GET /overlays`: optional `simplify_m` (2 | 8 | 25, default 8), geometry
+  pre-simplified at startup with that tolerance; responses echo `simplify_m`. `/zones/at`
+  keeps full geometry.
+
+---
+
 ## 1.11.0 — 2026-09-30 — planning
 
 **New endpoint `GET /overlays?plan_id&bbox&kind`:** map-symbol overlays (`ngt_buffer`,
