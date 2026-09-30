@@ -4,6 +4,17 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.10.0 — 2026-09-30 — planning
+
+- `SheetQA.extraction` enum gains `raster_palette`: zones classified by exact colour from a
+  lossless raster with a fixed palette (the BDA-RMP2031 Proposed Land Use composite).
+- Schema examples updated to the registered doc_ids: `BDA-RMP2031-ELU-PD<n>` (Existing Land
+  Use sheets) and `BDA-RMP2031-PLUCOMP` (proposed-zone source). No `PLU-PD` sheets exist.
+
+Additive, no breaking change.
+
+---
+
 ## 1.9.0 — 2026-09-30 — planning
 
 **`SheetQA` extended:** two optional fields on every sheet's QA block (in `/zones` feature

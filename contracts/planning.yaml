@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.9.0"
+  version: "1.10.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -73,7 +73,7 @@ paths:
           in: path
           required: true
           schema: { type: string }
-          example: "BDA-RMP2031-PLU-PD11"
+          example: "BDA-RMP2031-ELU-PD11"
       responses:
         "200":
           description: Register row
@@ -233,7 +233,7 @@ components:
       description: One source-register row. Status comes from the plan registry, never the file name.
       required: [doc_id, authority, plan_id, type, title, status, status_label, source_url, sha256, retrieved_on, checked]
       properties:
-        doc_id: { type: string, example: "BDA-RMP2031-PLU-PD11" }
+        doc_id: { type: string, example: "BDA-RMP2031-ELU-PD11" }
         authority: { type: string, example: "BDA" }
         plan_id: { type: string, example: "BDA-RMP2031" }
         type:
@@ -295,11 +295,11 @@ components:
       type: object
       required: [doc_id, status, extraction, legend_check]
       properties:
-        doc_id: { type: string, example: "BDA-RMP2031-PLU-PD11" }
+        doc_id: { type: string, example: "BDA-RMP2031-PLUCOMP" }
         status: { $ref: "#/components/schemas/DocStatus" }
         extraction:
           type: string
-          enum: [vector_pdf, primeocr_raster, manual]
+          enum: [vector_pdf, raster_palette, primeocr_raster, manual]
         georef_rmse_m: { type: [number, "null"], example: 4.2 }
         m_per_px:
           type: [number, "null"]
@@ -328,7 +328,7 @@ components:
       properties:
         zone_uid: { type: string, example: "BDA-RMP2031-PD11-000123" }
         plan_id: { type: string, example: "BDA-RMP2031" }
-        doc_id: { type: string, example: "BDA-RMP2031-PLU-PD11" }
+        doc_id: { type: string, example: "BDA-RMP2031-PLUCOMP" }
         zone_label_native:
           type: string
           example: "Residential (Main)"
@@ -379,7 +379,7 @@ components:
           type: array
           items: { type: string }
           description: Every sheet this zone hit came from (two or more on a sheet seam)
-          example: ["BDA-RMP2031-PLU-PD11", "BDA-RMP2031-PLU-PD12"]
+          example: ["BDA-RMP2031-ELU-PD11", "BDA-RMP2031-ELU-PD12"]
         overlap_pct:
           type: number
           example: 96.4
