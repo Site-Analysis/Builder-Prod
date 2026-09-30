@@ -22,10 +22,13 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 
 import geopandas as gpd
+import numpy as np
+import shapely
 
 log = logging.getLogger(__name__)
 
 CRS_METRIC = 32643
+SIMPLIFY_LEVELS = (2, 8, 25)  # metres; must match SimplifyM in contracts/planning.yaml
 CRS_WGS84 = 4326
 OVERLAY_KINDS = {
     "ngt_buffer": "ngt_buffer",
@@ -44,6 +47,9 @@ class PlanLayers:
     plan_id: str
     zones: gpd.GeoDataFrame | None = None
     overlays: gpd.GeoDataFrame | None = None
+    # tolerance (m) -> geometry array aligned with the layer rows (map display only)
+    zones_simplified: dict[int, np.ndarray] = field(default_factory=dict)
+    overlays_simplified: dict[int, np.ndarray] = field(default_factory=dict)
 
 
 @dataclass
@@ -88,6 +94,30 @@ def _load_layer(path: str, docs: dict[str, dict]) -> gpd.GeoDataFrame | None:
     return gdf
 
 
+def simplify_levels(
+    gdf: gpd.GeoDataFrame, group: str | None = None
+) -> dict[int, np.ndarray]:
+    """Pre-simplified geometry per tolerance. Polygons that form a coverage (per group)
+    are simplified together so shared edges stay shared; lines are simplified singly."""
+    out = {}
+    geoms = np.asarray(gdf.geometry.values)
+    if group is None:
+        groups = [np.arange(len(gdf))]
+    else:
+        col = gdf[group].to_numpy()
+        groups = [np.flatnonzero(col == v) for v in np.unique(col)]
+    for tol in SIMPLIFY_LEVELS:
+        res = geoms.copy()
+        for idx in groups:
+            part = geoms[idx]
+            if np.isin(shapely.get_type_id(part), (3, 6)).all():
+                res[idx] = shapely.coverage_simplify(part, tol)
+            else:
+                res[idx] = shapely.simplify(part, tol, preserve_topology=True)
+        out[tol] = res
+    return out
+
+
 def load_store() -> Store:
     reg = os.getenv("PLANNING_REGISTER_DIR", "infra/planning")
     data = os.getenv("PLANNING_DATA_DIR", "data/planning/zones")
@@ -100,7 +130,13 @@ def load_store() -> Store:
             os.path.join(data, f"{plan_id}_overlays.parquet"), st.docs
         )
         if zones is not None or overlays is not None:
-            st.layers[plan_id] = PlanLayers(plan_id, zones, overlays)
+            st.layers[plan_id] = PlanLayers(
+                plan_id,
+                zones,
+                overlays,
+                simplify_levels(zones) if zones is not None else {},
+                simplify_levels(overlays, "class_norm") if overlays is not None else {},
+            )
             log.info(
                 "loaded %s: %s zones, %s overlays",
                 plan_id,

@@ -46,19 +46,26 @@ def _plan_and_layers(plan_id: str):
 
 
 @router.get("/zones")
-def get_zones(plan_id: str = Query(...), bbox: str = Query(...)) -> dict:
+def get_zones(
+    plan_id: str = Query(...),
+    bbox: str = Query(...),
+    simplify_m: int | None = Query(None),
+) -> dict:
     _require_flag()
     plan, layers = _plan_and_layers(plan_id)
     if layers is None or layers.zones is None:
         raise HTTPException(
             status_code=404, detail=f"No zone layer loaded for {plan_id}"
         )
-    return zs.zones_in_bbox(layers, plan, bbox)
+    return zs.zones_in_bbox(layers, plan, bbox, simplify_m)
 
 
 @router.get("/overlays")
 def get_overlays(
-    plan_id: str = Query(...), bbox: str = Query(...), kind: str = Query(...)
+    plan_id: str = Query(...),
+    bbox: str = Query(...),
+    kind: str = Query(...),
+    simplify_m: int | None = Query(None),
 ) -> dict:
     _require_flag()
     plan, layers = _plan_and_layers(plan_id)
@@ -66,7 +73,7 @@ def get_overlays(
         raise HTTPException(
             status_code=404, detail=f"No overlay layer loaded for {plan_id}"
         )
-    return zs.overlays_in_bbox(layers, plan, bbox, kind)
+    return zs.overlays_in_bbox(layers, plan, bbox, kind, simplify_m)
 
 
 @router.get("/zones/at")
@@ -82,14 +89,16 @@ async def get_zones_at(
     st = get_store()
     fc = await zs.fetch_parcel(dist, taluk, hobli, vlg, survey, authorization)
     parcel, props = zs.parcel_geometry(fc)
-    zones, skipped, used = [], [], []
+    zones, traces, skipped, used = [], [], [], []
     for plan_id, layers in st.layers.items():
         if not _plan_enabled(plan_id):
             skipped.append(plan_id)
             continue
         used.append(layers)
         if layers.zones is not None:
-            zones.extend(zs.zone_hits(layers, parcel))
+            hits, trace = zs.zone_hits(layers, parcel)
+            zones.extend(hits)
+            traces.extend(trace)
     statuses = {z["status"] for z in zones}
     note = None
     if not zones:
@@ -107,6 +116,7 @@ async def get_zones_at(
             "area_sqm": round(parcel.area, 1),
         },
         "zones": zones,
+        "trace_hits": traces,
         "plans_skipped": skipped,
         "overlays_nearby": zs.overlays_nearby(used, parcel),
         "note": note,

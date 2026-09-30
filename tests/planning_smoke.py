@@ -219,3 +219,25 @@ def test_h_zones_at_plan_flag_off(client_layers_only, monkeypatch):
     _stub_parcel(monkeypatch, _parcel_fc(_E + 400, _N + 400, _E + 460, _N + 460))
     body = client_layers_only.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()
     assert body["zones"] == [] and body["plans_skipped"] == ["BDA-RMP2031"]
+
+
+def test_i_trace_hits(client, monkeypatch):
+    # grazes Commercial by 0.4 m (24 m2, 0.4 % of the parcel): a trace hit
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 900, _N + 400, _E + 1000.4, _N + 460))
+    body = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()
+    assert [h["zone_label_native"] for h in body["zones"]] == ["Residential"]
+    assert [h["zone_label_native"] for h in body["trace_hits"]] == ["Commercial"]
+    res = body["zones"][0]
+    assert res["near_edge"] is False  # the trace zone's edge does not count
+    assert body["trace_hits"][0]["near_edge"] is True  # the trace hit keeps its own
+
+
+def test_j_simplify_levels(client):
+    bbox = _wgs_bbox(_E, _N, _E + 2000, _N + 1000)
+    for tol in (2, 8, 25):
+        r = client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}&simplify_m={tol}")
+        assert r.status_code == 200 and r.json()["simplify_m"] == tol
+    assert client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}").json()["simplify_m"] == 8
+    assert client.get(f"/zones?plan_id=BDA-RMP2031&bbox={bbox}&simplify_m=5").status_code == 400
+    r = client.get(f"/overlays?plan_id=BDA-RMP2031&bbox={bbox}&kind=stream_centreline&simplify_m=25")
+    assert r.status_code == 200 and r.json()["simplify_m"] == 25

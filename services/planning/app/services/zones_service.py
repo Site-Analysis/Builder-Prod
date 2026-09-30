@@ -21,10 +21,15 @@ from app.services.store import (
     CRS_WGS84,
     OVERLAY_KINDS,
     OVERLAY_NOTES,
+    SIMPLIFY_LEVELS,
     PlanLayers,
 )
 
 MAX_BBOX_DEG = 0.05
+DEFAULT_SIMPLIFY_M = 8
+TRACE_SHARE = 0.01  # hits below 1 % of the parcel ...
+TRACE_AREA_M2 = 20.0  # ... or below 20 m2 are trace hits
+COORD_DECIMALS = 6  # ~0.1 m in WGS84
 STREAM_NEARBY_M = 100.0
 EDGE_WINDOW_M = 200.0  # same-label zones within this of the parcel are merged before measuring edges
 CADASTRAL_URL = os.getenv("CADASTRAL_URL", "http://localhost:8011")
@@ -63,10 +68,24 @@ def parse_bbox(bbox: str) -> shapely.Polygon:
     )
 
 
-def feature_collection(gdf: gpd.GeoDataFrame, props: list[str], extra: dict) -> dict:
-    out = gdf.to_crs(CRS_WGS84)
+def check_simplify(simplify_m: int | None) -> int:
+    tol = DEFAULT_SIMPLIFY_M if simplify_m is None else simplify_m
+    if tol not in SIMPLIFY_LEVELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"simplify_m must be one of {list(SIMPLIFY_LEVELS)}",
+        )
+    return tol
+
+
+def feature_collection(
+    gdf: gpd.GeoDataFrame, geoms: np.ndarray, props: list[str], extra: dict
+) -> dict:
+    """GeoJSON in WGS84 from metric geometries; coordinates rounded to ~0.1 m."""
+    out = gpd.GeoSeries(geoms, crs=CRS_METRIC).to_crs(CRS_WGS84).values
+    out = shapely.transform(np.asarray(out), lambda xy: np.round(xy, COORD_DECIMALS))
     feats = []
-    for row, geom in zip(out[props].to_dict("records"), out.geometry, strict=True):
+    for row, geom in zip(gdf[props].to_dict("records"), out, strict=True):
         feats.append(
             {
                 "type": "Feature",
@@ -101,24 +120,40 @@ ZONE_PROPS = [
 ]
 
 
-def zones_in_bbox(layers: PlanLayers, plan: dict, bbox: str) -> dict:
+def zones_in_bbox(
+    layers: PlanLayers, plan: dict, bbox: str, simplify_m: int | None = None
+) -> dict:
+    tol = check_simplify(simplify_m)
     box = parse_bbox(bbox)
     z = layers.zones
     idx = z.sindex.query(box, predicate="intersects")
     sub = z.iloc[idx].copy()
     sub["inferred_note"] = sub["note"]
-    return feature_collection(sub, ZONE_PROPS, {"plan": plan_ref(plan)})
+    return feature_collection(
+        sub,
+        layers.zones_simplified[tol][idx],
+        ZONE_PROPS,
+        {"plan": plan_ref(plan), "simplify_m": tol},
+    )
 
 
-def overlays_in_bbox(layers: PlanLayers, plan: dict, bbox: str, kind: str) -> dict:
+def overlays_in_bbox(
+    layers: PlanLayers,
+    plan: dict,
+    bbox: str,
+    kind: str,
+    simplify_m: int | None = None,
+) -> dict:
     if kind not in OVERLAY_KINDS:
         raise HTTPException(
             status_code=400, detail=f"kind must be one of {sorted(OVERLAY_KINDS)}"
         )
+    tol = check_simplify(simplify_m)
     box = parse_bbox(bbox)
     o = layers.overlays
-    o = o[o["class_norm"] == OVERLAY_KINDS[kind]]
-    sub = o.iloc[o.sindex.query(box, predicate="intersects")].copy()
+    idx = o.sindex.query(box, predicate="intersects")
+    idx = idx[o["class_norm"].to_numpy()[idx] == OVERLAY_KINDS[kind]]
+    sub = o.iloc[idx].copy()
     sub["kind"] = kind
     sub["note"] = OVERLAY_NOTES[kind]
     props = [
@@ -133,7 +168,12 @@ def overlays_in_bbox(layers: PlanLayers, plan: dict, bbox: str, kind: str) -> di
         "method",
         "qa",
     ]
-    return feature_collection(sub, props, {"plan": plan_ref(plan), "kind": kind})
+    return feature_collection(
+        sub,
+        layers.overlays_simplified[tol][idx],
+        props,
+        {"plan": plan_ref(plan), "kind": kind, "simplify_m": tol},
+    )
 
 
 # ---------------------------------------------------------------- /zones/at
@@ -189,27 +229,42 @@ def position_uncertainty(qa: dict) -> float:
     return math.sqrt(rmse**2 + mpx**2)
 
 
-def zone_hits(layers: PlanLayers, parcel: shapely.Geometry) -> list[dict]:
+def zone_hits(
+    layers: PlanLayers, parcel: shapely.Geometry
+) -> tuple[list[dict], list[dict]]:
+    """(hits, trace_hits). Trace hits (< 1 % of the parcel or < 20 m2) do not count for the
+    other hits' edges: trace-zone polygons near the parcel are merged into each other zone
+    before its boundary is measured. A trace hit keeps its own edge_distance_m / near_edge."""
     z = layers.zones
     touching = z.iloc[z.sindex.query(parcel, predicate="intersects")]
     if touching.empty:
-        return []
+        return [], []
     window = z.iloc[
         z.sindex.query(parcel.buffer(EDGE_WINDOW_M), predicate="intersects")
     ]
     area = parcel.area
-    hits = []
+    groups = {}
     for label, grp in touching.groupby("zone_label_native", sort=False):
         inter = [parcel.intersection(g) for g in grp.geometry]
         ov_area = sum(i.area for i in inter)
-        if ov_area <= 0:
-            continue
+        if ov_area > 0:
+            groups[label] = (grp, inter, ov_area)
+    trace = {
+        lb
+        for lb, (_, _, a) in groups.items()
+        if a < TRACE_SHARE * area or a < TRACE_AREA_M2
+    }
+    trace_polys = list(window[window["zone_label_native"].isin(trace)].geometry)
+    hits, traces = [], []
+    for label, (grp, inter, ov_area) in groups.items():
         inferred_area = sum(
             i.area for i, n in zip(inter, grp["note"], strict=True) if n
         )
         zone_union = shapely.union_all(
             list(window[window["zone_label_native"] == label].geometry)
         )
+        if trace_polys and label not in trace:
+            zone_union = shapely.union_all([zone_union, *trace_polys])
         edge = (
             0.0
             if parcel.boundary.intersects(zone_union.boundary)
@@ -218,27 +273,28 @@ def zone_hits(layers: PlanLayers, parcel: shapely.Geometry) -> list[dict]:
         qas = [plain(q) for q in grp["qa"]]
         unc = max(position_uncertainty(q) for q in qas)
         first = grp.iloc[0]
-        hits.append(
-            {
-                "plan_id": first["plan_id"],
-                "zone_label_native": label,
-                "zone_code_native": plain(first["zone_code_native"]),
-                "class_norm": plain(first["class_norm"]),
-                "status": first["status"],
-                "status_label": first["status_label"],
-                "zone_uids": list(grp["zone_uid"]),
-                "sheet_doc_ids": sorted(set(grp["doc_id"])),
-                "overlap_pct": round(100 * ov_area / area, 2),
-                "edge_distance_m": round(edge, 1),
-                "position_uncertainty_m": round(unc, 1),
-                "near_edge": edge < unc,
-                "inferred": inferred_area > 0,
-                "inferred_share_pct": round(100 * inferred_area / ov_area, 1),
-                "inferred_notes": sorted({n for n in grp["note"] if n}),
-                "sheets_qa": list({q["doc_id"]: q for q in qas}.values()),
-            }
-        )
-    return sorted(hits, key=lambda h: -h["overlap_pct"])
+        hit = {
+            "plan_id": first["plan_id"],
+            "zone_label_native": label,
+            "zone_code_native": plain(first["zone_code_native"]),
+            "class_norm": plain(first["class_norm"]),
+            "status": first["status"],
+            "status_label": first["status_label"],
+            "zone_uids": list(grp["zone_uid"]),
+            "sheet_doc_ids": sorted(set(grp["doc_id"])),
+            "overlap_pct": round(100 * ov_area / area, 2),
+            "edge_distance_m": round(edge, 1),
+            "position_uncertainty_m": round(unc, 1),
+            "near_edge": edge < unc,
+            "inferred": inferred_area > 0,
+            "inferred_share_pct": round(100 * inferred_area / ov_area, 1),
+            "inferred_notes": sorted({n for n in grp["note"] if n}),
+            "sheets_qa": list({q["doc_id"]: q for q in qas}.values()),
+        }
+        (traces if label in trace else hits).append(hit)
+    hits.sort(key=lambda h: -h["overlap_pct"])
+    traces.sort(key=lambda h: -h["overlap_pct"])
+    return hits, traces
 
 
 def overlays_nearby(layers_list: list[PlanLayers], parcel: shapely.Geometry) -> dict:

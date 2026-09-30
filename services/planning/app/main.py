@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.auth import verify_token
 from app.routers.registry import router as registry_router
@@ -46,6 +47,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# GeoJSON layers compress ~5x; clients send Accept-Encoding: gzip
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 app.include_router(registry_router, dependencies=[Depends(verify_token)])
 app.include_router(zones_router, dependencies=[Depends(verify_token)])
