@@ -344,3 +344,23 @@ def test_l_zones_at_parcel_with_spike(client, monkeypatch):
     assert r.status_code == 200
     (hit,) = r.json()["zones"]
     assert hit["zone_label_native"] == "Residential" and hit["overlap_pct"] == 100.0
+
+
+def test_m_road_space_is_cartographic(client, monkeypatch):
+    # parcel straddling the uncoloured zone and the 10 m road-space strip: both are hits,
+    # road space is flagged cartographic, and the hits add up to 100 %
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 2980, _N + 400, _E + 3010, _N + 460))
+    body = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()
+    hits = {z["zone_label_native"]: z for z in body["zones"]}
+    road = hits["Road space (not coloured on the plan)"]
+    assert road["class_norm"] == "road_space" and road["cartographic"] is True
+    assert hits["Not coloured on the plan"]["cartographic"] is False
+    assert sum(z["overlap_pct"] for z in body["zones"]) == pytest.approx(100.0, abs=0.1)
+    fc = client.get(
+        f"/zones?plan_id=BDA-RMP2031&bbox={_wgs_bbox(_E + 2990, _N, _E + 3020, _N + 100)}"
+    ).json()
+    flags = {
+        f["properties"]["class_norm"]: f["properties"]["cartographic"]
+        for f in fc["features"]
+    }
+    assert flags["road_space"] is True and flags["uncoloured"] is False

@@ -50,6 +50,8 @@ class PlanLayers:
     # tolerance (m) -> geometry array aligned with the layer rows (map display only)
     zones_simplified: dict[int, np.ndarray] = field(default_factory=dict)
     overlays_simplified: dict[int, np.ndarray] = field(default_factory=dict)
+    # the plan's outer boundary (its LPA) as a line; a zone edge for edge distances
+    outer_boundary: shapely.Geometry | None = None
 
 
 @dataclass
@@ -159,6 +161,8 @@ def load_store() -> Store:
         lpa = gpd.read_parquet(lpa_path).to_crs(CRS_METRIC)
         st.lpa["BDA"] = shapely.union_all(list(lpa.geometry))
         shapely.prepare(st.lpa["BDA"])
+        if "BDA-RMP2031" in st.layers:
+            st.layers["BDA-RMP2031"].outer_boundary = st.lpa["BDA"].boundary
     return st
 
 

@@ -53,6 +53,7 @@ export interface ZoneProperties {
   doc_id: string;
   zone_label_native: string;
   class_norm: string | null;
+  cartographic?: boolean; // road space: how the sheet is drawn, not a zoning decision
   status: DocStatus;
   status_label: string;
   inferred_note: string | null;
@@ -72,6 +73,7 @@ export interface ZoneHit {
   plan_id: string;
   zone_label_native: string;
   class_norm: string | null;
+  cartographic?: boolean;
   status: DocStatus;
   status_label: string;
   overlap_pct: number;

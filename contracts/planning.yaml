@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.13.1"
+  version: "1.14.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -346,7 +346,8 @@ components:
           description: >
             Village: full when over 98 % of its parcel area is inside the LPA, partial from
             2 %, none below (edge noise). Where the LPA schedule says full village and the map
-            shows 75-98 %, full with note "boundary drawing differs at the edge". A village the
+            shows 90-98 %, full with note "boundary drawing differs at the edge"; at 75-90 % it is
+            partial with note "text says full village; map share N %". A village the
             schedule does not list needs 5 % to count; below that it is none (edge noise). A
             village the schedule lists but the map puts outside is partial, with a mismatch
             note. Schedule names that differ from ours are joined through reviewed aliases
@@ -430,8 +431,18 @@ components:
             Normalised class for search and filters only; never replaces the native label.
             "uncoloured" (native label "Not coloured on the plan") is a normal zone value:
             the plan leaves the area white and it is never guessed.
+            "road_space" (native label "Road space (not coloured on the plan)"): thin white
+            strips between zones, under 2 source pixels (~10 m) wide, where the sheet draws
+            roads as lines over white. Cartographic class: not comparable with plan area
+            tables.
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string, example: "Draft, never approved" }
+        cartographic:
+          type: boolean
+          example: false
+          description: >
+            True for classes that come from how the sheet is drawn rather than a zoning
+            decision ("road_space"); leave them out of area comparisons.
         inferred_note:
           type: [string, "null"]
           example: "zone inferred under hatch"
@@ -475,6 +486,10 @@ components:
         zone_label_native: { type: string, example: "Residential (Mixed)" }
         zone_code_native: { type: [string, "null"] }
         class_norm: { type: [string, "null"], example: "residential" }
+        cartographic:
+          type: boolean
+          example: false
+          description: Same as ZoneProperties.cartographic
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string, example: "Draft, never approved" }
         zone_uids:

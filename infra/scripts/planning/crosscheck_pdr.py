@@ -42,6 +42,8 @@ M_PER_PX = 4.86  # PLUCOMP pixel size (georef)
 GRID = 4  # compare on a grid of GRID PLUCOMP pixels (~19 m)
 COARSE = 16  # coarse search grid (~78 m)
 SCALES_C = np.exp(np.linspace(np.log(6), np.log(24), 48))  # figure px per coarse cell
+WIDE_SCALES_C = np.exp(np.linspace(np.log(3), np.log(48), 96))  # --wide: 1.6-26 m/px
+MIN_AGREEMENT = 0.60  # below this (excl. PDR greys) the fit is not trusted: no extent
 FINE_SHIFT = 8  # +- fine cells
 FINE_SCALES = np.linspace(0.95, 1.05, 11)
 PD_CLOSE_PX = 6
@@ -146,7 +148,16 @@ def main():
     ap.add_argument("--pds", type=int, nargs="+", default=[2, 7, 12, 17, 20, 28, 36])
     ap.add_argument("--all", action="store_true", help="all 42 PDs")
     ap.add_argument("--extents", action="store_true", help="write PD extent polygons")
+    ap.add_argument(
+        "--wide", action="store_true", help="wider coarse scale search (1.6-26 m/px)"
+    )
+    ap.add_argument(
+        "--merge",
+        action="store_true",
+        help="replace only these PDs in the existing JSON / extents",
+    )
     args = ap.parse_args()
+    scales = WIDE_SCALES_C if args.wide else SCALES_C
     if args.all:
         args.pds = sorted(PDR_PLU_FIGURES)
     zdir = os.path.join(args.data_root, "planning", "zones")
@@ -198,7 +209,7 @@ def main():
         pd_mask = pd_extent(fig, greys)
         # coarse: FFT correlation per scale, candidate judged by direct agreement
         best = None
-        for s in SCALES_C:
+        for s in scales:
             t = resample(fig, s)
             th, tw = t.shape
             if th < 12 or tw < 12:
@@ -278,8 +289,11 @@ def main():
                 for (x, y), c in top
             ],
         }
+        ok = (res["agreement_excl_pdr_greys"] or 0.0) >= MIN_AGREEMENT
+        res["scale_search"] = "wide" if args.wide else "default"
+        res["status"] = "ok" if ok else "cross-check unavailable"
         results.append(res)
-        if args.extents:
+        if args.extents and ok:
             # PD mask in the fine grid, placed where the figure registered
             H, W = ref_f.shape
             tm = resample(pd_mask, s_f)
@@ -314,11 +328,40 @@ def main():
             ),
             flush=True,
         )
-    with open(os.path.join(zdir, f"{PLAN_ID}_pdr_crosscheck.json"), "w") as f:
+    json_path = os.path.join(zdir, f"{PLAN_ID}_pdr_crosscheck.json")
+    ext_path = os.path.join(zdir, f"{PLAN_ID}_pd_extents.parquet")
+    if args.merge:
+        done = set(args.pds)
+        if os.path.exists(json_path):
+            with open(json_path) as f:
+                results = [r for r in json.load(f) if r["pd"] not in done] + results
+        if args.extents and os.path.exists(ext_path):
+            t = pq.read_table(ext_path)
+            old_g = shapely.from_wkb(
+                t.column("geometry").to_numpy(zero_copy_only=False)
+            )
+            extents = [
+                (p, g, a)
+                for p, g, a in zip(
+                    t.column("pd").to_pylist(),
+                    old_g,
+                    t.column("registration_agreement").to_pylist(),
+                    strict=True,
+                )
+                if p not in done
+            ] + extents
+        results.sort(key=lambda r: r["pd"])
+        extents.sort(key=lambda e: e[0])
+    for r in results:
+        if r.get("status") == "cross-check unavailable":
+            print(
+                f"PD {r['pd']}: cross-check unavailable (agreement under {MIN_AGREEMENT:.0%})"
+            )
+    with open(json_path, "w") as f:
         json.dump(results, f, indent=1)
-    if extents:
+    if args.extents:
         geoparquet(
-            os.path.join(zdir, f"{PLAN_ID}_pd_extents.parquet"),
+            ext_path,
             pa.table(
                 {
                     "pd": [e[0] for e in extents],

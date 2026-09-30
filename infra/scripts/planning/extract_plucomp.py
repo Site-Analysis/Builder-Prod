@@ -11,15 +11,18 @@ Steps:
      other colours go to the nearest main colour (RGB distance).
   2. Symbols that hide the zone underneath become overlays, and the zone under them is
      filled from surrounding land pixels (lakes never act as a source):
-     - NGT Buffer hatch: extent = hatch closed by HATCH_CLOSE_PX; zone parts flagged
-       "zone inferred under hatch".
+     - NGT Buffer (a solid #38a800 band along streams and lakes, not a line hatch):
+       extent = band closed by HATCH_CLOSE_PX to bridge road lines drawn across it; zone
+       parts flagged "zone inferred under hatch".
      - Stream symbol (teal core + thin light-blue casing): Zhang-Suen centreline overlay;
        zone parts flagged "zone inferred under stream symbol".
   3. Forest glyphs: "forest symbol area" overlay (closed FOREST_CLOSE_PX, dilated
      FOREST_DILATE_PX); the zone is the ground colour under the glyphs (white).
   4. White inside the LPA boundary -> "uncoloured" (never guessed); outside -> dropped.
-  5. Polygonise (pixel runs -> per-tile coverage union -> per-class union), drop slivers
-     under SLIVER_PX wide, transform to EPSG:32643, clip to the LPA boundary.
+  5. Polygonise (pixel runs -> per-tile coverage union -> per-class union), transform to
+     EPSG:32643, clip to the LPA boundary. Pieces under SLIVER_PX wide are kept: white ones
+     become "Road space (not coloured on the plan)" (road corridors drawn as lines over
+     white; cartographic class), coloured ones keep their class.
   6. Write <data-root>/planning/zones/BDA-RMP2031.parquet (+ _overlays.parquet: NGT,
      forest symbol area, stream centrelines) and
      <data-root>/planning/zones/BDA-RMP2031_qa.json.
@@ -48,11 +51,12 @@ PLAN_ID = "BDA-RMP2031"
 DOC_ID = "BDA-RMP2031-PLUCOMP"
 STRIP_W = 9598
 ROW_PT = 0.24  # page points per raster row (strips are 300 dpi)
-HATCH_CLOSE_PX = 10
+HATCH_CLOSE_PX = (
+    2  # the NGT band is solid; only bridge lines drawn across it (audit W4)
+)
 FOREST_CLOSE_PX = 30  # tree glyphs are ~60 px apart
 FOREST_DILATE_PX = 2
 SLIVER_PX = 2.0
-ROAD_TOUCH_PX = 1.5  # commercial slivers within this of a road line are kept
 ROAD_STYLE = ("#b2b2b2", 0.96)  # vector road network on the sheet
 STREAM_CASING_PX = 4  # light-blue stream casing is thinner than 2*this; lakes are wider
 STREAM_REACH_PX = 6  # casing must touch the teal stream core within this distance
@@ -60,6 +64,8 @@ TILE = 256
 LPA_STYLE = ("#000000", 1.92)
 
 BACKGROUND, UNCOLOURED, HATCH, GLYPH = 0, 1, 2, 3  # special codes; zones start at 10
+ROAD_SPACE = 4  # thin white pieces (set after polygonising, never in the raster)
+ROAD_SPACE_LABEL = "Road space (not coloured on the plan)"
 STREAM_BIT, HATCH_BIT = 32, 64  # flag bits added to class codes before polygonising
 
 
@@ -410,22 +416,6 @@ def main():
 
     # 2. LPA mask
     lpa_page = lpa_polygon_page(page)
-    road_px = []  # road lines in raster pixel coordinates (for commercial slivers)
-    for x in page.get_drawings():
-        if (hx(x.get("color")), round(x.get("width") or 0, 2)) != ROAD_STYLE:
-            continue
-        for it in x["items"]:
-            if it[0] in ("l", "c"):
-                a, b = (it[1], it[2]) if it[0] == "l" else (it[1], it[4])
-                road_px.append(
-                    [
-                        ((a.x - x0) / cpt, (a.y - y0) / rpt),
-                        ((b.x - x0) / cpt, (b.y - y0) / rpt),
-                    ]
-                )
-    road_tree = shapely.STRtree(
-        shapely.buffer(shapely.linestrings(road_px), ROAD_TOUCH_PX)
-    )
     inside = render_mask(page, lpa_page, grid, cls.shape)
 
     # 3. symbols that hide the zone underneath: NGT hatch, stream symbol, forest glyphs
@@ -506,10 +496,14 @@ def main():
         "qa_failures": [],
         "sheet_scale": "1:57,340 (fitted; title block says 1:5,000)",
     }
-    rows, geoms, sliver_n, sliver_area = [], [], 0, 0.0
-    kept_commercial_n, kept_commercial_area = 0, 0.0
+    rows, geoms = [], []
+    road_n, road_area, thin_n, thin_area = 0, 0.0, 0, 0.0
     names = {v: k for k, v in zones.items()}
     names[UNCOLOURED] = info[UNCOLOURED]["zone_label_native"]
+    names[ROAD_SPACE] = ROAD_SPACE_LABEL
+    info[ROAD_SPACE] = next(
+        r for r in read_csv(LEGEND_CSV) if r["zone_label_native"] == ROAD_SPACE_LABEL
+    )
     for code_f, g in polys.items():
         code = code_f & (STREAM_BIT - 1)
         if code in (BACKGROUND, HATCH, GLYPH):
@@ -523,17 +517,14 @@ def main():
         thin = shapely.is_empty(
             shapely.buffer(parts, -SLIVER_PX / 2, join_style="mitre")
         )
-        if code == zones["Commercial"] and thin.any():
-            # commercial frontage strips along roads are real zoning, not slivers
-            hit = np.unique(road_tree.query(parts[thin], predicate="intersects")[0])
-            keep = np.zeros(len(parts), bool)
-            keep[np.flatnonzero(thin)[hit]] = True
-            kept_commercial_n += int(keep.sum())
-            kept_commercial_area += float(shapely.area(parts[keep]).sum()) * px_area
-            thin &= ~keep
-        sliver_n += int(thin.sum())
-        sliver_area += float(shapely.area(parts[thin]).sum()) * px_area
-        for p in parts[~thin]:
+        # thin pieces are kept (audit M1): white -> road space, coloured -> own class
+        thin_a = float(shapely.area(parts[thin]).sum()) * px_area
+        if code == UNCOLOURED:
+            road_n, road_area = road_n + int(thin.sum()), road_area + thin_a
+        else:
+            thin_n, thin_area = thin_n + int(thin.sum()), thin_area + thin_a
+        for p, is_thin in zip(parts, thin, strict=True):
+            out_code = ROAD_SPACE if (is_thin and code == UNCOLOURED) else code
             gp = to_ground(p)
             if not lpa_g.contains(gp):
                 gp = shapely.intersection(gp, lpa_g)
@@ -541,16 +532,18 @@ def main():
                 continue
             for piece in (gp,):
                 for q in shapely.get_parts(piece):
-                    if q.geom_type != "Polygon" or q.area < px_area:
+                    # half a pixel: a 1-px piece can compute a hair under px_area
+                    if q.geom_type != "Polygon" or q.area < 0.5 * px_area:
                         continue
-                    r = info[code]
+                    r = info[out_code]
                     rows.append(
                         {
                             "plan_id": PLAN_ID,
                             "doc_id": DOC_ID,
-                            "zone_label_native": names[code],
+                            "zone_label_native": names[out_code],
                             "zone_code_native": None,
                             "class_norm": r["class_norm"] or None,
+                            "cartographic": out_code == ROAD_SPACE,
                             **status,
                             "inferred_under_hatch": "hatch" in flags,
                             "inferred_under_stream": "stream" in flags,
@@ -570,7 +563,8 @@ def main():
     for i, r in enumerate(rows, 1):
         r["zone_uid"] = f"{PLAN_ID}-PLUCOMP-{i:06d}"
     print(
-        f"{len(rows)} zone polygons; slivers dropped {sliver_n} ({sliver_area / 1e4:.1f} ha) ({time.time() - t0:.0f}s)"
+        f"{len(rows)} zone polygons; thin white -> road space {road_n} ({road_area / 1e4:.1f} ha), "
+        f"thin coloured kept {thin_n} ({thin_area / 1e4:.1f} ha) ({time.time() - t0:.0f}s)"
     )
 
     # QA: areas
@@ -598,10 +592,11 @@ def main():
         "forest_ground_colour": "#ffffff (white, 86% of ground pixels) -> zone 'uncoloured'",
         "zone_area_inferred_under_hatch_ha": under_ha,
         "uncoloured_share_of_lpa": by.get("uncoloured", 0.0) / 1e4 / lpa_ha,
-        "slivers_dropped": sliver_n,
-        "commercial_slivers_kept_on_roads": kept_commercial_n,
-        "commercial_sliver_area_kept_ha": kept_commercial_area / 1e4,
-        "sliver_area_ha": sliver_area / 1e4,
+        "slivers_dropped": 0,
+        "road_space_pieces": road_n,
+        "road_space_ha": road_area / 1e4,
+        "thin_coloured_pieces_kept": thin_n,
+        "thin_coloured_kept_ha": thin_area / 1e4,
         "blend_px": blend_px,
         "params": {
             "HATCH_CLOSE_PX": HATCH_CLOSE_PX,
@@ -637,6 +632,7 @@ def main():
         "inferred_under_hatch",
         "inferred_under_stream",
         "note",
+        "cartographic",
         "area_m2",
     ]
     table = pa.table({c: [r[c] for r in rows] for c in cols})
@@ -726,8 +722,8 @@ def main():
                     "stream_centreline_km",
                     "forest_symbol_area_ha",
                     "uncoloured_share_of_lpa",
-                    "slivers_dropped",
-                    "sliver_area_ha",
+                    "road_space_ha",
+                    "thin_coloured_kept_ha",
                 )
             },
             indent=1,

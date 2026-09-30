@@ -4,6 +4,21 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.14.0 — 2026-09-30 — planning
+
+Additive (audit fixes M1, W6).
+- New zone value: `zone_label_native` "Road space (not coloured on the plan)", `class_norm`
+  `road_space`, status from the sheet (draft). Thin white strips between zones (under 2 source
+  pixels) that were dropped before and left parcels without a zone; `/zones/at` hits now sum to
+  ~100 % of a parcel inside the LPA. Thin pieces of a coloured zone are no longer dropped
+  either; they keep their own class.
+- `ZoneProperties.cartographic` and `ZoneHit.cartographic` (boolean): true for `road_space`,
+  a drawing artefact class that is not comparable with plan area tables.
+- `/authority` village coverage: the "schedule says full, map shows less" rule now makes a
+  village full only from 90 % map share; 75-90 % is partial with a note.
+
+---
+
 ## 1.13.1 — 2026-09-30 — planning
 
 `/authority` coverage rules for villages refined (description only, no schema change):

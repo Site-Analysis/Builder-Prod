@@ -677,7 +677,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,3,8,8,AMANIBHUJANGADASANAKE,BDA,BDA-RMP2031,full,100.0,,both,full,Bhujangadasana Amanikere,alias: name 0.73 (next 0.63); map share 100.0%; no PD in text; taluk agrees
 20,3,8,9,BANNERUGHATTA,BDA,BDA-RMP2031,full,97.35,30,both,full,Bannerugatta,boundary drawing differs at the edge (map share 97.35%); same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,10,GOLLAHALLI,BDA,BDA-RMP2031,full,100.0,27,both,full,Gollahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
-20,3,8,11,BHUTANAHALLI,BDA,BDA-RMP2031,full,89.47,30,both,full,Bhoothanahalli,boundary drawing differs at the edge (map share 89.47%); same name listed 2x in our data; picked the one with parcels / larger LPA share
+20,3,8,11,BHUTANAHALLI,BDA,BDA-RMP2031,partial,89.47,30,both,full,Bhoothanahalli,text says full village; map share 89.47%; same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,12,BAIRAPPANA HALLI,BDA,BDA-RMP2031,full,99.61,30,both,full,Bhyrappanahalli,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,13,KANNANAYAKANAGRAHARA,BDA,BDA-RMP2031,full,99.97,30,both,full,Kannaikana Agrahara,same name listed 2x in our data; picked the one with parcels / larger LPA share
 20,3,8,14,RAMASANDRA,BDA,BDA-RMP2031,full,99.12,30,both,full,Ramasandra,same name listed 2x in our data; picked the one with parcels / larger LPA share
@@ -932,7 +932,7 @@ dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,sourc
 20,5,2,2,BYATARAYAPURA,BDA,BDA-RMP2031,full,100.0,,both,full,Byatarayapura,
 20,5,2,22,AGRAHARA,BDA,BDA-RMP2031,full,100.0,,both,full,Agrahara,
 20,5,2,25,GASTIKEMPANAHALLI,BDA,BDA-RMP2031,full,100.0,,both,full,Gasthikempanahalli,
-20,5,2,35,CHOKKANAHALLI,BDA,BDA-RMP2031,full,86.0,,both,full,Chokkanahalli,boundary drawing differs at the edge (map share 86.0%)
+20,5,2,35,CHOKKANAHALLI,BDA,BDA-RMP2031,partial,86.0,,both,full,Chokkanahalli,text says full village; map share 86.0%
 20,5,2,36,TINDLU,BDA,BDA-RMP2031,full,100.0,,both,full,Thindlu,
 20,5,2,37,JAKKURU PLANTESHAN,BDA,BDA-RMP2031,full,100.0,,both,full,Jakkuru Plantation,alias: name 0.84 (next 0.55); map share 100.0%; no PD in text; taluk agrees
 20,5,2,50,JAKKURU,BDA,BDA-RMP2031,full,100.0,,both,full,Jakkuru,

@@ -77,5 +77,11 @@ export const PLANNING_LEGEND: LegendEntry[] = [
     "label": "Not coloured on the plan",
     "colour": "#ffffff",
     "classNorm": "uncoloured"
+  },
+  {
+    "planId": "BDA-RMP2031",
+    "label": "Road space (not coloured on the plan)",
+    "colour": "#ffffff",
+    "classNorm": "road_space"
   }
 ];

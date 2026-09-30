@@ -28,7 +28,12 @@ def main():
         label = r["zone_label_native"]
         # streams are a centreline overlay now; a label sharing an earlier row's colour
         # (left-column "Water bodies") never appears in the zone data
-        if label in seen or label == "Streams" or r["colour_hex"] in colours:
+        # road space shares white with "Not coloured" but is its own zone value
+        if (
+            label in seen
+            or label == "Streams"
+            or (r["colour_hex"] in colours and r["class_norm"] != "road_space")
+        ):
             continue
         seen.add(label)
         colours.add(r["colour_hex"])

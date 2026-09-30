@@ -12,6 +12,7 @@ import os
 import geopandas as gpd
 import httpx
 import numpy as np
+import pandas as pd
 import shapely
 from fastapi import HTTPException
 from pyproj import Transformer
@@ -115,9 +116,16 @@ ZONE_PROPS = [
     "class_norm",
     "status",
     "status_label",
+    "cartographic",
     "inferred_note",
     "qa",
 ]
+
+
+def _cartographic(row) -> bool:
+    """True for drawing-artefact classes (road space); layers built before 1.14 lack it."""
+    v = row.get("cartographic", False)
+    return False if v is None or pd.isna(v) else bool(v)
 
 
 def zones_in_bbox(
@@ -129,6 +137,11 @@ def zones_in_bbox(
     idx = z.sindex.query(box, predicate="intersects")
     sub = z.iloc[idx].copy()
     sub["inferred_note"] = sub["note"]
+    sub["cartographic"] = (
+        sub["cartographic"].fillna(False).astype(bool)
+        if "cartographic" in sub.columns
+        else False
+    )
     return feature_collection(
         sub,
         layers.zones_simplified[tol][idx],
@@ -244,8 +257,14 @@ def zone_hits(
     layers: PlanLayers, parcel: shapely.Geometry
 ) -> tuple[list[dict], list[dict]]:
     """(hits, trace_hits). Trace hits (< 1 % of the parcel or < 20 m2) do not count for the
-    other hits' edges: trace-zone polygons near the parcel are merged into each other zone
-    before its boundary is measured. A trace hit keeps its own edge_distance_m / near_edge."""
+    other hits' edges: trace-zone polygons near the parcel are treated as part of each other
+    zone. A trace hit keeps its own edge_distance_m / near_edge.
+
+    edge_distance_m is the distance from the parcel boundary to the zone's boundary, 0 when
+    they cross. Zones form a coverage, so only the zone pieces touching the parcel are unioned
+    (a union over the whole 200 m window was slow once road space added many small pieces):
+    a parcel inside the zone measures to the nearest other zone or the plan's outer boundary,
+    capped at EDGE_WINDOW_M; zone pieces wholly inside the parcel measure to those pieces."""
     z = layers.zones
     touching = z.iloc[z.sindex.query(parcel, predicate="intersects")]
     if touching.empty:
@@ -265,22 +284,40 @@ def zone_hits(
         for lb, (_, _, a) in groups.items()
         if a < TRACE_SHARE * area or a < TRACE_AREA_M2
     }
-    trace_polys = list(window[window["zone_label_native"].isin(trace)].geometry)
+    w_labels = window["zone_label_native"].to_numpy()
+    w_geoms = np.asarray(window.geometry.values)
+    w_trace = np.isin(w_labels, list(trace))
+    outer = layers.outer_boundary
+    clip_box = shapely.box(*parcel.buffer(2.0).bounds)
     hits, traces = [], []
     for label, (grp, inter, ov_area) in groups.items():
         inferred_area = sum(
             i.area for i, n in zip(inter, grp["note"], strict=True) if n
         )
-        zone_union = shapely.union_all(
-            list(window[window["zone_label_native"] == label].geometry)
-        )
-        if trace_polys and label not in trace:
-            zone_union = shapely.union_all([zone_union, *trace_polys])
-        edge = (
-            0.0
-            if parcel.boundary.intersects(zone_union.boundary)
-            else parcel.boundary.distance(zone_union.boundary)
-        )
+        mine = w_labels == label
+        if label not in trace:
+            mine |= w_trace
+        # the zone (with trace zones merged in) is only unioned where it touches the parcel;
+        # anything across that local outline on the parcel boundary is another zone
+        local = w_geoms[mine & shapely.intersects(w_geoms, parcel)]
+        # clip to just beyond the parcel first: big zone polygons made the union slow, and
+        # edges the clip adds lie outside the parcel boundary
+        local_u = shapely.union_all(shapely.intersection(local, clip_box))
+        rim = parcel.boundary
+        if rim.intersects(local_u.boundary) or (
+            outer is not None and rim.intersects(outer)
+        ):
+            edge = 0.0
+        elif local_u.covers(rim):
+            # parcel inside the zone: the edge is where another zone (or the LPA edge) starts
+            og = w_geoms[~mine]
+            ds = list(shapely.distance(og, parcel)) if len(og) else []
+            if outer is not None:
+                ds.append(parcel.distance(outer))
+            edge = min([EDGE_WINDOW_M, *ds])
+        else:
+            # zone pieces lie wholly inside the parcel
+            edge = rim.distance(local_u)
         qas = [plain(q) for q in grp["qa"]]
         unc = max(position_uncertainty(q) for q in qas)
         first = grp.iloc[0]
@@ -289,6 +326,7 @@ def zone_hits(
             "zone_label_native": label,
             "zone_code_native": plain(first["zone_code_native"]),
             "class_norm": plain(first["class_norm"]),
+            "cartographic": _cartographic(first),
             "status": first["status"],
             "status_label": first["status_label"],
             "zone_uids": list(grp["zone_uid"]),

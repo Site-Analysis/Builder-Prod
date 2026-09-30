@@ -45,6 +45,7 @@ from app.services import zones_service as zs
 PLAN_ID = "BDA-RMP2031"
 DISTS = ("20", "21")
 SUM_LO, SUM_HI = 95.0, 101.0
+SUM_GOAL = 99.0  # audit fix M1 target: every parcel inside the LPA sums to >= 99 %
 GRID_M = 1000.0
 TO_WGS = Transformer.from_crs(32643, 4326, always_xy=True).transform
 
@@ -92,6 +93,7 @@ def run_village(job):
         "parcel_errors": 0,
         "parcels_empty": 0,
         "parcels_sum_off": 0,
+        "parcels_below_99": 0,
         "parcels_partly_outside_lpa": 0,
         "parts_without_survey_no": 0,
     }
@@ -158,8 +160,10 @@ def run_village(job):
         if inside < 0.99:
             out["parcels_partly_outside_lpa"] += 1
             continue
-        if not (SUM_LO <= total <= SUM_HI):
-            out["parcels_sum_off"] += 1
+        off = not (SUM_LO <= total <= SUM_HI)
+        out["parcels_sum_off"] += off
+        if total < SUM_GOAL or off:
+            out["parcels_below_99"] += total < SUM_GOAL
             sum_off.append(
                 {
                     "key": "/".join(key),
@@ -228,6 +232,7 @@ def step_b6(args, out_dir):
             "parcel_errors",
             "parcels_empty",
             "parcels_sum_off",
+            "parcels_below_99",
             "parcels_partly_outside_lpa",
             "parts_without_survey_no",
             "village_error",
@@ -250,6 +255,7 @@ def step_b6(args, out_dir):
             "parcel_errors",
             "parcels_empty",
             "parcels_sum_off",
+            "parcels_below_99",
             "parcels_partly_outside_lpa",
             "parts_without_survey_no",
         )

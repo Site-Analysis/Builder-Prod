@@ -45,7 +45,9 @@ PLAN_ID = "BDA-RMP2031"
 DISTS = ("20", "21")  # Bengaluru Urban, Bengaluru Rural
 FULL_PCT, NOISE_PCT = 98.0, 2.0
 NOISE_UNLISTED_PCT = 5.0  # a village the text does not list needs 5 % to count
-EDGE_FULL_MIN = 75.0  # text says full and map 75-97 %: full, edge drawing differs
+EDGE_FULL_MIN = (
+    90.0  # text says full and map 90-98 %: full, edge drawing differs (75-90: partial)
+)
 ALIAS_NAME_MIN, ALIAS_SHARE_MIN, PD_NEAR_M = 0.7, 50.0, 500.0
 ALIAS_CSV = os.path.join(REPO, "infra", "planning", "village_aliases.csv")
 SKIPPED: list[str] = []

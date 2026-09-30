@@ -43,6 +43,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from build_authority import village_names
 from extract_plucomp import geoparquet, load_legend, load_mosaic
 from georef_plucomp import (
+    OVERPASS,
     apply_affine,
     isolated,
     junctions_from_segments,
@@ -65,6 +66,13 @@ MISMATCH_RESIDUAL_M = (
 )
 MISMATCH_ON_ROAD_M = 30.0  # sits on an OSM road but its cross road is missing from OSM
 SAMPLE_PER_PD = 3
+ROAD_SPACE_LABEL = "Road space (not coloured on the plan)"
+# M3: PDs with fewer than 3 check points (or over 20 m) in the first audit, plus PD 5
+MINOR_PDS = (5, 10, 12, 22, 25, 26, 28, 36, 37, 39, 41, 42)
+MINOR_HIGHWAYS = "residential|unclassified|living_street"
+MINOR_ISOLATION_M = 100.0
+MINOR_PAIR_M = 40.0
+MINOR_RATIO, MINOR_MARGIN_M = 2.5, 30.0  # second-nearest OSM junction test
 SEED = 2031
 TO_WGS = Transformer.from_crs(32643, 4326, always_xy=True).transform
 
@@ -423,6 +431,7 @@ def step_a1(c):
                 "Not coloured on the plan",
                 "Defense",
                 "Transport and Communication",
+                "Road space (not coloured on the plan)",
             )
         )
         ours_roads += row["no_polygon_pct"]
@@ -431,7 +440,7 @@ def step_a1(c):
             {
                 "pd": pd,
                 "category": "(combined) unclassified + transport",
-                "ours_as": "Not coloured + Defense + Transport + no polygon",
+                "ours_as": "Not coloured + Defense + Transport + Road space + no polygon",
                 "pdr_ha": round(pdr_roads, 2),
                 "pdr_pct": round(pr, 2),
                 "ours_pct": round(ours_roads, 2),
@@ -685,6 +694,7 @@ def step_a4(c):
                 "pd": c.pd_of(g) or "",
                 "in_lpa_ha": round(area / 1e4, 2),
                 "uncoloured_pct": round(100 * unc / area, 1),
+                "road_space_pct": round(100 * by.get(ROAD_SPACE_LABEL, 0.0) / area, 1),
                 "inferred_pct": round(100 * inf / area, 1),
                 "uncoloured_or_inferred_pct": round(bad, 1),
                 "no_polygon_pct": round(100 * (1 - zone_area / area), 2),
@@ -705,6 +715,7 @@ def step_a4(c):
             "in_lpa_ha",
             "uncoloured_pct",
             "inferred_pct",
+            "road_space_pct",
             "uncoloured_or_inferred_pct",
             "no_polygon_pct",
             "flag_over_30",
@@ -889,6 +900,162 @@ def step_c9(c):
         f"  c9: {len(P)} pairs, {dropped.sum()} dropped ({time.time() - t0:.0f}s)",
         flush=True,
     )
+    c9_independent(
+        c, Jg, osm(c.args.data_root, "major") + osm(c.args.data_root, "sec"), Jo, tr
+    )
+
+
+def _overpass(query):
+    import urllib.parse
+    import urllib.request
+
+    body = urllib.parse.urlencode(
+        {"data": f"[out:json][timeout:180];{query}out geom;"}
+    ).encode()
+    for ep in OVERPASS:
+        try:
+            req = urllib.request.Request(
+                ep, data=body, headers={"User-Agent": "builder-prod-planning/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=240) as r:
+                return json.loads(r.read())["elements"]
+        except Exception as ex:  # noqa: BLE001 - next mirror
+            print(f"  overpass {ep} failed: {ex}", flush=True)
+    return None
+
+
+def osm_minor(data_root, pd, bbox_wgs):
+    """OSM minor roads inside one PD's bounding box (cached). Check points only. Dense
+    boxes that time out are fetched as 2 x 2 tiles."""
+    path = os.path.join(data_root, "osm", f"minor_pd{pd:02d}.json")
+    if not os.path.exists(path):
+        w, s_, e, n = bbox_wgs
+
+        def q(w_, s2, e_, n_):
+            return f'way["highway"~"^({MINOR_HIGHWAYS})$"]({s2:.5f},{w_:.5f},{n_:.5f},{e_:.5f});'
+
+        el = _overpass(q(w, s_, e, n))
+        if el is None:
+            mx, my = (w + e) / 2, (s_ + n) / 2
+            tiles = [(w, s_, mx, my), (mx, s_, e, my), (w, my, mx, n), (mx, my, e, n)]
+            parts = [_overpass(q(*t)) for t in tiles]
+            if any(p_ is None for p_ in parts):
+                return None
+            seen, el = set(), []
+            for p_ in parts:
+                for x in p_:
+                    if x["id"] not in seen:
+                        seen.add(x["id"])
+                        el.append(x)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"elements": el}, f)
+    return read_json(path)["elements"]
+
+
+def c9_independent(c, Jg, ms_elements, Jo_ms, tr):
+    """Check points whose OSM junction involves a minor road. The georeference fit only
+    ever saw OSM major/secondary/tertiary lines, so these are independent of it."""
+    t0 = time.time()
+    minor, fetched = [], {}
+    for pd in MINOR_PDS:
+        g = c.pds.get(pd)
+        if g is None:
+            fetched[pd] = "no PD extent"
+            continue
+        x0, y0, x1, y1 = g.bounds
+        lo = TO_WGS(x0, y0)
+        hi = TO_WGS(x1, y1)
+        el = osm_minor(c.args.data_root, pd, (lo[0], lo[1], hi[0], hi[1]))
+        fetched[pd] = "fetch failed" if el is None else f"{len(el)} ways"
+        minor += el or []
+    lines, J = osm_lines_and_junctions(ms_elements + minor, tr)
+    ltree = shapely.STRtree(lines)
+    d_ms = shapely.STRtree(shapely.points(Jo_ms)).query_nearest(
+        shapely.points(J), return_distance=True, all_matches=False
+    )[1]
+    is_minor = d_ms > 2.0
+    # OSM minor networks are dense, so no OSM junction is isolated; instead the pairing must
+    # be unambiguous: the second-nearest OSM junction is well further away than the nearest
+    iso_p = isolated(Jg, MINOR_ISOLATION_M)
+    jtree = shapely.STRtree(shapely.points(J))
+    (pi, oj), d = jtree.query_nearest(
+        shapely.points(Jg), return_distance=True, all_matches=False
+    )
+    (_, pi2), _ = shapely.STRtree(shapely.points(Jg)).query_nearest(
+        shapely.points(J[oj]), return_distance=True, all_matches=False
+    )
+    second = np.full(len(pi), np.inf)
+    near = jtree.query(shapely.buffer(shapely.points(Jg[pi]), MINOR_ISOLATION_M))
+    for a, b in zip(*near, strict=True):
+        if b != oj[a]:
+            second[a] = min(second[a], float(np.hypot(*(Jg[pi[a]] - J[b]))))
+    unambiguous = second >= np.maximum(MINOR_RATIO * d, d + MINOR_MARGIN_M)
+    keep = (d < MINOR_PAIR_M) & iso_p[pi] & (pi2 == pi) & is_minor[oj] & unambiguous
+    P, G = Jg[pi[keep]], J[oj[keep]]
+    R = P - G
+    r = np.hypot(*R.T)
+    _, d_line = ltree.query_nearest(
+        shapely.points(P), return_distance=True, all_matches=False
+    )
+    dropped = (r > MISMATCH_RESIDUAL_M) & (d_line < MISMATCH_ON_ROAD_M)
+    pts, rows = [], []
+    for i in range(len(P)):
+        pt = shapely.Point(P[i])
+        pd = next((p for p in MINOR_PDS if p in c.pds and c.pds[p].contains(pt)), None)
+        if pd is None:
+            continue
+        lng, lat = TO_WGS(*G[i])
+        pts.append(
+            {
+                "pd": pd,
+                "lat": round(lat, 6),
+                "lng": round(lng, 6),
+                "residual_m": round(float(r[i]), 1),
+                "de_m": round(float(R[i, 0]), 1),
+                "dn_m": round(float(R[i, 1]), 1),
+                "dropped_junction_mismatch": bool(dropped[i]),
+            }
+        )
+    write_csv(os.path.join(c.out, "georef_points_independent.csv"), pts)
+    for pd in MINOR_PDS:
+        rr = np.array(
+            [
+                p["residual_m"]
+                for p in pts
+                if p["pd"] == pd and not p["dropped_junction_mismatch"]
+            ]
+        )
+        nd = sum(1 for p in pts if p["pd"] == pd and p["dropped_junction_mismatch"])
+        row = {"pd": pd, "osm_minor": fetched[pd], "n": len(rr), "dropped": nd}
+        if len(rr):
+            rmse = float(np.sqrt(np.mean(rr**2)))
+            flags = [
+                f
+                for f, bad in (
+                    (f"RMSE > {GEOREF_FLAG_M:.0f} m", rmse > GEOREF_FLAG_M),
+                    ("fewer than 3 points", len(rr) < 3),
+                )
+                if bad
+            ]
+            row |= {
+                "rmse_m": round(rmse, 1),
+                "median_m": round(float(np.median(rr)), 1),
+                "max_m": round(float(rr.max()), 1),
+                "flag": "; ".join(flags),
+            }
+        else:
+            row["flag"] = "no check points"
+        rows.append(row)
+    write_csv(
+        os.path.join(c.out, "georef_pd_independent.csv"),
+        rows,
+        ["pd", "osm_minor", "n", "dropped", "rmse_m", "median_m", "max_m", "flag"],
+    )
+    print(
+        f"  c9 independent: {len(pts)} pairs in the {len(MINOR_PDS)} PDs ({time.time() - t0:.0f}s)",
+        flush=True,
+    )
 
 
 def step_c10(c):
@@ -976,6 +1143,8 @@ def step_c10(c):
                 src, maj = source_at(cen.x, cen.y)
                 if src == ours:
                     res = "match"
+                elif ours == ROAD_SPACE_LABEL and src == "Not coloured on the plan":
+                    res = "match (road space over white)"
                 elif note and src in ("(NGT hatch)", "(forest glyph)", "Streams"):
                     res = "source shows a map symbol; ours inferred"
                 elif src.startswith("(other colour") and maj == ours:

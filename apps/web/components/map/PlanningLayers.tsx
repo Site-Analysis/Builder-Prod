@@ -83,6 +83,10 @@ function zoneStyle(f?: GeoJSON.Feature): PathOptions {
   const p = (f?.properties ?? {}) as ZoneProperties;
   const colour = COLOUR_BY_LABEL.get(p.zone_label_native) ?? "#999999";
   const uncoloured = p.class_norm === "uncoloured";
+  if (p.class_norm === "road_space") {
+    // cartographic class: road corridors drawn as lines over white on the sheet
+    return { color: "#BDBDBD", weight: 0, fillColor: "#E0E0E0", fillOpacity: 0.35 };
+  }
   return {
     color: p.inferred_note ? "#8E24AA" : uncoloured ? "#9E9E9E" : colour,
     weight: p.inferred_note ? 1 : 0.5,
@@ -252,6 +256,7 @@ export function PlanningLegend({ toggles, status }: { toggles: PlanningToggles; 
         <div key={e.label} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
           <span style={{
             width: 12, height: 10, background: e.colour, border: e.classNorm === "uncoloured" ? "1px dashed #9E9E9E" : "1px solid rgba(0,0,0,0.15)",
+            ...(e.classNorm === "road_space" ? { background: "#E0E0E0" } : {}),
             display: "inline-block", flexShrink: 0,
           }} />
           <span>{e.label}</span>
@@ -300,6 +305,9 @@ export function PlanningCardSection({ result }: { result: ZonesAtResult | "loadi
             <span style={{ fontWeight: 600 }}>{z.zone_label_native}</span>
             <span style={{ color: "#7B8F83", marginLeft: "auto" }}>{z.overlap_pct.toFixed(1)}%</span>
           </div>
+          {z.cartographic && (
+            <div style={{ color: "#7B8F83", marginLeft: 16 }}>Road corridor as drawn on the sheet, not a zone decision</div>
+          )}
           {z.near_edge && (
             <div style={{ color: "#9A4F00", marginLeft: 16 }}>
               Near a zone edge (within {Math.round(z.position_uncertainty_m)} m map accuracy)
