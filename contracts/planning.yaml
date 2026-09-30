@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.10.0"
+  version: "1.11.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -117,6 +117,8 @@ paths:
           description: Feature flag disabled
         "404":
           description: Village codes do not exist
+        "501":
+          description: Not implemented yet (authority table arrives in build step 1.7)
 
   /zones:
     get:
@@ -155,6 +157,48 @@ paths:
         "404":
           description: Unknown plan_id, or plan has no zone layer loaded
 
+  /overlays:
+    get:
+      operationId: getOverlays
+      summary: Map-symbol overlays for one plan within a bbox (map layer)
+      description: >
+        Symbols drawn on the plan sheet that are not zones: the NGT Buffer hatch, the forest
+        tree-glyph area and stream centrelines. They are map symbols, not measured buffers
+        or boundaries, and every feature says so in `note`. Same bbox cap as /zones
+        (0.05 degrees per side; larger returns 400). Gated by `feature.planning.layers`
+        AND `feature.planning.plan.<plan_id>`.
+      parameters:
+        - name: plan_id
+          in: query
+          required: true
+          schema: { type: string }
+          example: "BDA-RMP2031"
+        - name: bbox
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?$"
+          description: "minLng,minLat,maxLng,maxLat in WGS84; at most 0.05 degrees per side"
+          example: "77.60,12.95,77.65,13.00"
+        - name: kind
+          in: query
+          required: true
+          schema: { $ref: "#/components/schemas/OverlayKind" }
+      responses:
+        "200":
+          description: GeoJSON FeatureCollection of overlay features
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OverlayFeatureCollection"
+        "400":
+          description: Malformed bbox, bbox wider/taller than 0.05 degrees, or unknown kind
+        "403":
+          description: Feature flag disabled (layers or this plan)
+        "404":
+          description: Unknown plan_id, or plan has no overlay layer loaded
+
   /zones/at:
     get:
       operationId: getZonesAtParcel
@@ -166,7 +210,11 @@ paths:
         Hits are grouped per (plan_id, zone_label_native): where a parcel sits on a seam
         between two sheets and the same zone appears on both, it is one hit with both
         sheets in `sheet_doc_ids`, and overlap is computed on the union so it is not
-        double counted. Gated by `feature.planning.layers`.
+        double counted. Each hit carries its position uncertainty
+        (sqrt(georef_rmse_m^2 + m_per_px^2) of its sheet), `near_edge`, and whether it
+        comes from a zone inferred under a map symbol. `overlays_nearby` lists the
+        map-symbol overlays the parcel touches. Parcel geometry comes from the cadastral
+        service. Gated by `feature.planning.layers`.
       parameters:
         - { name: dist, in: query, required: true, schema: { type: string } }
         - { name: taluk, in: query, required: true, schema: { type: string } }
@@ -337,9 +385,18 @@ components:
         class_norm:
           type: [string, "null"]
           example: "residential"
-          description: Normalised class for search and filters only; never replaces the native label
+          description: >
+            Normalised class for search and filters only; never replaces the native label.
+            "uncoloured" (native label "Not coloured on the plan") is a normal zone value:
+            the plan leaves the area white and it is never guessed.
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string, example: "Draft, never approved" }
+        inferred_note:
+          type: [string, "null"]
+          example: "zone inferred under hatch"
+          description: >
+            Set when the zone was hidden by a map symbol on the sheet and filled from the
+            surrounding land: "zone inferred under hatch" or "zone inferred under stream symbol".
         qa: { $ref: "#/components/schemas/SheetQA" }
 
     ZoneFeatureCollection:
@@ -364,7 +421,8 @@ components:
       type: object
       description: One zone of one plan touching the parcel, merged across sheets.
       required:
-        [plan_id, zone_label_native, status, status_label, zone_uids, sheet_doc_ids, overlap_pct, edge_distance_m, sheets_qa]
+        [plan_id, zone_label_native, status, status_label, zone_uids, sheet_doc_ids, overlap_pct, edge_distance_m,
+         position_uncertainty_m, near_edge, inferred, sheets_qa]
       properties:
         plan_id: { type: string, example: "BDA-RMP2031" }
         zone_label_native: { type: string, example: "Residential (Mixed)" }
@@ -390,13 +448,115 @@ components:
           description: >
             Shortest distance in metres between the parcel boundary and this zone's
             boundary; 0 when the parcel boundary crosses the zone boundary.
+        position_uncertainty_m:
+          type: number
+          example: 11.2
+          description: sqrt(georef_rmse_m^2 + m_per_px^2) of the sheet (about 11 m for BDA-RMP2031)
+        near_edge:
+          type: boolean
+          description: true when edge_distance_m < position_uncertainty_m
+        inferred:
+          type: boolean
+          description: >
+            true when any part of this hit comes from a zone inferred under a map symbol
+            (NGT hatch or stream symbol)
+        inferred_share_pct:
+          type: number
+          example: 12.5
+          description: Share of this hit's overlap area that is inferred, 0-100
+        inferred_notes:
+          type: array
+          items: { type: string }
+          example: ["zone inferred under hatch"]
         sheets_qa:
           type: array
           items: { $ref: "#/components/schemas/SheetQA" }
 
+    OverlayKind:
+      type: string
+      enum: [ngt_buffer, forest_symbol, stream_centreline]
+
+    OverlayProperties:
+      type: object
+      required: [overlay_uid, plan_id, doc_id, kind, overlay_label_native, status, status_label, note, qa]
+      properties:
+        overlay_uid: { type: string, example: "BDA-RMP2031-NGT_BUFFER-000001" }
+        plan_id: { type: string, example: "BDA-RMP2031" }
+        doc_id: { type: string, example: "BDA-RMP2031-PLUCOMP" }
+        kind: { $ref: "#/components/schemas/OverlayKind" }
+        overlay_label_native: { type: string, example: "NGT Buffer" }
+        status: { $ref: "#/components/schemas/DocStatus" }
+        status_label: { type: string, example: "Draft, never approved" }
+        note:
+          type: string
+          example: "Map symbol, not a measured buffer"
+          description: Always states that this is a drawn map symbol, not a measured buffer or boundary
+        method: { type: [string, "null"], description: How the symbol was traced from the sheet }
+        qa: { $ref: "#/components/schemas/SheetQA" }
+
+    OverlayFeatureCollection:
+      type: object
+      required: [type, plan, kind, features]
+      properties:
+        type: { type: string, enum: [FeatureCollection] }
+        plan: { $ref: "#/components/schemas/PlanRef" }
+        kind: { $ref: "#/components/schemas/OverlayKind" }
+        features:
+          type: array
+          items:
+            type: object
+            required: [type, geometry, properties]
+            properties:
+              type: { type: string, enum: [Feature] }
+              geometry:
+                type: object
+                description: GeoJSON Polygon (ngt_buffer, forest_symbol) or LineString (stream_centreline), EPSG:4326
+              properties: { $ref: "#/components/schemas/OverlayProperties" }
+
+    OverlayTouch:
+      type: object
+      required: [overlay_uid, plan_id, kind, status, status_label, note, overlap_pct]
+      properties:
+        overlay_uid: { type: string }
+        plan_id: { type: string }
+        kind: { $ref: "#/components/schemas/OverlayKind" }
+        status: { $ref: "#/components/schemas/DocStatus" }
+        status_label: { type: string }
+        note: { type: string, example: "Map symbol, not a measured buffer" }
+        overlap_pct: { type: number, description: Share of the parcel's area inside the overlay, 0-100 }
+
+    StreamNearby:
+      type: object
+      required: [overlay_uid, plan_id, status, status_label, note, distance_m]
+      properties:
+        overlay_uid: { type: string }
+        plan_id: { type: string }
+        status: { $ref: "#/components/schemas/DocStatus" }
+        status_label: { type: string }
+        note: { type: string, example: "Map symbol (stream centreline), not a surveyed stream" }
+        distance_m: { type: number, description: Parcel boundary to the centreline; 0 when it crosses the parcel }
+
+    OverlaysNearby:
+      type: object
+      required: [ngt_buffer, forest_symbol, nearest_stream_centreline]
+      properties:
+        ngt_buffer:
+          type: array
+          items: { $ref: "#/components/schemas/OverlayTouch" }
+          description: NGT Buffer areas the parcel touches
+        forest_symbol:
+          type: array
+          items: { $ref: "#/components/schemas/OverlayTouch" }
+          description: Forest symbol areas the parcel touches
+        nearest_stream_centreline:
+          oneOf:
+            - $ref: "#/components/schemas/StreamNearby"
+            - type: "null"
+          description: Nearest stream centreline within 100 m of the parcel, else null
+
     ZonesAtResult:
       type: object
-      required: [parcel, zones, plans_skipped]
+      required: [parcel, zones, plans_skipped, overlays_nearby]
       properties:
         parcel:
           type: object
@@ -416,6 +576,8 @@ components:
           type: array
           items: { type: string }
           description: plan_ids not queried because their flag is off
+        overlays_nearby:
+          $ref: "#/components/schemas/OverlaysNearby"
         note:
           type: [string, "null"]
           example: "Only draft plans cover this parcel; shown for context only"

@@ -4,6 +4,27 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.11.0 — 2026-09-30 — planning
+
+**New endpoint `GET /overlays?plan_id&bbox&kind`:** map-symbol overlays (`ngt_buffer`,
+`forest_symbol`, `stream_centreline`) as GeoJSON. Same flags and 0.05-degree bbox cap as
+`/zones`. Every feature carries `status`, `status_label` and a `note` that it is a map
+symbol, not a measured buffer.
+
+**`GET /zones/at` extended (additive):**
+- `ZoneHit.position_uncertainty_m` = sqrt(georef_rmse_m^2 + m_per_px^2) (about 11 m for BDA-RMP2031)
+- `ZoneHit.near_edge` = edge_distance_m < position_uncertainty_m
+- `ZoneHit.inferred`, `inferred_share_pct`, `inferred_notes`: zone inferred under the NGT hatch
+  or a stream symbol
+- `ZonesAtResult.overlays_nearby`: NGT areas and forest symbol areas the parcel touches, and the
+  nearest stream centreline within 100 m with its distance
+
+`ZoneProperties.inferred_note` added. `uncoloured` documented as a normal zone value (native
+label "Not coloured on the plan"). `/authority` documents `501` until the authority table
+is built (step 1.7).
+
+---
+
 ## 1.10.0 — 2026-09-30 — planning
 
 - `SheetQA.extraction` enum gains `raster_palette`: zones classified by exact colour from a
