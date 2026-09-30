@@ -1,246 +1,247 @@
 # BDA RMP 2031 (Draft): coverage and accuracy audit
 
-30 Sep 2026. Branch `feat/planning-2031-phase0`. Audit only: nothing in the layer, the
-service or the tables was changed. RMP 2031 is a draft plan, never approved.
+Round 1: 30 Sep 2026 (audit only). Round 2: 1 Oct 2026 (fixes decided by Tanmay on 30 Sep,
+then the audit re-run). Branch `feat/planning-2031-phase0`. RMP 2031 is a draft plan, never
+approved.
 
-CSVs: `<data-root>/planning/audit/` (data-root here `C:\Users\tanny\Downloads\planning`).
-Scripts: `infra/scripts/planning/audit_rmp2031.py` (A1-A5, C9, C10, summary),
-`audit_service.py` (B6, B7, run with the planning service venv),
-`crosscheck_pdr.py --all --extents` (C8 and PD extents).
+CSVs: `<data-root>/planning/audit/` (round 1 copies in `audit_before_fix/`; data-root here
+`C:\Users\tanny\Downloads\planning`). Scripts: `infra/scripts/planning/audit_rmp2031.py`
+(A1-A5, C9, C10, summary), `audit_service.py` (B6, B7, planning service venv),
+`crosscheck_pdr.py --all --extents` (C8, PD extents).
 
-## Summary
+## Before / after
 
-### By district and taluk
+| Check | Round 1 (before) | Round 2 (after) |
+|---|---:|---:|
+| LPA area with no zone polygon (A2) | 3,004 ha (2.49 %), 221,595 pieces | **2.17 ha** (0.002 %), 12,231 pieces; 2.14 ha of it is the raster step along the LPA edge, 165 m2 interior |
+| Gap pieces >= 100 m2 | 65,682 | **0** |
+| Parcels fully inside the LPA whose `/zones/at` hits sum < 95 % (B6) | 15,627 | **0** |
+| ... sum < 99 % | not measured | **6** (all cross the LPA boundary, see B6) |
+| ... sum > 101 % | 0 | 0 |
+| `/zones/at` errors over 92,623 parcels | 0 | 0 |
+| `/zones/at` time per parcel (audit run, 6-10 workers) | ~0.16 s | ~0.10 s (1,610 s for all BDA parcels on 6 workers) |
+| `/authority` errors (2,287 villages + 7,650 points) | 0 | 0 |
+| `/authority` point mismatches | 5 | **1** (Lingadeeranahalli, noted, no change) |
+| Random-sample mismatches (C10) | 5 of 124 | **0** of 118 |
+| PDR figure cross-check (C8) | 36 pass, 4 borderline, 2 mis-registered | 36 pass, 4 borderline, **2 "cross-check unavailable"** (PD 31, 37) |
+| NGT buffer within +-5 pp of PDR (A1) | 10 / 41 PDs | **27 / 39** |
+| NGT overlay area | 16,134 ha | 11,613 ha |
+| PDs where every PDR category passes (combined road row) | 3 (1, 6, 20) | 8 (1, 4, 5, 6, 8, 15, 20, 39) |
+| Villages over 30 % uncoloured or inferred (A4) | 186 of 493 | 168 of 493 |
+| Georef: PDs with fewer than 3 check points | 11 | **0 of the 11 with an extent** (independent check points, C9) |
+| Georef: PDs over 20 m RMSE | PD 5 (20.4 m, n=4) | **PD 26** (21.8 m, n=8, independent points); PD 5 is 2.4 m on independent points |
 
-"Searchable" = BDA villages that have parcel geometry (so a survey-number search works).
-"Sum off" = parcels fully inside the LPA whose `/zones/at` hits add up to less than 95 %
-(none were above 101 %). PD lists are the PDs the taluk's BDA villages fall in.
+## What changed (round 2)
 
-| District | Taluk | Villages | In BDA | BDA, no parcels | Searchable | Outside BDA (no plan loaded yet) | `/zones/at` parcels run | Errors | Sum off (< 95 %) | Villages > 30 % uncoloured/inferred | PDs failing PDR table check | PDs with georef flag |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
-| Bengaluru Urban | Bangalore North | 188 | 107 | 20 | 81.3 % | 81 | 20,417 | 0 | 5,499 (26.9 %) | 28 | 6 7 8 17 18 19 32 33 34 39 40 41 | 39 41 |
-| Bengaluru Urban | Bangalore South | 224 | 141 | 10 | 92.9 % | 83 | 11,195 | 0 | 2,589 (23.1 %) | 64 | 3 4 13 14 15 16 17 28 30 32 36 37 38 39 | 28 36 37 39 |
-| Bengaluru Urban | Anekal | 304 | 54 | 0 | 100 % | 250 | 19,398 | 0 | 1,765 (9.1 %) | 21 | 13 26 29 30 | 26 |
-| Bengaluru Urban | Bangalore East | 186 | 143 | 20 | 86.0 % | 43 | 13,451 | 0 | 2,228 (16.6 %) | 43 | 2 8 9 10 11 12 21 22 23 24 25 | 10 12 22 25 |
-| Bengaluru Urban | Yalahanka (incl. North Additional) | 196 | 100 | 2 | 98.0 % | 96 | 28,162 | 0 | 3,546 (12.6 %) | 30 | 7 19 20 21 31 34 35 41 42 | 41 42 |
-| Bengaluru Rural | Nelamangala | 367 | 0 | – | – | 367 | – | 0 | – | – | – | – |
-| Bengaluru Rural | Doddaballapura | 302 | 0 | – | – | 302 | – | 0 | – | – | – | – |
-| Bengaluru Rural | Devanahalli | 226 | 0 | – | – | 226 | – | 0 | – | – | – | – |
-| Bengaluru Rural | Hoskote | 294 | 0 | – | – | 294 | – | 0 | – | – | – | – |
-| **Total** | | **2,287** | **545** | **52** | **90.5 %** | **1,742** | **92,623** | **0** | **15,627 (16.9 %)** | **186** | 39 of 41 PDs with a usable table | 12 PDs |
+Commit `03a2bce` (contract 1.14.0, additive).
 
-"PDs failing the PDR table check" counts any class outside +-5 percentage points; the core
-zone classes mostly pass (see A1), so this column overstates the problem. Read it with A1.
+1. **M1 road gaps.** Thin white pieces (under 2 source pixels, ~10 m) are no longer dropped:
+   they are the zone "Road space (not coloured on the plan)", `class_norm` `road_space`,
+   status draft, `cartographic: true` (a drawing class, not comparable with plan area
+   tables). Thin pieces of a coloured zone keep their own class (not given to neighbours).
+   A second cause turned up and was fixed: every one-pixel piece (36,177 of them) was lost to
+   a float cut-off (`area < px_area`); the minimum is now half a pixel.
+   Road space: 3,138 ha in the LPA (median 2.8 % of a PD, max 6.3 %); zones now cover
+   120,674.5 of the LPA's 120,676.7 ha.
+   The service passes `cartographic` through `/zones` and `/zones/at`; web legend and card
+   show it as a road corridor, not a zone decision.
+   Side effect fixed in the same commit: road space added ~230,000 small polygons and made the
+   edge-distance union in `/zones/at` slow (4 s per parcel). The union now takes only the
+   zone pieces touching the parcel, clipped just beyond it: identical results on 469 of 469
+   checked hits, 0.07 s per parcel.
+2. **W1 PD 31 / PD 37.** Wider scale search (1.6-26 m/px): best agreement still 0.4 % and
+   3.1 %, so both are marked "cross-check unavailable" (floor 60 %) and have no PD extent.
+   PD-level A1/C9/C10 numbers are not given for them.
+3. **W4 NGT.** On PLUCOMP the NGT buffer is a solid #38a800 band along streams and lakes, not a
+   line hatch. The old closing (10 px) bridged across the stream and the parks between two
+   bands. Now 2 px (bridges road lines drawn across the band). Per PD below.
+4. **M3 / W7 check points.** OSM residential/unclassified/living-street roads fetched per PD
+   (Overpass; two dense PDs in 2x2 tiles) and used only as check points; the georeference
+   fit never saw them. A pair is kept when the sheet junction is isolated (100 m), the pairing
+   is mutual, within 40 m, and unambiguous (second-nearest OSM junction at least 2.5x and
+   30 m further). No refit.
+5. **W6.** A village the schedule lists as full is full only from 90 % map share; 75-90 % is
+   partial. Changed: Bhutanahalli (89.5 %) and Chokkanahalli (86.0 %) to partial.
+6. **+-5** is percentage points of the PD's area. The combined road-space row stays (now
+   including Road space).
+7. **M2.** The 52 BDA villages without parcel geometry are in
+   `infra/planning/cadastral_data_gaps.csv` as a cadastral data gap. No fix this phase.
+8. **W2 (borderline PDs 8, 15, 17, 41) and W3 (uncoloured, PD 30):** unchanged, waiting on the
+   SME.
 
-### What's missing
+## Summary by district and taluk (after)
 
-| # | Missing | Size | Proposed fix |
-|---|---|---|---|
-| M1 | **Road corridors have no polygon.** The extractor drops pieces under 2 px wide (`SLIVER_PX`), which are mostly white road corridors between blocks; nothing replaces them. | 3,004 ha of the LPA (2.49 %) in 221,595 pieces 5-8 m wide; 13 ha of that is the LPA edge. 15,627 parcels (16.9 % of those run) have hits summing < 95 %, 1,399 < 80 %. All 5 sample "mismatches" in C10 are this. | Stop dropping slivers: keep thin white pieces as "Not coloured on the plan" (or give them to the neighbouring zone), and label road corridors as such if the SME agrees they are road space. Re-run the extraction, then A2/B6. |
-| M2 | **52 BDA villages cannot be searched by survey number**: 38 have no parcel file, 14 have a placeholder file with no geometry. Mostly Bangalore North (hobli 40/41 city-survey villages) and Bangalore East (Marathahalli, Beluru, Kodihalli ...). List: `bda_villages_no_parcels.csv`. | 9.5 % of BDA villages | Cadastral data gap, not a planning bug. Re-scrape these villages; until then `/authority` still answers from the schedule (coverage from text). |
-| M3 | **Check points for the georeference are thin** in 12 PDs (none in PD 26, 28, 36, 37; 1-2 in 10, 12, 22, 25, 39, 41, 42). Only OSM major + secondary roads were fetched. | 12 of 42 PDs | Fetch OSM tertiary/residential roads for check points only, re-run C9. |
-| M4 | **PDR table for PD 27 is blank in the source** (only Agriculture and Total PD Area, both copied from PD 26). | 1 PD | Nothing to fix on our side; record it and skip PD 27 in the table check. |
-| M5 | **ELU sheet for PD 19** is not in the OpenCity dataset. | 1 sheet | Not a 2031 layer; no action. PD 19 is otherwise covered (see A5). |
-| M6 | No `/zones/at` result for 5,214 parcels in partial villages. | expected | They lie wholly outside the LPA; `/authority` already says partial. No action. |
+| District | Taluk | Villages | In BDA | BDA, no parcels | Searchable | Outside BDA (no plan loaded yet) | `/zones/at` parcels | Errors | Sum < 99 % | Villages > 30 % uncoloured/inferred |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Bengaluru Urban | Bangalore North | 188 | 107 | 20 | 81.3 % | 81 | 20,417 | 0 | 0 | 26 |
+| Bengaluru Urban | Bangalore South | 224 | 141 | 10 | 92.9 % | 83 | 11,195 | 0 | 1 | 60 |
+| Bengaluru Urban | Anekal | 304 | 54 | 0 | 100 % | 250 | 19,398 | 0 | 3 | 17 |
+| Bengaluru Urban | Bangalore East | 186 | 143 | 20 | 86.0 % | 43 | 13,451 | 0 | 0 | 39 |
+| Bengaluru Urban | Yalahanka (incl. North Additional) | 196 | 100 | 2 | 98.0 % | 96 | 28,162 | 0 | 2 | 26 |
+| Bengaluru Rural | Nelamangala / Doddaballapura / Devanahalli / Hoskote | 1,189 | 0 | – | – | 1,189 | – | 0 | – | – |
+| **Total** | | **2,287** | **545** | **52** | **90.5 %** | **1,742** | **92,623** | **0** | **6** | **168** |
 
-### What's wrong
+Accuracy flags: PD 26 lower map accuracy (21.8 m); PD 31 and 37 no PDR cross-check; PD 8,
+15, 17, 41 borderline PDR cross-check. Per-PD PDR table results in `pd_vs_pdr.csv`.
 
-| # | Wrong | Evidence | Proposed fix |
-|---|---|---|---|
-| W1 | **PD extents for PD 31 and PD 37 are mis-registered** (PDR figure agreement 15.8 % and 2.9 % vs baselines 48.5 % / 46.7 %; PD 37 landed at the edge of the scale search, 3.6 m/px). Their A1, C9, C10 numbers use a wrong outline. | `pdr_crosscheck_all.csv` | Widen the scale search / seed the registration from the PD index map; re-run C8, then A1/C9/C10 for those two PDs. |
-| W2 | **Borderline PDR cross-check** for PD 8, 15, 17, 41 (agreement excl. PDR greys 79-87 %, within 5 points of the majority-class baseline). | `pdr_crosscheck_all.csv` | Look at the renders with the SME; likely PDR figure greys/labels, not our zones. |
-| W3 | **"Uncoloured" is large and uneven**: median village 13.4 % uncoloured + 13.7 % inferred; 186 BDA villages over 30 % (81 driven by uncoloured, 105 by inferred). Worst: Bairappana Halli 91 % uncoloured, Bannerughatta 74 %, Khane Kandaya 48 % + 60 % inferred. PD 30 is 34.5 % uncoloured. | `village_quality.csv`, `pd_landuse.csv` | Ask the SME what white inside the LPA means on PLUCOMP (forest/reserve? gaothana? not yet planned?). Until then keep showing "Not coloured on the plan". |
-| W4 | **NGT buffer is much larger than the PDR tables** in 31 of 41 PDs (e.g. PD 29: ours 15.1 % vs PDR 1.8 %). Our NGT area is the closed hatch extent. | `pd_vs_pdr.csv` | Check `HATCH_CLOSE_PX` against a few PDs with the SME; the PDR may count only the part not already zoned. |
-| W5 | **Water, Agriculture, Unclassified/Transport do not reconcile with the PDR tables** (pass 24/41, 17/31, 10/41 even after combining road space). | `pd_vs_pdr.csv` | Mostly W3/W4/M1 plus PD extent error; revisit after M1 and W1 are fixed. |
-| W6 | **"Text full + map 75-97 %" rule makes some outside points look inside** (from last round's coverage rule): 5 of 7,650 grid points outside the LPA sit in villages marked full, one 1.04 km outside (Chokkanahalli, map share 86 %). | `authority_points_check.csv` | Only apply the rule from 90 %, or mark such villages `partial` with the text note. Your call. |
-| W7 | **Georeference in PD 5 is 20.4 m RMSE** (n=4), over the 20 m flag. Overall 11.5 m (n=212). | `georef_pd.csv` | Add check points (M3) before acting; if it holds, a local correction for the west side. |
+## What's still open
 
-Nothing crashed: 0 errors in 92,623 `/zones/at` runs and in 2,287 + 7,650 `/authority` calls.
+| # | Open | Status / proposal |
+|---|---|---|
+| O1 | **PD 26 has lower map accuracy**: 21.8 m RMSE on 8 independent check points (median 9.1 m, max 36.1 m), the only PD over 20 m. | Flagged, no refit (decision). Edge answers there carry more uncertainty than the ~11 m used elsewhere. |
+| O2 | **PD 31, 37 cross-check unavailable** (PDR figures do not register onto PLUCOMP). | No PD extent for them; their zones exist and are used. |
+| O3 | **NGT still above the PDR in 12 PDs**, mostly the outer agricultural ones (21, 28-30, 34, 38, 40-42: PDR 0-3 %, drawn band 8-14 %). | Definitional: the PDR seems not to count NGT over agriculture. SME. |
+| O4 | **Uncoloured share** (median PD 14.7 %, PD 30 34.5 %) and 168 villages over 30 %. | Waiting on the SME (W3). |
+| O5 | **Borderline PDR cross-check** PD 8, 15, 17, 41. | Waiting on the SME (W2). |
+| O6 | **52 BDA villages without parcel geometry.** | Cadastral data gap, `cadastral_data_gaps.csv`. |
+| O7 | **Lingadeeranahalli** (map share 95.6 %, full): the one grid point that answers "outside the LPA" while its village is full, 15.6 m outside the edge. | Left as is (decision): within the ~11 m map uncertainty plus the parcel edge. |
+| O8 | Water, Agriculture and road space still do not reconcile with the PDR tables in many PDs (A1). | Revisit with the SME answers on O3/O4. |
 
 ---
 
 ## A. Coverage
 
-### A1. Planning districts (`pd_landuse.csv`, `pd_vs_pdr.csv`)
+### A1. Planning districts (`pd_landuse.csv`, `pd_vs_pdr.csv`, `ngt_before_after.csv`)
 
-PD boundaries are not published as vectors. Each PD's area here is the coloured extent of
-its own PDR "Proposed Land Use" figure, registered onto PLUCOMP (C8). Extent area vs the
-PDR's "Total PD Area": within +-12 % for 34 of 41 PDs; off for PD 2 (-19 %), 10 (+22 %),
-17 (+20 %), 26 (-50 %, the PDR's PD 26 total includes 2,194 ha agriculture), 31 (+196 %),
-33 (+17 %), 37 (-39 %) (W1).
+PD extents are the coloured extent of each PDR figure registered onto PLUCOMP (PD
+boundaries are not published as vectors); PD 31 and 37 have none (O2). Every other PD has
+zones; area with no polygon is now at most 0.01 % of a PD (was up to 7.1 %). Uncoloured
+median 14.7 % (PD 30 34.5 %); inferred under symbols median 14.9 % (was 16.2 %).
 
-- Every PD 1-42 has zones. No PD is empty.
-- Uncoloured 11-18 % in most PDs (PD 30: 34.5 %); inferred under symbols 7.6-21.6 %;
-  area with no polygon at all 0.8-7.1 % (over 5 % in PD 5, 8, 15, 17, 18, 32, 33: M1).
-- PDR tables found for all 42 PDs (the PD number is taken from the chapter number because
-  captions misprint it: PD 11's table says "PD 10", PD 33's has no PD). PD 27's is blank (M4).
+PDR tables: read for all 42 PDs (PD number from the chapter number; PD 11's caption misprints
+"PD 10", PD 33's has none). PD 27's table is blank in the source (only Agriculture and the
+total, copied from PD 26).
 
-Comparison, +-5 percentage points of PD area ("+-5 %" read as percentage points). PDR
-"Unclassified" is grey on the PD figures and compared with our uncoloured + Defense. A combined
-row adds road space, because PLUCOMP draws roads as lines over white corridors while the PDR
-counts them as Transport.
+Categories passing +-5 pp, before -> after (after has 39 PDs with an extent and a usable table):
 
-| Category | PDs passing |
-|---|---|
-| Commercial | 41/41 |
-| Industrial | 39/39 |
-| Public Utility | 41/41 |
-| Public & Semi Public | 40/41 |
-| Parks / open spaces | 40/41 |
-| Forest (our forest-symbol overlay) | 37/39 |
-| Streams (our zones inferred under the stream symbol) | 35/41 |
-| Residential | 34/41 |
-| Water Bodies | 24/41 |
-| Agriculture | 17/31 |
-| NGT Buffer (our overlay) | 10/41 |
-| Unclassified + Transport (combined) | 10/41 |
-| Transport alone | 8/41 |
-| Unclassified alone | 3/38 |
+| Category | Before | After |
+|---|---|---|
+| Commercial | 41/41 | 39/39 |
+| Industrial | 39/39 | 37/37 |
+| Public Utility | 41/41 | 39/39 |
+| Public & Semi Public | 40/41 | 39/39 |
+| Parks / open spaces | 40/41 | 38/39 |
+| Forest | 37/39 | 35/37 |
+| Streams | 35/41 | 33/39 |
+| Residential | 34/41 | 32/39 |
+| Water Bodies | 24/41 | 24/39 |
+| Agriculture | 17/31 | 17/29 |
+| **NGT Buffer** | **10/41** | **27/39** |
+| Unclassified + Transport (combined, incl. Road space and no-polygon) | 10/41 | 12/39 |
 
-PDs passing every row (using the combined road row): 1, 6, 20.
+NGT buffer, % of PD area (PDR / before / after; fail = outside +-5 pp):
+1: 5.9 / 9.5 / 8.1 · 2: 6.4 / 14.8 / 11.4 · 3: 6.2 / 17.9 / 13.7 fail · 4: 5.0 / 11.4 / 9.5 ·
+5: 9.8 / 17.6 / 14.7 · 6: 5.8 / 8.3 / 6.9 · 7: 7.4 / 13.2 / 9.8 · 8: 10.5 / 17.4 / 13.1 ·
+9: 10.2 / 14.5 / 10.6 · 10: 13.6 / 17.8 / 12.6 · 11: 8.5 / 15.7 / 10.5 · 12: 10.8 / 15.4 / 10.1 ·
+13: 12.9 / 17.3 / 13.0 · 14: 8.7 / 14.1 / 11.9 · 15: 10.3 / 18.0 / 15.0 · 16: 10.2 / 15.5 / 12.2 ·
+17: 11.5 / 21.8 / 16.2 · 18: 9.3 / 18.6 / 14.8 fail · 19: 10.4 / 20.8 / 16.0 fail ·
+20: 9.3 / 13.0 / 9.3 · 21: 1.3 / 12.3 / 8.4 fail · 22: 9.0 / 16.9 / 11.5 · 23: 12.0 / 15.8 / 10.8 ·
+24: 10.3 / 17.4 / 11.2 · 25: 13.9 / 14.2 / 9.9 · 26: 5.1 / 13.7 / 8.9 · 28: 3.1 / 13.8 / 9.4 fail ·
+29: 1.8 / 15.1 / 10.3 fail · 30: 0.6 / 16.5 / 10.8 fail · 32: 11.6 / 16.6 / 11.7 ·
+33: 10.9 / 19.2 / 15.2 · 34: 7.2 / 18.8 / 13.0 fail · 35: 6.1 / 11.9 / 8.2 · 36: 10.7 / 19.8 / 12.3 ·
+38: 6.9 / 19.8 / 12.9 fail · 39: 10.7 / 16.2 / 11.2 · 40: 0.6 / 19.5 / 13.1 fail ·
+41: 0.0 / 21.2 / 13.8 fail · 42: 0.7 / 14.3 / 9.8 fail · (31, 37: no extent; 27: blank table).
 
-### A2. Gaps (`gaps.csv`, `gaps_summary.json`, `gaps_top10_interior.csv`)
+Closing radius was chosen from the band's geometry, then checked against the tables (raster
+measure, 39 PDs within +-5 pp): r=10 7, r=6 13, r=4 20, r=2 23, band pixels only 28. Even the
+raw band exceeds the PDR totals, so the remaining gap is how the PDR counts NGT (O3).
 
-LPA minus (all zone polygons + NGT/forest overlay polygons): 3,004 ha, 221,595 pieces;
-65,682 of them >= 100 m2, 3,369 >= 1,000 m2. Only 13 ha lie on the LPA edge (raster steps
-against the smooth boundary). The rest are road corridors (median width 5-8 m), see M1.
+### A2. Gaps (`gaps.csv`, `gaps_summary.json`)
 
-Largest 10 interior gaps:
+2.17 ha in 12,231 pieces, none >= 100 m2. 2.14 ha lie on the LPA edge (the raster's pixel
+steps against the smooth boundary); 165 m2 are interior. Round 1: 3,004 ha of road corridors.
 
-| # | Area m2 | Lat, lng | PD | Nearest village | Width m |
-|---|---:|---|---|---|---:|
-| 1 | 21,360 | 13.03153, 77.58989 | 7 | Cholanaykana Halli | 6.4 |
-| 2 | 20,728 | 13.06851, 77.49499 | 19 | Seededahalli | 5.5 |
-| 3 | 18,388 | 12.98219, 77.58442 | 1 | Adugodi | 8.6 |
-| 4 | 14,240 | 12.94485, 77.68754 | 12 | Amani Bellandurukhane | 6.6 |
-| 5 | 14,217 | 13.05762, 77.64083 | 9 | K Narayanapura | 6.1 |
-| 6 | 12,306 | 13.07150, 77.58266 | 7 | Kotihosahalli | 6.1 |
-| 7 | 12,213 | 12.97482, 77.49294 | 33 | Giddadakonenahalli | 5.4 |
-| 8 | 12,165 | 13.05891, 77.44324 | 40 | Harokyatana Halli | 6.1 |
-| 9 | 12,050 | 12.94758, 77.55070 | 15 | Avalahalli | 6.6 |
-| 10 | 12,002 | 12.87191, 77.63939 | 13 | Beguru | 5.4 |
+### A3. Admin hierarchy (`admin_hobli.csv`, `bda_villages_no_parcels.csv`)
 
-(Each is a long connected road network piece, hence large area at ~6 m width.)
-
-### A3. Admin hierarchy (`admin_hobli.csv`, `bda_villages_no_parcels.csv`, `admin_errors.csv`)
-
-2,287 villages (Urban 1,098, Rural 1,189). In BDA: 545 (490 full, 55 partial), all in
-Bengaluru Urban. With parcel data: Urban 827, Rural 1,013. BDA villages with no parcel data:
-52 (M2). Outside BDA, no plan loaded yet: 1,742 (Urban 553, Rural 1,189); 395 of them have no
-parcel data (not an error for planning). Hierarchy errors: 0 (every village is in the
-authority table and in the e-Chawadi list).
+Unchanged: 2,287 villages, 545 in BDA (now 488 full, 57 partial after W6), all in Bengaluru
+Urban. 52 BDA villages without parcel geometry (38 no file, 14 placeholder), listed in
+`infra/planning/cadastral_data_gaps.csv`. Hierarchy errors: 0.
 
 ### A4. Villages (`village_quality.csv`)
 
-493 BDA villages with parcels measured (52 have none). Share of each village's in-LPA area
-that is uncoloured or inferred: median 13.4 % + 13.7 %. **186 villages over 30 %** (161
-full, 25 partial). Top of the list:
-
-| Village | Key | Uncoloured % | Inferred % | PD |
-|---|---|---:|---:|---|
-| Bairappana Halli | 20/3/8/12 | 91.2 | 22.1 | 30 |
-| Khane Kandaya | 20/4/4/22 | 48.0 | 60.0 | 24 |
-| Bannerughatta | 20/3/8/9 | 74.2 | 23.2 | 30 |
-| Huvinani | 20/4/10/12 | 38.9 | 48.9 | 22 |
-| Hebbala Amani Kere | 20/1/2/19 | 34.7 | 42.1 | 7 |
-| Amani Bairatikhane | 20/4/2/34 | 32.8 | 43.0 | 9 |
-| Basavanapura | 20/2/17/32 | 67.5 | 5.8 | 30 |
-| Kalkere | 20/3/2/56 | 57.8 | 10.0 | 30 |
-
-("Uncoloured" and "inferred" can overlap slightly: a zone inferred under a symbol can itself
-be uncoloured.) Tank-bed ("Amani", "Kere") villages are high on inferred, as expected under
-water/NGT symbols.
+493 BDA villages with parcels measured. Over 30 % uncoloured or inferred: 168 (was 186).
+Road space is reported in its own column and not counted as uncoloured.
 
 ### A5. Documents (`documents.csv`)
 
-95 rows in `plan_docs.csv`:
-- Used by a layer (3): PLUCOMP (zones, overlays, LPA), MPD (LPA village schedule), PDINDEX (village to PD).
-- Used as QA (43): PDR (per-PD tables) and the 42 PDR PLU figures (C8 and PD extents).
-- Not used yet (48): 41 ELU-PD sheets and the ELU composite (existing land use 2015, not a 2031 layer), ZR (needed for `/classify`, which waits for sign-off), VISION, BROCHURE, FORM, DBINFO/OCSINGLE.
-
-**PD 19 is covered:** its PDR figure (p202) and PDR table are used; its extent registered
-(agreement 83.0 % excl. PDR greys, baseline 67.4 %, pass); PLUCOMP zones cover it (2,350 ha,
-15.8 % uncoloured, 19.7 % inferred). Only ELU-PD19 is missing from the source dataset (M5).
+Unchanged. PD 19: PDR figure and table used, extent registered (pass), zones present; only
+its ELU sheet is missing from the source.
 
 ## B. Works everywhere
 
-### B6. `/zones/at` over every BDA parcel (`zones_at_*.csv`, `zones_at_summary.json`)
+### B6. `/zones/at` over every BDA parcel (`zones_at_*.csv`)
 
-Function level, same code path as the route (`parcel_geometry` -> `zone_hits` ->
-`overlays_nearby`), parcels read with the X/Y swap and passed through WGS84 as `/data` does.
+92,623 survey numbers, **0 errors**. Empty: 5,420 (5,214 wholly outside the LPA in partial
+villages; the rest touch zones only under 1 %). Partly outside the LPA (< 99 % inside):
+2,054, not held to the sum. Fully inside the LPA and summing under 99 %: **6**, none under
+98.7 %. All 6 cross the LPA boundary by a sliver (99.0-99.96 % inside), and the missing part
+is the part outside the plan edge:
 
-- 507 BDA villages with a parcel file; 14 of those files have no geometry (M2).
-- 92,623 survey numbers run. **Errors: 0** (no exception of any type).
-- Empty (no zone hit): 5,434. Of these 5,214 lie wholly outside the LPA (partial villages,
-  expected), 219 touch zones only under 1 % (reported as trace hits), 1 lies inside a road gap.
-- Partly outside the LPA (< 99 % inside): 2,049, not checked for the sum.
-- **Sums outside 95-101 %: 15,627** parcels fully inside the LPA, all below 95 % (none above
-  101 %); 1,399 below 80 %, 62 below 50 %. Cause: M1 road-corridor gaps (checked on the
-  worst 40: the missing part is 3.7-5 m strips whose source pixels are white).
+| Village key | Survey | Sum % | Area m2 | Share inside LPA | Reason |
+|---|---|---:|---:|---:|---|
+| 20/2/17/34 | 29/\*/\* | 98.99 | 15,021 | 99.00 % | crosses the LPA edge (152 m2 outside) |
+| 20/3/6/49 | 164/\*/1 | 98.75 | 18,117 | 99.01 % | crosses the LPA edge (227 m2 outside) |
+| 20/3/8/22 | 120/\*/3 | 98.92 | 1,852 | 99.96 % | crosses the LPA edge (20 m2: edge raster step) |
+| 20/3/9/21 | 7/\*/\* | 98.72 | 18,303 | 99.49 % | crosses the LPA edge (235 m2 outside) |
+| 20/5/5/21 | 158/\*/\* | 98.95 | 85,398 | 99.06 % | crosses the LPA edge (899 m2 outside) |
+| 20/5/8/20 | 27/\*/\* | 98.96 | 18,742 | 99.06 % | crosses the LPA edge (195 m2 outside) |
 
-### B7. `/authority` (`authority_villages_check.csv`, `authority_points_check.csv`)
+No parcel away from the plan edge sums under 99 %.
 
-- 2,287 village keys: 0 errors, 0 mismatches with `authority_villages.csv`; operative_plan
-  null everywhere; draft plan listed for every BDA village; an unknown code in a listed
-  district returns 404.
-- 7,650-point grid (1 km) over both districts: 0 errors; 1,199 inside the LPA; 3,949
-  consistent with the village table; 3,696 fall between village outlines (roads, lakes,
-  villages without parcels); **5 mismatches**, all "point outside the LPA but village full",
-  all from the 75-97 % rule (W6).
+### B7. `/authority` (`authority_*_check.csv`)
+
+2,287 village keys: 0 errors, 0 mismatches with the table. 7,650-point grid: 0 errors,
+1 mismatch: Lingadeeranahalli (20/2/20/38, map share 95.6 %, full) at 12.86804, 77.51198,
+15.6 m outside the LPA edge. Left as is (O7).
 
 ## C. Accuracy
 
-### C8. PDR figure cross-check, all 42 PDs (`pdr_crosscheck_all.csv`)
+### C8. PDR figure cross-check (`pdr_crosscheck_all.csv`)
 
-Per-cell class agreement inside each PD's own extent (~19 m grid). Pass = agreement
-excluding PDR greys >= 80 % and at least 5 points above the majority-class baseline (the
-greys are ambiguous: PD-level "Unclassified" vs PLUCOMP Defense, and road lines/labels in the
-JPEG). Mean agreement excl. greys: 84.0 %.
+Pass = agreement excluding PDR greys >= 80 % and >= 5 points above the majority-class
+baseline. 36 pass (80.6-95.2 %); borderline PD 8, 15, 17, 41 (W2, SME); PD 31 and 37
+cross-check unavailable after the wider search (0.4 % and 3.1 %; floor 60 %).
 
-- Fail, registration: PD 31 (15.8 % vs baseline 48.5 %), PD 37 (2.9 % vs 46.7 %) (W1).
-- Fail, borderline: PD 8 (79.2 vs 77.7), 15 (80.5 vs 78.8), 17 (80.0 vs 53.1: just under 80),
-  41 (87.4 vs 86.2) (W2).
-- Pass: the other 36, from 80.6 % to 95.2 % (PD 29).
-- Largest disagreements are PDR greys (Transport/Defense/Public Utilities) against our
-  Residential or Agriculture, i.e. roads and labels on the figures.
+### C9. Georeference per PD (`georef_pd.csv`, `georef_pd_independent.csv`)
 
-### C9. Georeference per PD (`georef_pd.csv`, `georef_points.csv`)
+Round 1 method (major/secondary junctions, not independent of the fit): 212 points, RMSE
+11.5 m. Round 2 adds **independent** check points (OSM minor roads, never used in the fit) for
+the 11 thin PDs and PD 5:
 
-OSM junctions (major + secondary roads) paired with PLUCOMP road-line junctions under the
-fitted affine: isolated 150 m, mutual nearest, within 60 m. 227 pairs, 15 dropped as junction
-mismatches (same rule as the georef step). Overall **RMSE 11.5 m, n = 212**.
+| PD | OSM minor ways | Independent points | RMSE m | Median m | Max m | Flag |
+|---|---:|---:|---:|---:|---:|---|
+| 5 | 8,045 | 4 | 2.4 | 1.9 | 3.9 | |
+| 10 | 9,969 | 9 | 17.3 | 9.0 | 30.1 | |
+| 12 | 7,392 | 10 | 17.2 | 8.2 | 34.3 | |
+| 22 | 6,159 | 11 | 19.8 | 13.7 | 34.4 | |
+| 25 | 2,329 | 11 | 11.8 | 8.2 | 22.5 | |
+| **26** | 2,137 | 8 | **21.8** | 9.1 | 36.1 | **lower map accuracy (O1)** |
+| 28 | 4,734 | 4 | 8.8 | 8.8 | 12.1 | |
+| 36 | 3,277 | 16 | 14.7 | 9.9 | 37.8 | |
+| 37 | – | – | – | – | – | no PD extent |
+| 39 | 2,079 | 9 | 17.8 | 14.0 | 32.3 | |
+| 41 | 5,492 | 14 | 16.4 | 6.9 | 35.0 | |
+| 42 | 3,471 | 14 | 11.1 | 4.2 | 28.7 | |
 
-- Over 20 m: PD 5 (20.4 m, n = 4).
-- No check points: PD 26, 28, 36, 37. Fewer than 3: PD 10, 12, 22, 25, 39, 41, 42 (M3).
-- Others 2.8-18.5 m.
+PD 5's round-1 20.4 m came from 4 points on major roads; independent points give 2.4 m.
+Medians sit at 2-14 m; RMSE is pulled up by a few 30-38 m points (likely residual junction
+mismatches in dense street grids), so treat per-PD RMSE on 4-16 points as indicative.
 
-Caveat: these junctions are not independent of the fit (the road ICP used road samples
-everywhere except near the original 70 check points); treat per-PD values as a consistency
-check.
+### C10. Random parcels (`sample_parcels.csv`)
 
-### C10. Random parcels (`sample_parcels.csv`, `sample_mismatches/*.png`)
+3 per PD, one per village, seeded: 118 parcels (PD 31, 37 no extent; PD 1 only 1). 78 match,
+38 sit where the source shows a map symbol and ours is inferred, 2 are road space over white
+source pixels (match). **0 mismatches** (round 1: 5, all road gaps).
 
-3 parcels per PD, one per village, seeded; zone at the parcel centroid in our layer vs the
-raw PLUCOMP pixel colour at the same spot (inverse affine onto the source raster). 124
-parcels (PD 1 has only one BDA village parcel inside its extent).
+## Method notes
 
-| Result | Count |
-|---|---:|
-| Match | 84 |
-| Source shows a map symbol (NGT hatch / stream / forest), ours inferred | 35 |
-| **Mismatch** | **5 (4.0 %)** |
-
-All 5 mismatches are "(no polygon)" on our side: the centroid falls on a dropped
-road-corridor sliver (M1). No sample had a different zone class. Pages like the acceptance
-pack are in `audit/sample_mismatches/` (PD 7, 14, 16, 33, 39).
-
-## Method notes and limits
-
-- "+-5 %" in A1 is read as +-5 percentage points of the PD's area.
-- PD extents come from registered PDR figures (C8), so A1/C9/C10 per-PD numbers are only as
-  good as the registration; PD 31 and 37 are wrong (W1), PD 2, 10, 17, 26, 33 have area
-  differences over 15 %.
-- A4 and B6 use village outlines built from parcels (union), so villages without parcels
-  are not measured.
-- B6 does not go over HTTP; B7 calls the router function with a store built from the same
-  files the service loads.
+- "+-5" = percentage points of the PD's area.
+- PD extents come from registered PDR figures; A1/C9/C10 per-PD numbers are only as good as
+  that registration.
+- B6 runs the route's functions directly (no HTTP); B7 calls the router function with a store
+  built from the same files.
+- Edge distance (`/zones/at`): distance from the parcel boundary to the zone's boundary (0 when
+  they cross); a parcel inside a zone measures to the nearest other zone or the plan's outer
+  boundary, capped at 200 m. Compared with the round-1 method on 402 hits: 387 identical,
+  near-edge flag the same on 399; the differences are the 200 m cap and parcels next to the
+  few remaining gaps.
