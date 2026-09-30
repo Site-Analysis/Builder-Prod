@@ -11,7 +11,10 @@ are north-up, no rotation), then report
 per-pixel class agreement and the largest disagreements. Figures carry labels and JPEG noise,
 so agreement is a consistency check, not a truth score.
 
-Writes <data-root>/planning/zones/BDA-RMP2031_pdr_crosscheck.json.
+Writes <data-root>/planning/zones/BDA-RMP2031_pdr_crosscheck.json and, with --extents,
+BDA-RMP2031_pd_extents.parquet: each PD's own area (the coloured extent of its PDR figure,
+registered onto PLUCOMP) as a polygon in EPSG:32643, clipped to the LPA. PD boundaries are
+not published as vectors, so this registered footprint stands in for them.
 """
 
 import argparse
@@ -21,10 +24,14 @@ import os
 import sys
 
 import numpy as np
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pymupdf
+import shapely
+from pyproj import CRS
 
 sys.path.insert(0, os.path.dirname(__file__))
-from extract_plucomp import close, dilate
+from extract_plucomp import close, dilate, geoparquet, polygonise
 from fetch_sources import PDR_PLU_FIGURES
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -137,7 +144,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--data-root", default=os.getenv("PLANNING_DATA_ROOT"))
     ap.add_argument("--pds", type=int, nargs="+", default=[2, 7, 12, 17, 20, 28, 36])
+    ap.add_argument("--all", action="store_true", help="all 42 PDs")
+    ap.add_argument("--extents", action="store_true", help="write PD extent polygons")
     args = ap.parse_args()
+    if args.all:
+        args.pds = sorted(PDR_PLU_FIGURES)
     zdir = os.path.join(args.data_root, "planning", "zones")
     with open(os.path.join(zdir, f"{PLAN_ID}_classes.json")) as f:
         meta = json.load(f)
@@ -154,6 +165,16 @@ def main():
     pdr = pymupdf.open(
         os.path.join(args.data_root, "raw", PLAN_ID, f"{PLAN_ID}-PDR.pdf")
     )
+    A = np.array(meta["affine_page_to_32643"])
+    gx0, gy0, cpt, rpt = meta["grid"]
+    lpa = shapely.from_wkb(
+        pq.read_table(
+            os.path.join(zdir, f"{PLAN_ID}_lpa.parquet"), columns=["geometry"]
+        )
+        .column("geometry")
+        .to_numpy(zero_copy_only=False)
+    )[0]
+    extents = []
     results = []
     for pd in args.pds:
         page_no, _caption = PDR_PLU_FIGURES[pd]
@@ -258,6 +279,32 @@ def main():
             ],
         }
         results.append(res)
+        if args.extents:
+            # PD mask in the fine grid, placed where the figure registered
+            H, W = ref_f.shape
+            tm = resample(pd_mask, s_f)
+            m = np.zeros((H, W), np.uint8)
+            y0, x0 = max(dy, 0), max(dx, 0)
+            y1, x1 = min(dy + tm.shape[0], H), min(dx + tm.shape[1], W)
+            if y1 > y0 and x1 > x0:
+                m[y0:y1, x0:x1] = tm[y0 - dy : y1 - dy, x0 - dx : x1 - dx]
+            g = polygonise(m).get(1)
+            if g is not None:
+                g = shapely.transform(
+                    g,
+                    lambda xy: (
+                        np.column_stack(
+                            [
+                                gx0 + xy[:, 0] * GRID * cpt,
+                                gy0 + xy[:, 1] * GRID * rpt,
+                                np.ones(len(xy)),
+                            ]
+                        )
+                        @ A
+                    ),
+                )
+                g = shapely.intersection(shapely.make_valid(g), lpa)
+                extents.append((pd, g, agr))
         print(
             f"PD {pd:2d} (p{page_no}): figure {res['figure_m_per_px']:.2f} m/px, compared {n:,} cells, "
             f"agreement {agr:.1%} (majority-class baseline {res['majority_class_share']:.1%}; excl. PDR greys {res['agreement_excl_pdr_greys']:.1%}); top: "
@@ -269,6 +316,21 @@ def main():
         )
     with open(os.path.join(zdir, f"{PLAN_ID}_pdr_crosscheck.json"), "w") as f:
         json.dump(results, f, indent=1)
+    if extents:
+        geoparquet(
+            os.path.join(zdir, f"{PLAN_ID}_pd_extents.parquet"),
+            pa.table(
+                {
+                    "pd": [e[0] for e in extents],
+                    "area_ha": [e[1].area / 1e4 for e in extents],
+                    "registration_agreement": [e[2] for e in extents],
+                    "source": ["coloured extent of the PDR figure, registered"]
+                    * len(extents),
+                }
+            ),
+            np.array([e[1] for e in extents], dtype=object),
+            CRS.from_epsg(32643),
+        )
 
 
 if __name__ == "__main__":
