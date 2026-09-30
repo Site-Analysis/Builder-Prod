@@ -4,6 +4,23 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.8.0 — 2026-09-30 — planning
+
+Initial planning service contract (`contracts/planning.yaml`, port 8012). 2031 plans only.
+
+Endpoints: `/health`, `/plans`, `/docs/{doc_id}`, `/authority`, `/zones`, `/zones/at`.
+No `/classify` yet — added only after the 2031 layers are signed off.
+
+Every record carries its document `status` (final / draft / superseded / reference) and
+`status_label`. Zones inherit status from their source sheet. BDA RMP 2031 is draft, never
+operative. No endpoint returns an answer or confidence.
+
+Feature flags: `feature.planning.layers` (all routes except `/health`),
+`feature.planning.plan.<plan_id>` (per plan). Web flags `NEXT_PUBLIC_ENABLE_PLANNING_LAYERS` /
+`NEXT_PUBLIC_ENABLE_PLANNING_PANEL` come with the Phase 1 web work.
+
+---
+
 ## 1.7.0 — 2026-09-15 — cadastral
 
 **New endpoint `GET /rtc`:** Live RCCMS (Records of Rights) + mutations proxy for a survey parcel.
@@ -53,7 +70,8 @@ to auto-populate the hierarchy dropdowns and load parcels after a coordinate sea
 
 **`GET /data` geometry datum changed:** `CADASTRAL_DATUM` env var and the Kalianpur 1975 shift
 (added in 9e138c2) removed. Parcels are now raw EPSG:32643 after the `[0,1,1,0,0,0]` X/Y swap,
-reprojected to EPSG:4326. No path or schema changes; coordinates move by ~60–100 m versus 1.2.0.
+reprojected to EPSG:4326. No path or schema changes. Coordinates shift versus 1.2.0 because the
+Kalianpur correction was removed; size of the shift not measured.
 
 ---
 

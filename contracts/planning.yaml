@@ -1,0 +1,409 @@
+openapi: "3.1.0"
+info:
+  title: Planning Service
+  version: "1.8.0"
+  description: >
+    Bengaluru statutory planning layers. This version covers 2031 plans only
+    (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
+
+    Every record and every zone carries the status of the document it came from:
+    final | draft | superseded | reference. A zone has no status of its own; it
+    inherits it from its source sheet's doc_id in the source register, and a derived
+    layer is never stronger than its source. BDA RMP 2031 is a DRAFT that was never
+    approved and is never returned as an operative plan.
+
+    No endpoint in this version returns an answer or a confidence level; they return
+    facts (zones, overlap, distances, status, sheet QA) only.
+
+    Flags (FLAGS env var, space-separated):
+      - `feature.planning.layers` gates every route except /health.
+      - `feature.planning.plan.<plan_id>` gates each plan's zones separately.
+    A disabled flag returns 403.
+
+    Geometry is stored in EPSG:32643 and served as EPSG:4326 (WGS84). Parcel geometry
+    is fetched from the cadastral service.
+
+servers:
+  - url: http://localhost:8012
+    description: Local dev
+
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      responses:
+        "200":
+          description: Service running
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, service]
+                properties:
+                  status: { type: string, example: "ok" }
+                  service: { type: string, example: "planning" }
+
+  /plans:
+    get:
+      operationId: listPlans
+      summary: Plan registry with status and GO
+      description: >
+        All registered plans. `enabled` shows whether the plan's own
+        `feature.planning.plan.<plan_id>` flag is on. Gated by `feature.planning.layers`.
+      responses:
+        "200":
+          description: Plan registry rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Plan"
+        "403":
+          description: Feature flag disabled
+
+  /docs/{doc_id}:
+    get:
+      operationId: getDoc
+      summary: One source-register row
+      description: Gated by `feature.planning.layers`.
+      parameters:
+        - name: doc_id
+          in: path
+          required: true
+          schema: { type: string }
+          example: "BDA-RMP2031-PLU-PD11"
+      responses:
+        "200":
+          description: Register row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDoc"
+        "403":
+          description: Feature flag disabled
+        "404":
+          description: Unknown doc_id
+
+  /authority:
+    get:
+      operationId: getAuthority
+      summary: Planning authority, operative plan (or none) and draft plans for a village or point
+      description: >
+        Pass either all of (dist, taluk, hobli, vlg) or both (lat, lng).
+        `operative_plan` is null when no FINAL plan covers the location (for example the
+        whole BDA area in this version, since RMP 2015 is not loaded yet).
+        A place outside every known planning area returns 200 with `coverage: "none"`,
+        `authority: null` and empty plan lists. 404 is only for village codes that do
+        not exist. Gated by `feature.planning.layers`.
+      parameters:
+        - { name: dist, in: query, required: false, schema: { type: string } }
+        - { name: taluk, in: query, required: false, schema: { type: string } }
+        - { name: hobli, in: query, required: false, schema: { type: string } }
+        - { name: vlg, in: query, required: false, schema: { type: string } }
+        - { name: lat, in: query, required: false, schema: { type: number, minimum: -90, maximum: 90 } }
+        - { name: lng, in: query, required: false, schema: { type: number, minimum: -180, maximum: 180 } }
+      responses:
+        "200":
+          description: Authority and plans covering the location (coverage may be "none")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorityResult"
+        "400":
+          description: Neither a complete set of village codes nor lat/lng given
+        "403":
+          description: Feature flag disabled
+        "404":
+          description: Village codes do not exist
+
+  /zones:
+    get:
+      operationId: getZones
+      summary: Zone polygons for one plan within a bbox (map layer)
+      description: >
+        Maximum bbox is 0.05 degrees per side (maxLng - minLng <= 0.05 and
+        maxLat - minLat <= 0.05); larger boxes return 400.
+        Every feature carries `status` and `status_label` copied from its source sheet's
+        register row. Gated by `feature.planning.layers` AND `feature.planning.plan.<plan_id>`.
+      parameters:
+        - name: plan_id
+          in: query
+          required: true
+          schema: { type: string }
+          example: "BDA-RMP2031"
+        - name: bbox
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?$"
+          description: "minLng,minLat,maxLng,maxLat in WGS84; at most 0.05 degrees per side"
+          example: "77.60,12.95,77.65,13.00"
+      responses:
+        "200":
+          description: GeoJSON FeatureCollection of zones
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneFeatureCollection"
+        "400":
+          description: Malformed bbox, or bbox wider/taller than 0.05 degrees
+        "403":
+          description: Feature flag disabled (layers or this plan)
+        "404":
+          description: Unknown plan_id, or plan has no zone layer loaded
+
+  /zones/at:
+    get:
+      operationId: getZonesAtParcel
+      summary: Every zone from every enabled plan that touches a parcel
+      description: >
+        Returns facts only: native label, overlap, edge distance, plan status, sheet QA.
+        No answer and no confidence. Plans whose own flag is off are not queried and are
+        listed in `plans_skipped`.
+        Hits are grouped per (plan_id, zone_label_native): where a parcel sits on a seam
+        between two sheets and the same zone appears on both, it is one hit with both
+        sheets in `sheet_doc_ids`, and overlap is computed on the union so it is not
+        double counted. Gated by `feature.planning.layers`.
+      parameters:
+        - { name: dist, in: query, required: true, schema: { type: string } }
+        - { name: taluk, in: query, required: true, schema: { type: string } }
+        - { name: hobli, in: query, required: true, schema: { type: string } }
+        - { name: vlg, in: query, required: true, schema: { type: string } }
+        - name: survey
+          in: query
+          required: true
+          schema: { type: string }
+          example: "45/2"
+      responses:
+        "200":
+          description: Zones touching the parcel (may be empty)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZonesAtResult"
+        "403":
+          description: Feature flag disabled
+        "404":
+          description: Parcel not found
+        "502":
+          description: Cadastral service unavailable
+
+components:
+  schemas:
+    DocStatus:
+      type: string
+      enum: [final, draft, superseded, reference]
+
+    Checked:
+      type: string
+      enum: [verified, unverified]
+
+    Plan:
+      type: object
+      description: >
+        One plan registry row. `status_label` is the human wording shown next to the
+        status, e.g. "Draft, never approved" (BDA-RMP2031) or
+        "Status unconfirmed, GO not found yet" (LPA plans still awaiting a GO; these
+        carry status draft and checked unverified).
+      required: [plan_id, authority, name, horizon, status, status_label, checked, enabled]
+      properties:
+        plan_id: { type: string, example: "BDA-RMP2031" }
+        authority: { type: string, example: "BDA" }
+        name: { type: string, example: "BDA Revised Master Plan 2031" }
+        horizon: { type: [integer, "null"], example: 2031 }
+        status: { $ref: "#/components/schemas/DocStatus" }
+        status_label: { type: string, example: "Draft, never approved" }
+        go_ref: { type: [string, "null"], example: null }
+        go_date: { type: [string, "null"], format: date, example: null }
+        operative_for:
+          type: [string, "null"]
+          description: Area where this plan is the sanctioned plan; null unless status is final
+          example: null
+        checked: { $ref: "#/components/schemas/Checked" }
+        notes: { type: [string, "null"] }
+        enabled:
+          type: boolean
+          description: Whether feature.planning.plan.<plan_id> is on
+
+    PlanDoc:
+      type: object
+      description: One source-register row. Status comes from the plan registry, never the file name.
+      required: [doc_id, authority, plan_id, type, title, status, status_label, source_url, sha256, retrieved_on, checked]
+      properties:
+        doc_id: { type: string, example: "BDA-RMP2031-PLU-PD11" }
+        authority: { type: string, example: "BDA" }
+        plan_id: { type: string, example: "BDA-RMP2031" }
+        type:
+          type: string
+          enum: [plan_sheet, plan_report, zr, zr_amendment, go, clu, overlay, reference]
+        title: { type: string }
+        status: { $ref: "#/components/schemas/DocStatus" }
+        status_label: { type: string, example: "Draft, never approved" }
+        go_ref: { type: [string, "null"] }
+        go_date: { type: [string, "null"], format: date }
+        applies_to: { type: [string, "null"], example: "PD 11 (Doddanekkundi-Whitefield)" }
+        amends: { type: [string, "null"] }
+        superseded_by: { type: [string, "null"] }
+        source_url: { type: string, format: uri }
+        sha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+        retrieved_on: { type: string, format: date }
+        checked: { $ref: "#/components/schemas/Checked" }
+
+    PlanRef:
+      type: object
+      required: [plan_id, status, status_label, coverage]
+      properties:
+        plan_id: { type: string }
+        status: { $ref: "#/components/schemas/DocStatus" }
+        status_label: { type: string }
+        go_ref: { type: [string, "null"] }
+        coverage:
+          type: string
+          enum: [full, partial]
+          description: partial when the village is split by the plan's boundary
+
+    AuthorityResult:
+      type: object
+      required: [location, authority, coverage, operative_plan, draft_plans]
+      properties:
+        location:
+          type: object
+          description: Echo of the query (dist/taluk/hobli/vlg or lat/lng)
+          additionalProperties: true
+        authority: { type: [string, "null"], example: "BDA" }
+        lpa: { type: [string, "null"], example: "BDA LPA" }
+        coverage:
+          type: string
+          enum: [full, partial, none]
+          description: none when the place is outside every known planning area
+        operative_plan:
+          oneOf:
+            - $ref: "#/components/schemas/PlanRef"
+            - type: "null"
+        draft_plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanRef"
+        note:
+          type: [string, "null"]
+          example: "No sanctioned plan data loaded for this area"
+
+    SheetQA:
+      type: object
+      required: [doc_id, status, extraction, legend_check]
+      properties:
+        doc_id: { type: string, example: "BDA-RMP2031-PLU-PD11" }
+        status: { $ref: "#/components/schemas/DocStatus" }
+        extraction:
+          type: string
+          enum: [vector_pdf, primeocr_raster, manual]
+        georef_rmse_m: { type: [number, "null"], example: 4.2 }
+        legend_check:
+          type: string
+          enum: [pass, warn, fail]
+        qa_failures:
+          type: array
+          items: { type: string }
+          description: Names of failed QA checks (control points, cadastral fit, area totals, seams, topology)
+        sheet_scale: { type: [string, "null"], example: "1:10000" }
+
+    ZoneProperties:
+      type: object
+      required: [zone_uid, plan_id, doc_id, zone_label_native, status, status_label, qa]
+      properties:
+        zone_uid: { type: string, example: "BDA-RMP2031-PD11-000123" }
+        plan_id: { type: string, example: "BDA-RMP2031" }
+        doc_id: { type: string, example: "BDA-RMP2031-PLU-PD11" }
+        zone_label_native:
+          type: string
+          example: "Residential (Main)"
+          description: Verbatim legend text from the sheet
+        zone_code_native: { type: [string, "null"], example: "R-M" }
+        class_norm:
+          type: [string, "null"]
+          example: "residential"
+          description: Normalised class for search and filters only; never replaces the native label
+        status: { $ref: "#/components/schemas/DocStatus" }
+        status_label: { type: string, example: "Draft, never approved" }
+        qa: { $ref: "#/components/schemas/SheetQA" }
+
+    ZoneFeatureCollection:
+      type: object
+      required: [type, plan, features]
+      properties:
+        type: { type: string, enum: [FeatureCollection] }
+        plan: { $ref: "#/components/schemas/PlanRef" }
+        features:
+          type: array
+          items:
+            type: object
+            required: [type, geometry, properties]
+            properties:
+              type: { type: string, enum: [Feature] }
+              geometry:
+                type: object
+                description: GeoJSON Polygon or MultiPolygon, EPSG:4326
+              properties: { $ref: "#/components/schemas/ZoneProperties" }
+
+    ZoneHit:
+      type: object
+      description: One zone of one plan touching the parcel, merged across sheets.
+      required:
+        [plan_id, zone_label_native, status, status_label, zone_uids, sheet_doc_ids, overlap_pct, edge_distance_m, sheets_qa]
+      properties:
+        plan_id: { type: string, example: "BDA-RMP2031" }
+        zone_label_native: { type: string, example: "Residential (Mixed)" }
+        zone_code_native: { type: [string, "null"] }
+        class_norm: { type: [string, "null"], example: "residential" }
+        status: { $ref: "#/components/schemas/DocStatus" }
+        status_label: { type: string, example: "Draft, never approved" }
+        zone_uids:
+          type: array
+          items: { type: string }
+        sheet_doc_ids:
+          type: array
+          items: { type: string }
+          description: Every sheet this zone hit came from (two or more on a sheet seam)
+          example: ["BDA-RMP2031-PLU-PD11", "BDA-RMP2031-PLU-PD12"]
+        overlap_pct:
+          type: number
+          example: 96.4
+          description: Share of the parcel's area inside this zone (union across sheets), 0-100
+        edge_distance_m:
+          type: number
+          example: 38
+          description: >
+            Shortest distance in metres between the parcel boundary and this zone's
+            boundary; 0 when the parcel boundary crosses the zone boundary.
+        sheets_qa:
+          type: array
+          items: { $ref: "#/components/schemas/SheetQA" }
+
+    ZonesAtResult:
+      type: object
+      required: [parcel, zones, plans_skipped]
+      properties:
+        parcel:
+          type: object
+          required: [dist, taluk, hobli, vlg, survey]
+          properties:
+            dist: { type: string }
+            taluk: { type: string }
+            hobli: { type: string }
+            vlg: { type: string }
+            survey: { type: string }
+            village_name: { type: [string, "null"] }
+            area_sqm: { type: number }
+        zones:
+          type: array
+          items: { $ref: "#/components/schemas/ZoneHit" }
+        plans_skipped:
+          type: array
+          items: { type: string }
+          description: plan_ids not queried because their flag is off
+        note:
+          type: [string, "null"]
+          example: "Only draft plans cover this parcel; shown for context only"
