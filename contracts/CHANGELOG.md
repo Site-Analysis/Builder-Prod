@@ -47,6 +47,26 @@ to auto-populate the hierarchy dropdowns and load parcels after a coordinate sea
 
 ---
 
+## 1.4.0 — 2026-09-10 — cadastral
+
+*Reconstructed from git history (f9710f3); no entry was written at the time.*
+
+**`GET /data` geometry datum changed:** `CADASTRAL_DATUM` env var and the Kalianpur 1975 shift
+(added in 9e138c2) removed. Parcels are now raw EPSG:32643 after the `[0,1,1,0,0,0]` X/Y swap,
+reprojected to EPSG:4326. No path or schema changes; coordinates move by ~60–100 m versus 1.2.0.
+
+---
+
+## 1.3.0 — 2026-09-10 — cadastral
+
+*Reconstructed from git history (f9710f3); no entry was written at the time.*
+
+**New endpoint `GET /nearby`:** LGD villages whose centroid is within `radius_km` of a WGS84
+point, as a GeoJSON FeatureCollection. Properties: `lgd_code`, `village_name`, `has_data`.
+Extended in 1.5.0.
+
+---
+
 ## 1.2.0 — 2026-09-06 — cadastral
 
 `GET /boundaries` now returns ALL LGD villages in the hobli (from echawadi_village_list.json),
@@ -73,3 +93,13 @@ Initial cadastral service contract.
 Endpoints: `/health`, `/search`, `/districts`, `/taluks`, `/hoblis`, `/villages`, `/data`.
 
 Feature flag: `feature.cadastral.land-records`.
+
+---
+
+## Known contract drift
+
+Not fixed yet; listed so it isn't lost.
+
+- `contracts/cadastral.yaml` `info.version` is still `"1.0.0"`; the changelog is at 1.7.0.
+- `contracts/cadastral.yaml` `/nearby` says geometry comes from `lgd_villages.parquet`; since
+  802d36c the service reads an LGD SQLite index (`LGD_INDEX_DB`) first, parquet only as fallback.
