@@ -374,3 +374,17 @@ All rows are "default, SME to confirm".
 
 - Snapping zone edges to ELU road, lake and drain lines.
 - RMP 2015, `/classify` and all other layers until Phase 1 sign-off.
+
+### Round 2 (30 Sep 2026): extraction of BDA-RMP2031 from PLUCOMP
+
+- **Strip flip.** PLUCOMP's raster strips are stored bottom-up (negative y scale); both scripts now flip them. The first extraction was scrambled by this; the georeference was not (its fine fit uses vector roads). Final fit unchanged: 1:57,341, `m_per_px` 4.86.
+- **Georef QA.** 70 junction check points; 10 dropped as junction-identity mismatches (sheet junction on an OSM road, its cross road missing from the fetched OSM classes; renders in `georef/BDA-RMP2031/outliers/`). `georef_rmse_m` 10.1 m (robust, n=60); 30.6 m on all 70. No genuine map error found.
+- **Symbols are overlays, not zones.** Each is removed from the zone raster and the zone underneath is filled from surrounding land pixels (lakes never a source):
+  - NGT Buffer hatch -> overlay (hatch closed 10 px); zone parts flagged "zone inferred under hatch".
+  - Stream symbol (teal core + thin light-blue casing) -> Zhang-Suen centreline overlay (1,178 km); zone parts flagged "zone inferred under stream symbol" (3,181 ha).
+  - Forest glyphs -> "forest symbol area" overlay (2,267 ha; closed 30 px, dilated 2 px). Ground colour under the glyphs is white (#ffffff, 86%), so the zone there is "uncoloured".
+- **Output.** `<data-root>/planning/zones/BDA-RMP2031.parquet` (67,709 zone polygons, EPSG:32643, ZoneProperties + SheetQA struct, status draft) and `BDA-RMP2031_overlays.parquet` (NGT, forest symbol area, stream centrelines). Slivers under 2 px wide dropped (3,542 ha, mostly white road corridors).
+- **Area check vs Vol 3 Table 10-1** (per-class `area_check`): land zones pass/fail at 3 % on the table's basis (NGT area excluded); Transport, Water/Stream, NGT and Forest are "not comparable: cartographic" with a one-line reason. Result: Residential, Industrial, PSP, Defence pass; Commercial (-5.1 %), Agriculture (-35 %) fail; Public Utility (+6.0 %) and Parks (+8.4 %) fail with note, not tuned.
+- **PDR cross-check** (7 PDs, automatic registration): agreement 47-76 %, 78-91 % excluding PDR greys. PD17 is below its baseline: its figure colours only PD17 and draws the surrounding districts as grey base map, which the colour classifier reads as Defense (14,765 of 18,776 such cells fall on neighbouring Residential). Not fixed.
+- **Uncoloured** stays unguessed until the SME answers: 15.3 % of the LPA as polygons.
+- **Next:** step 1.3, planning service skeleton serving this layer. Overlays are not in the contract yet.

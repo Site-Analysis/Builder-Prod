@@ -25,6 +25,18 @@ PLAN_ID = "BDA-RMP2031"
 DOC_ID = "BDA-RMP2031-PLUCOMP"
 TOLERANCE = 0.03
 # RMP 2031 (Draft) Vol 3 Master Plan Document, Table 10-1 Proposed Land Use Area Statement (ha)
+CLOSE = 0.05
+NOT_COMPARABLE = {
+    "transport": "roads are drawn as white corridors and vector lines, not a raster fill",
+    "water+stream": "lakes only: streams are a drawn symbol, now a centreline overlay",
+    "ngt_buffer": "hatch symbol extent, not a measured buffer",
+    "forest": "tree-glyph symbol area, not a measured forest boundary; zone under it is its ground colour",
+}
+# land classes kept as fail-with-note by decision (30 Sep 2026): not tuned
+FAIL_NOTES = {
+    "public_utility": "fail with note, not tuned; grows when land under stream symbols is filled",
+    "open_space": "fail with note, not tuned; parks line streams, so land fill under stream symbols adds area",
+}
 TABLE_10_1_HA = {
     "residential": 42477.08,
     "commercial": 2473.74,
@@ -72,25 +84,34 @@ def main():
         k = "water+stream" if k in ("water", "stream") else k
         a = by.setdefault(k, [0.0, 0.0])
         a[1 if r["inferred_under_hatch"] else 0] += r["area_m2"] / 1e4
+    # cartographic symbols are overlays now; report their drawn extent
     by["ngt_buffer"] = [qa["ngt_overlay_excl_visible_water_ha"], 0.0]
+    by["forest"] = [qa.get("forest_symbol_area_ha", 0.0), 0.0]
     rows, failed = [], []
     for k, target in TABLE_10_1_HA.items():
         out, under = by.get(k, [0.0, 0.0])
         diff = (out - target) / target
-        ok = abs(diff) <= TOLERANCE
-        rows.append(
-            {
-                "class": k,
-                "table_ha": target,
-                "extracted_ha": round(out, 1),
-                "diff": round(diff, 4),
-                "pass": ok,
-                "incl_under_hatch_ha": round(out + under, 1),
-                "incl_under_hatch_diff": round((out + under - target) / target, 4),
-            }
-        )
-        if not ok:
-            failed.append(k)
+        row = {
+            "class": k,
+            "table_ha": target,
+            "extracted_ha": round(out, 1),
+            "diff": round(diff, 4),
+            "incl_under_hatch_ha": round(out + under, 1),
+            "incl_under_hatch_diff": round((out + under - target) / target, 4),
+        }
+        if k in NOT_COMPARABLE:
+            row["area_check"] = "not comparable: cartographic"
+            row["reason"] = NOT_COMPARABLE[k]
+        else:
+            ok = abs(diff) <= TOLERANCE
+            row["area_check"] = "pass" if ok else "fail"
+            if not ok:
+                failed.append(k)
+                if k in FAIL_NOTES:
+                    row["reason"] = FAIL_NOTES[k]
+                elif abs(diff) <= CLOSE:
+                    row["reason"] = f"close ({diff:+.1%})"
+        rows.append(row)
     xfail = [r["pd"] for r in xc if r["agreement"] <= r["majority_class_share"]]
     qa_failures = []
     if failed:
@@ -128,11 +149,11 @@ def main():
             with_qa(pq.read_table(ov_path), sheet), ov_path, compression="zstd"
         )
 
-    print("class | table ha | extracted ha | diff | pass | incl. under-hatch ha | diff")
+    print("class | table ha | extracted ha | diff | area_check | reason")
     for r in rows:
         print(
             f"{r['class']} | {r['table_ha']:,.0f} | {r['extracted_ha']:,.0f} | {r['diff']:+.1%} | "
-            f"{'yes' if r['pass'] else 'no'} | {r['incl_under_hatch_ha']:,.0f} | {r['incl_under_hatch_diff']:+.1%}"
+            f"{r['area_check']} | {r.get('reason', '')}"
         )
     print("qa_failures:", qa_failures)
 

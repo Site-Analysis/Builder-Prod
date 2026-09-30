@@ -9,14 +9,19 @@ Needs georef_plucomp.py to have run (reads <data-root>/georef/BDA-RMP2031-PLUCOM
 Steps:
   1. Classify the lossless raster by exact palette (infra/planning/legend_map.csv);
      other colours go to the nearest main colour (RGB distance).
-  2. NGT Buffer hatch: extent = hatch pixels closed by HATCH_CLOSE_PX -> separate overlay.
-     Hatch pixels are dropped and filled from surrounding non-hatch pixels; zone parts
-     inside the hatch extent are flagged "zone inferred under hatch".
-  3. Forest glyphs: closed by FOREST_CLOSE_PX then dilated by FOREST_DILATE_PX -> forest.
+  2. Symbols that hide the zone underneath become overlays, and the zone under them is
+     filled from surrounding land pixels (lakes never act as a source):
+     - NGT Buffer hatch: extent = hatch closed by HATCH_CLOSE_PX; zone parts flagged
+       "zone inferred under hatch".
+     - Stream symbol (teal core + thin light-blue casing): Zhang-Suen centreline overlay;
+       zone parts flagged "zone inferred under stream symbol".
+  3. Forest glyphs: "forest symbol area" overlay (closed FOREST_CLOSE_PX, dilated
+     FOREST_DILATE_PX); the zone is the ground colour under the glyphs (white).
   4. White inside the LPA boundary -> "uncoloured" (never guessed); outside -> dropped.
   5. Polygonise (pixel runs -> per-tile coverage union -> per-class union), drop slivers
      under SLIVER_PX wide, transform to EPSG:32643, clip to the LPA boundary.
-  6. Write <data-root>/planning/zones/BDA-RMP2031.parquet (+ _overlays.parquet) and
+  6. Write <data-root>/planning/zones/BDA-RMP2031.parquet (+ _overlays.parquet: NGT,
+     forest symbol area, stream centrelines) and
      <data-root>/planning/zones/BDA-RMP2031_qa.json.
 """
 
@@ -47,10 +52,13 @@ HATCH_CLOSE_PX = 10
 FOREST_CLOSE_PX = 30  # tree glyphs are ~60 px apart
 FOREST_DILATE_PX = 2
 SLIVER_PX = 2.0
+STREAM_CASING_PX = 4  # light-blue stream casing is thinner than 2*this; lakes are wider
+STREAM_REACH_PX = 6  # casing must touch the teal stream core within this distance
 TILE = 256
 LPA_STYLE = ("#000000", 1.92)
 
 BACKGROUND, UNCOLOURED, HATCH, GLYPH = 0, 1, 2, 3  # special codes; zones start at 10
+STREAM_BIT, HATCH_BIT = 32, 64  # flag bits added to class codes before polygonising
 
 
 def hx(c):
@@ -118,6 +126,76 @@ def fill_from_neighbours(cls, unknown, not_source=None):
     if unknown.any() and not_source is not None:
         return fill_from_neighbours(cls, unknown)
     return cls
+
+
+def erode(m, r):
+    return ~dilate(~m, r)
+
+
+def opening(m, r):
+    return dilate(erode(m, r), r)
+
+
+def zhang_suen(img):
+    """Thin a binary image to a 1-pixel skeleton (Zhang-Suen)."""
+    img = img.astype(np.uint8)
+    while True:
+        changed = False
+        for step in (0, 1):
+            P = np.pad(img, 1)
+            p2, p3, p4 = P[:-2, 1:-1], P[:-2, 2:], P[1:-1, 2:]
+            p5, p6, p7 = P[2:, 2:], P[2:, 1:-1], P[2:, :-2]
+            p8, p9 = P[1:-1, :-2], P[:-2, :-2]
+            seq = [p2, p3, p4, p5, p6, p7, p8, p9, p2]
+            B = sum(x.astype(np.uint8) for x in seq[:8])
+            A = sum(
+                ((seq[i] == 0) & (seq[i + 1] == 1)).astype(np.uint8) for i in range(8)
+            )
+            if step == 0:
+                c = ((p2 * p4 * p6) == 0) & ((p4 * p6 * p8) == 0)
+            else:
+                c = ((p2 * p4 * p8) == 0) & ((p2 * p6 * p8) == 0)
+            m = (img == 1) & (B >= 2) & (B <= 6) & (A == 1) & c
+            if m.any():
+                img[m] = 0
+                changed = True
+        if not changed:
+            return img.astype(bool)
+
+
+def skeleton_tiled(mask, tile=1024, margin=48):
+    out = np.zeros_like(mask)
+    H, W = mask.shape
+    for ty in range(0, H, tile):
+        for tx in range(0, W, tile):
+            y0, x0 = max(ty - margin, 0), max(tx - margin, 0)
+            y1, x1 = min(ty + tile + margin, H), min(tx + tile + margin, W)
+            win = mask[y0:y1, x0:x1]
+            if not win.any():
+                continue
+            sk = zhang_suen(win)
+            h, w = min(tile, H - ty), min(tile, W - tx)
+            out[ty : ty + h, tx : tx + w] = sk[
+                ty - y0 : ty - y0 + h, tx - x0 : tx - x0 + w
+            ]
+    return out
+
+
+def skeleton_lines(sk):
+    """8-connected skeleton pixels -> merged LineStrings (pixel-centre coordinates)."""
+    ys, xs = np.nonzero(sk)
+    on = set(zip(ys.tolist(), xs.tolist()))
+    segs = []
+    for y, x in on:
+        for dy, dx in ((0, 1), (1, 0), (1, 1), (1, -1)):
+            if (y + dy, x + dx) not in on:
+                continue
+            # diagonal only where no orthogonal step already joins the two pixels
+            if dy and dx and ((y, x + dx) in on or (y + dy, x) in on):
+                continue
+            segs.append(((x + 0.5, y + 0.5), (x + dx + 0.5, y + dy + 0.5)))
+    lines = shapely.linestrings(np.array(segs, dtype=float))
+    return shapely.get_parts(shapely.line_merge(shapely.union_all(lines)))
 
 
 # ---------------------------------------------------------------- inputs
@@ -266,7 +344,7 @@ def geoparquet(path, table, geoms, crs):
     table = table.append_column("geometry", pa.array(wkb, pa.binary()))
     b = shapely.total_bounds(geoms)
     types = sorted({shapely.get_type_id(g) for g in geoms})
-    names = {3: "Polygon", 6: "MultiPolygon"}
+    names = {1: "LineString", 3: "Polygon", 6: "MultiPolygon"}
     geo = {
         "version": "1.1.0",
         "primary_column": "geometry",
@@ -332,35 +410,45 @@ def main():
     lpa_page = lpa_polygon_page(page)
     inside = render_mask(page, lpa_page, grid, cls.shape)
 
-    # 3. NGT hatch -> overlay extent; fill zones underneath
+    # 3. symbols that hide the zone underneath: NGT hatch, stream symbol, forest glyphs
     hatch = cls == HATCH
     ngt = close(hatch, HATCH_CLOSE_PX) & inside
-    # zone parts are 'inferred' only where the NGT extent hid the map: exclude water and
-    # stream pixels that were visible (the buffer surrounds them, it does not hide them)
-    visible_water = np.isin(cls, [zones["Water Bodies"], zones["Streams"]])
-    inferred = ngt & ~visible_water
-    # the buffer is land: fill from land zones first, water/stream only as a last resort
-    cls = fill_from_neighbours(cls, hatch, not_source=visible_water)
-    print(f"NGT hatch filled ({time.time() - t0:.0f}s)")
-
-    # 4. forest glyphs -> solid forest area
+    teal = cls == zones["Streams"]
+    light = cls == zones["Water Bodies"]
+    casing = light & ~opening(light, STREAM_CASING_PX) & dilate(teal, STREAM_REACH_PX)
+    stream_sym = (teal | casing) & inside
+    lakes = light & ~casing
     glyph = cls == GLYPH
-    forest = dilate(close(glyph, FOREST_CLOSE_PX), FOREST_DILATE_PX)
-    cls[glyph] = UNCOLOURED  # glyph pixels themselves before forest override
-    cls[forest & (cls == UNCOLOURED)] = zones[
-        "Forest"
-    ]  # forest ground is white; never overrides a zone
-    print(f"forest closed ({time.time() - t0:.0f}s)")
+    forest_area = dilate(close(glyph, FOREST_CLOSE_PX), FOREST_DILATE_PX) & inside
+    skel = skeleton_tiled(stream_sym)
+    print(
+        f"stream symbol {stream_sym.sum():,} px, skeleton {skel.sum():,} px ({time.time() - t0:.0f}s)"
+    )
+    # zones under the symbols are land: fill from land pixels; lakes are never a source
+    cls = fill_from_neighbours(cls, hatch | stream_sym | glyph, not_source=lakes)
+    inf_hatch = (
+        ngt & ~lakes & ~stream_sym
+    )  # visible lakes inside the buffer are not hidden
+    inf_stream = stream_sym.copy()
+    print(f"symbols filled ({time.time() - t0:.0f}s)")
 
-    # 5. clip to LPA
+    # 5. clip to LPA; the two "inferred" flags go into the raster as bits so that one
+    #    polygonise yields pieces already split by flag (no vector splitting)
     cls[~inside] = BACKGROUND
     px_area = abs(np.linalg.det(A[:2])) * cpt * rpt
     inside_px = int(inside.sum())
+    assert int(cls.max()) < STREAM_BIT
+    zone_px = (cls >= 10) | (cls == UNCOLOURED)
+    code_r = cls.copy()
+    code_r[inf_stream & zone_px] |= STREAM_BIT
+    code_r[inf_hatch & zone_px] |= HATCH_BIT
 
     # 6. polygonise
-    polys = polygonise(cls)
+    polys = polygonise(code_r)
+    del code_r
     ngt_geom = polygonise(ngt.astype(np.uint8)).get(1)
-    inf_geom = polygonise(inferred.astype(np.uint8)).get(1)
+    forest_geom = polygonise(forest_area.astype(np.uint8)).get(1)
+    stream_lines = skeleton_lines(skel)
     print(f"polygonised ({time.time() - t0:.0f}s)")
 
     # pixel -> ground: pixel (c, r) -> page (x0 + c*cpt, y0 + r*rpt) -> affine
@@ -375,11 +463,18 @@ def main():
     )
     ngt_g = to_ground(ngt_geom) if ngt_geom is not None else None
     ngt_g = shapely.make_valid(ngt_g).buffer(0) if ngt_g is not None else None
-    inf_g = (
-        shapely.make_valid(to_ground(inf_geom)).buffer(0)
-        if inf_geom is not None
+
+    forest_g = (
+        shapely.make_valid(to_ground(forest_geom)).buffer(0)
+        if forest_geom is not None
         else None
     )
+    shapely.prepare(lpa_g)
+    stream_g = [
+        q
+        for q in shapely.get_parts(shapely.intersection(to_ground(stream_lines), lpa_g))
+        if q.geom_type == "LineString"
+    ]
 
     status = {"status": plan["status"], "status_label": plan["status_label"]}
     qa_struct = {
@@ -396,9 +491,15 @@ def main():
     rows, geoms, sliver_n, sliver_area = [], [], 0, 0.0
     names = {v: k for k, v in zones.items()}
     names[UNCOLOURED] = info[UNCOLOURED]["zone_label_native"]
-    for code, g in polys.items():
+    for code_f, g in polys.items():
+        code = code_f & (STREAM_BIT - 1)
         if code in (BACKGROUND, HATCH, GLYPH):
             continue
+        flags = {
+            f
+            for f, bit in (("stream", STREAM_BIT), ("hatch", HATCH_BIT))
+            if code_f & bit
+        }
         parts = shapely.get_parts(g)
         thin = shapely.is_empty(
             shapely.buffer(parts, -SLIVER_PX / 2, join_style="mitre")
@@ -406,13 +507,12 @@ def main():
         sliver_n += int(thin.sum())
         sliver_area += float(shapely.area(parts[thin]).sum()) * px_area
         for p in parts[~thin]:
-            gp = shapely.intersection(to_ground(p), lpa_g)
+            gp = to_ground(p)
+            if not lpa_g.contains(gp):
+                gp = shapely.intersection(gp, lpa_g)
             if gp.is_empty:
                 continue
-            pieces = [(gp, False)]
-            if inf_g is not None and gp.intersects(inf_g):
-                pieces = [(gp.difference(inf_g), False), (gp.intersection(inf_g), True)]
-            for piece, inferred in pieces:
+            for piece in (gp,):
                 for q in shapely.get_parts(piece):
                     if q.geom_type != "Polygon" or q.area < px_area:
                         continue
@@ -425,8 +525,17 @@ def main():
                             "zone_code_native": None,
                             "class_norm": r["class_norm"] or None,
                             **status,
-                            "inferred_under_hatch": inferred,
-                            "note": "zone inferred under hatch" if inferred else None,
+                            "inferred_under_hatch": "hatch" in flags,
+                            "inferred_under_stream": "stream" in flags,
+                            "note": "; ".join(
+                                n
+                                for f, n in (
+                                    ("stream", "zone inferred under stream symbol"),
+                                    ("hatch", "zone inferred under hatch"),
+                                )
+                                if f in flags
+                            )
+                            or None,
                             "area_m2": float(q.area),
                         }
                     )
@@ -444,6 +553,7 @@ def main():
         by[k] = by.get(k, 0.0) + r["area_m2"]
     ngt_ha = ngt_g.intersection(lpa_g).area / 1e4 if ngt_g is not None else 0.0
     under_ha = sum(r["area_m2"] for r in rows if r["inferred_under_hatch"]) / 1e4
+    under_s_ha = sum(r["area_m2"] for r in rows if r["inferred_under_stream"]) / 1e4
     lpa_ha = lpa_g.area / 1e4
     qa = {
         "lpa_area_ha": lpa_ha,
@@ -451,9 +561,14 @@ def main():
         "px_area_m2": px_area,
         "area_ha_by_class": {k: v / 1e4 for k, v in sorted(by.items())},
         "ngt_overlay_ha": ngt_ha,
-        "ngt_overlay_excl_visible_water_ha": inf_g.intersection(lpa_g).area / 1e4
-        if inf_g is not None
+        "ngt_overlay_excl_visible_water_ha": float(inf_hatch.sum()) * px_area / 1e4,
+        "zone_area_inferred_under_stream_ha": under_s_ha,
+        "stream_symbol_ha": float(inf_stream.sum()) * px_area / 1e4,
+        "stream_centreline_km": sum(q.length for q in stream_g) / 1000,
+        "forest_symbol_area_ha": forest_g.intersection(lpa_g).area / 1e4
+        if forest_g is not None
         else 0.0,
+        "forest_ground_colour": "#ffffff (white, 86% of ground pixels) -> zone 'uncoloured'",
         "zone_area_inferred_under_hatch_ha": under_ha,
         "uncoloured_share_of_lpa": by.get("uncoloured", 0.0) / 1e4 / lpa_ha,
         "slivers_dropped": sliver_n,
@@ -464,7 +579,16 @@ def main():
             "FOREST_CLOSE_PX": FOREST_CLOSE_PX,
             "FOREST_DILATE_PX": FOREST_DILATE_PX,
             "SLIVER_PX": SLIVER_PX,
-            "forest_method": f"glyph pixels closed {FOREST_CLOSE_PX}px then dilated {FOREST_DILATE_PX}px",
+            "STREAM_CASING_PX": STREAM_CASING_PX,
+            "STREAM_REACH_PX": STREAM_REACH_PX,
+            "forest_method": (
+                f"overlay: glyph pixels closed {FOREST_CLOSE_PX}px then dilated "
+                f"{FOREST_DILATE_PX}px; zone = ground colour"
+            ),
+            "stream_method": (
+                "overlay: teal core + thin light-blue casing, Zhang-Suen skeleton; "
+                "zone under symbol filled from land"
+            ),
         },
         "sheet_qa": qa_struct,
     }
@@ -482,6 +606,7 @@ def main():
         "status",
         "status_label",
         "inferred_under_hatch",
+        "inferred_under_stream",
         "note",
         "area_m2",
     ]
@@ -493,33 +618,60 @@ def main():
         np.array(geoms, dtype=object),
         crs,
     )
-    if ngt_g is not None:
-        ov = [
-            p
-            for p in shapely.get_parts(ngt_g.intersection(lpa_g))
-            if p.geom_type == "Polygon"
+    ov_rows, ov_geoms = [], []
+
+    def add_overlays(geoms_, label, cls_norm, kind, method):
+        for q in geoms_:
+            ov_rows.append(
+                {
+                    "overlay_uid": f"{PLAN_ID}-{cls_norm.upper()}-{len(ov_rows) + 1:06d}",
+                    "plan_id": PLAN_ID,
+                    "doc_id": DOC_ID,
+                    "overlay_label_native": label,
+                    "class_norm": cls_norm,
+                    "overlay_type": kind,
+                    "status": plan["status"],
+                    "status_label": plan["status_label"],
+                    "method": method,
+                    "size": q.area if kind == "area" else q.length,
+                }
+            )
+            ov_geoms.append(q)
+
+    def polys_in_lpa(g):
+        if g is None:
+            return []
+        return [
+            q
+            for q in shapely.get_parts(g.intersection(lpa_g))
+            if q.geom_type == "Polygon"
         ]
-        ot = pa.table(
-            {
-                "overlay_uid": [
-                    f"{PLAN_ID}-NGT-{i:05d}" for i in range(1, len(ov) + 1)
-                ],
-                "plan_id": [PLAN_ID] * len(ov),
-                "doc_id": [DOC_ID] * len(ov),
-                "overlay_label_native": ["NGT Buffer"] * len(ov),
-                "class_norm": ["ngt_buffer"] * len(ov),
-                "status": [plan["status"]] * len(ov),
-                "status_label": [plan["status_label"]] * len(ov),
-                "method": [f"hatch pixels closed {HATCH_CLOSE_PX}px"] * len(ov),
-            }
-        )
-        ot = ot.append_column("qa", pa.array([qa_struct] * len(ov)))
-        geoparquet(
-            os.path.join(outdir, f"{PLAN_ID}_overlays.parquet"),
-            ot,
-            np.array(ov, dtype=object),
-            crs,
-        )
+
+    add_overlays(
+        polys_in_lpa(ngt_g),
+        "NGT Buffer",
+        "ngt_buffer",
+        "area",
+        f"hatch pixels closed {HATCH_CLOSE_PX}px",
+    )
+    add_overlays(
+        polys_in_lpa(forest_g),
+        "Forest",
+        "forest_symbol_area",
+        "area",
+        qa["params"]["forest_method"],
+    )
+    add_overlays(
+        stream_g, "Streams", "stream_centreline", "line", qa["params"]["stream_method"]
+    )
+    ot = pa.table({c: [r[c] for r in ov_rows] for c in ov_rows[0]})
+    ot = ot.append_column("qa", pa.array([qa_struct] * len(ov_rows)))
+    geoparquet(
+        os.path.join(outdir, f"{PLAN_ID}_overlays.parquet"),
+        ot,
+        np.array(ov_geoms, dtype=object),
+        crs,
+    )
     np.save(os.path.join(outdir, f"{PLAN_ID}_classes.npy"), cls)
     write_json(
         {
@@ -540,6 +692,10 @@ def main():
                     "area_ha_by_class",
                     "ngt_overlay_ha",
                     "zone_area_inferred_under_hatch_ha",
+                    "zone_area_inferred_under_stream_ha",
+                    "stream_symbol_ha",
+                    "stream_centreline_km",
+                    "forest_symbol_area_ha",
                     "uncoloured_share_of_lpa",
                     "slivers_dropped",
                     "sliver_area_ha",
