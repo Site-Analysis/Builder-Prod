@@ -15,7 +15,15 @@ import {
   fetchRtcData, type SearchResult, type RtcData,
 } from "@/lib/api/cadastral_records";
 import { useIsMobile } from "@/lib/useIsMobile";
+import { isEnabled } from "@/lib/flags";
+import { fetchZonesAt, type ZonesAtResult } from "@/lib/api/planning";
+import {
+  PlanningCardSection, PlanningControls, PlanningLegend, PlanningMapLayers, type PlanningToggles,
+} from "./PlanningLayers";
 import "leaflet/dist/leaflet.css";
+
+// Build step 1.4 — RMP 2031 (Draft) planning layers; with the flag off nothing below renders.
+const PLANNING = isEnabled("planningLayers");
 
 // Karnataka centroid — default map center
 const KA_CENTER: [number, number] = [15.3173, 75.7139];
@@ -300,6 +308,12 @@ export function MapView() {
   const [loadedVillage, setLoadedVillage]           = useState<VillageCoords | null>(null);
   const [rtcData, setRtcData]                       = useState<RtcData | null | "loading">(null);
   const [clickedLatLng, setClickedLatLng]           = useState<{ lat: number; lng: number } | null>(null);
+  const [planningToggles, setPlanningToggles]       = useState<PlanningToggles>({
+    zones: false, ngt_buffer: false, forest_symbol: false, stream_centreline: false,
+  });
+  const [planningStatus, setPlanningStatus]         = useState("");
+  const [zonesAt, setZonesAt]                       = useState<ZonesAtResult | "loading" | { error: string } | null>(null);
+  const zonesAtReq    = useRef(0);
   const mapRef        = useRef<LeafletMap | null>(null);
 
   useEffect(() => {
@@ -392,7 +406,7 @@ export function MapView() {
     if (!fc) return;
     setParcelFc(fc);
     setLoadKey((k) => k + 1);
-    setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null);
+    setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null); setZonesAt(null);
     setHighlightedSurveyNo(result.survey_no);
     setLoadedVillage({ dist: result.dist, taluk: result.taluk, hobli: result.hobli, vlg: result.vlg });
     loadBoundaries({ dist: result.dist, taluk: result.taluk, hobli: result.hobli, vlg: result.vlg }, showNearby);
@@ -427,7 +441,7 @@ export function MapView() {
         onLoad={(fc, _label, hier) => {
           setParcelFc(fc);
           setLoadKey((k) => k + 1);
-          setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null);
+          setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null); setZonesAt(null);
           setHighlightedSurveyNo(null);
           if (fc && hier) { loadBoundaries(hier, showNearby); setLoadedVillage(hier); }
         }}
@@ -494,6 +508,13 @@ export function MapView() {
           </div>
         </div>
 
+        {PLANNING && (
+          <>
+            <PlanningControls toggles={planningToggles} setToggles={setPlanningToggles} isMobile={isMobile} />
+            <PlanningLegend toggles={planningToggles} status={planningStatus} />
+          </>
+        )}
+
         {/* Parcel info card — appears near click cursor */}
         {clickedParcelProps && clickPos && (
           <div style={{
@@ -502,13 +523,15 @@ export function MapView() {
             padding: "10px 14px", borderRadius: 8, fontSize: 12,
             boxShadow: "0 4px 16px rgba(0,0,0,0.18)", border: "1px solid #CFD6C4",
             minWidth: 180, maxWidth: 260,
+            // planning section makes the card taller: keep it inside the map and scroll
+            ...(PLANNING ? { maxHeight: `calc(100% - ${clickPos.y + 12}px)`, overflowY: "auto" as const } : {}),
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontWeight: 800, fontSize: 13, color: "#306223" }}>
                 {String(clickedParcelProps.village_name ?? "—")} · {String(clickedParcelProps.survey_no ?? "—")}
               </span>
               <span
-                onClick={() => { setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null); }}
+                onClick={() => { setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null); setZonesAt(null); }}
                 style={{ cursor: "pointer", opacity: 0.45, fontSize: 18, lineHeight: 1, fontWeight: 300, marginLeft: 12 }}
               >×</span>
             </div>
@@ -569,6 +592,7 @@ export function MapView() {
                 )}
               </div>
             )}
+            {PLANNING && zonesAt && <PlanningCardSection result={zonesAt} />}
           </div>
         )}
         <MapContainer
@@ -594,6 +618,7 @@ export function MapView() {
               fillOpacity={0.10}
             />
           )}
+          {PLANNING && <PlanningMapLayers toggles={planningToggles} onStatus={setPlanningStatus} />}
           {parcelFc && (
             <>
               <ParcelLayer key={loadKey} fc={parcelFc} mapLayer={mapLayer} />
@@ -605,6 +630,16 @@ export function MapView() {
                     loadedVillage.dist, loadedVillage.taluk, loadedVillage.hobli, loadedVillage.vlg,
                     String(props.village_code ?? ""), String(props.survey_no ?? ""),
                   ).then(setRtcData);
+                }
+                if (PLANNING && loadedVillage && props.survey_no) {
+                  const req = ++zonesAtReq.current;
+                  setZonesAt("loading");
+                  fetchZonesAt(
+                    loadedVillage.dist, loadedVillage.taluk, loadedVillage.hobli, loadedVillage.vlg,
+                    String(props.survey_no),
+                  )
+                    .then((r) => { if (req === zonesAtReq.current) setZonesAt(r); })
+                    .catch((e: Error) => { if (req === zonesAtReq.current) setZonesAt({ error: e.message }); });
                 }
               }} />
               {highlightedSurveyNo && (() => {
