@@ -4,6 +4,19 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.13.0 — 2026-09-30 — planning
+
+**`GET /authority` implemented (BDA area only, build step 1.7).** No longer returns 501.
+- Villages: from the village-to-authority table (RMP 2031 LPA schedule compared with the LPA
+  boundary on the plan sheet). BDA villages: authority `BDA`, `operative_plan` null (RMP 2015
+  not loaded), `draft_plans` [BDA-RMP2031], note "Only a draft plan is loaded for this area".
+- Outside BDA: `coverage` none, `authority` null, note "Outside BDA; this area's plan isn't
+  loaded yet".
+- lat/lng: point-in-LPA-polygon test.
+- `AuthorityResult` gains `share_pct`, `pd`, `source`, `mismatch_note` (additive).
+
+---
+
 ## 1.12.0 — 2026-09-30 — planning
 
 Additive.

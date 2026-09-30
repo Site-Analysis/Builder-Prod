@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.12.0"
+  version: "1.13.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -91,12 +91,15 @@ paths:
       operationId: getAuthority
       summary: Planning authority, operative plan (or none) and draft plans for a village or point
       description: >
-        Pass either all of (dist, taluk, hobli, vlg) or both (lat, lng).
-        `operative_plan` is null when no FINAL plan covers the location (for example the
-        whole BDA area in this version, since RMP 2015 is not loaded yet).
-        A place outside every known planning area returns 200 with `coverage: "none"`,
-        `authority: null` and empty plan lists. 404 is only for village codes that do
-        not exist. Gated by `feature.planning.layers`.
+        Pass either all of (dist, taluk, hobli, vlg) or both (lat, lng). BDA area only in
+        this version (build step 1.7): villages come from the village-to-authority table
+        (infra/planning/authority_villages.csv, text schedule of the LPA compared with the
+        LPA boundary on the plan sheet); a point is tested against the LPA boundary polygon.
+        In the BDA area: authority "BDA", `operative_plan` null (RMP 2015 is not loaded),
+        `draft_plans` [BDA-RMP2031], note "Only a draft plan is loaded for this area".
+        Outside it: 200 with `coverage: "none"`, `authority: null`, empty plan lists and
+        note "Outside BDA; this area's plan isn't loaded yet". 404 is only for village codes
+        that do not exist. Gated by `feature.planning.layers`.
       parameters:
         - { name: dist, in: query, required: false, schema: { type: string } }
         - { name: taluk, in: query, required: false, schema: { type: string } }
@@ -117,8 +120,6 @@ paths:
           description: Feature flag disabled
         "404":
           description: Village codes do not exist
-        "501":
-          description: Not implemented yet (authority table arrives in build step 1.7)
 
   /zones:
     get:
@@ -342,7 +343,27 @@ components:
         coverage:
           type: string
           enum: [full, partial, none]
-          description: none when the place is outside every known planning area
+          description: >
+            Village: full when over 98 % of its parcel area is inside the LPA, partial from
+            2 %, none below (edge noise). A village the LPA schedule lists but the map puts
+            outside is partial, with a mismatch note. Point: full inside the LPA, else none.
+        share_pct:
+          type: [number, "null"]
+          example: 100.0
+          description: Share of the village's parcel area inside the LPA; null for points or villages without parcel data
+        pd:
+          type: [integer, "null"]
+          example: 9
+          description: Planning District, where the RMP 2031 PD index names the village
+        source:
+          type: [string, "null"]
+          enum: [text, spatial, both, point, null]
+          description: >
+            text = the RMP 2031 LPA schedule lists the village; spatial = the LPA boundary
+            covers it; both; point = lat/lng tested against the boundary
+        mismatch_note:
+          type: [string, "null"]
+          description: Set when the schedule and the boundary disagree, or when the match needed a tie-break
         operative_plan:
           oneOf:
             - $ref: "#/components/schemas/PlanRef"
