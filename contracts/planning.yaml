@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.13.0"
+  version: "1.13.1"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -345,8 +345,12 @@ components:
           enum: [full, partial, none]
           description: >
             Village: full when over 98 % of its parcel area is inside the LPA, partial from
-            2 %, none below (edge noise). A village the LPA schedule lists but the map puts
-            outside is partial, with a mismatch note. Point: full inside the LPA, else none.
+            2 %, none below (edge noise). Where the LPA schedule says full village and the map
+            shows 75-98 %, full with note "boundary drawing differs at the edge". A village the
+            schedule does not list needs 5 % to count; below that it is none (edge noise). A
+            village the schedule lists but the map puts outside is partial, with a mismatch
+            note. Schedule names that differ from ours are joined through reviewed aliases
+            (infra/planning/village_aliases.csv). Point: full inside the LPA, else none.
         share_pct:
           type: [number, "null"]
           example: 100.0

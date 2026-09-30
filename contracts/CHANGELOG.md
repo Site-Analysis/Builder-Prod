@@ -4,6 +4,18 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.13.1 — 2026-09-30 — planning
+
+`/authority` coverage rules for villages refined (description only, no schema change):
+- Schedule says full and map shows 75-98 %: `coverage` full, note "boundary drawing differs at
+  the edge".
+- Not in the schedule and map share under 5 %: `coverage` none (edge noise).
+- Schedule names joined to ours through a reviewed alias table
+  (`infra/planning/village_aliases.csv`); aliases failing the name, share or PD/taluk check
+  are listed there but not applied.
+
+---
+
 ## 1.13.0 — 2026-09-30 — planning
 
 **`GET /authority` implemented (BDA area only, build step 1.7).** No longer returns 501.
