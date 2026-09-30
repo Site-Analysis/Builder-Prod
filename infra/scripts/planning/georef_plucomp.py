@@ -59,6 +59,8 @@ CHECK_TOL_M = 120.0
 EXCLUDE_M = 200.0
 TRIM_SCHEDULE_M = [60, 45, 35, 30, 25, 25, 25, 25, 25, 25]
 SEED = 2031
+MISMATCH_RESIDUAL_M = 40.0
+MISMATCH_ON_ROAD_M = 30.0
 
 
 def hx(c):
@@ -466,6 +468,24 @@ def main():
         f"   poly2 (comparison only): check RMSE {np.sqrt(np.mean(r2**2)):.1f} m, median {np.median(r2):.1f} m"
     )
 
+    # 5. junction-identity mismatches: residual large but the sheet junction lies on an
+    #    OSM road, i.e. its cross road is missing from the fetched OSM classes and the
+    #    pairing picked a neighbouring junction (confirmed by renders, 30 Sep 2026)
+    _, d_line = tree.query_nearest(
+        shapely.points(apply_affine(A, CP)), return_distance=True, all_matches=False
+    )
+    mismatch = (r > MISMATCH_RESIDUAL_M) & (d_line < MISMATCH_ON_ROAD_M)
+    genuine = (r > MISMATCH_RESIDUAL_M) & ~mismatch
+    rr = r[~mismatch]
+    robust_rmse = float(np.sqrt(np.mean(rr**2)))
+    print(
+        f"   mismatched junction pairs dropped: {mismatch.sum()} (residual > {MISMATCH_RESIDUAL_M:.0f} m, "
+        f"sheet junction < {MISMATCH_ON_ROAD_M:.0f} m from an OSM road); other large residuals: {genuine.sum()}"
+    )
+    print(
+        f"   ROBUST check RMSE n={len(rr)}: {robust_rmse:.1f} m (median {np.median(rr):.1f}, max {rr.max():.0f})"
+    )
+
     out = os.path.join(args.data_root, "georef", f"{DOC_ID}.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w") as f:
@@ -479,7 +499,17 @@ def main():
                 "m_per_px": m_px,
                 "lake_control_points": n_lake,
                 "icp_pairs": n_icp,
+                "georef_rmse_m": robust_rmse,
+                "georef_rmse_all_m": float(np.sqrt(np.mean(r**2))),
+                "check_points_dropped": int(mismatch.sum()),
+                "check_points_dropped_reason": (
+                    "junction identity mismatch: sheet junction lies on an OSM road but its cross "
+                    "road is absent from the fetched OSM classes, so the pairing picked a "
+                    "neighbouring junction; confirmed by renders in georef/BDA-RMP2031/outliers/"
+                ),
+                "check_points_large_unexplained": int(genuine.sum()),
                 "check_points": {
+                    "dropped_index": np.where(mismatch)[0].tolist(),
                     "n": len(r),
                     "rmse_m": float(np.sqrt(np.mean(r**2))),
                     "median_m": float(np.median(r)),
