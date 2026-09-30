@@ -68,6 +68,7 @@ _FIXED = [
     (r"^Suggestions Form \(Official\)$", "FORM", "reference"),
     (r"^Database/Information for Preparation of RMP 2031$", "DBINFO", "plan_report"),
 ]
+# OpenCity calls these "Land Use Maps", but every page is titled "Existing Land Use Map"
 _PD = re.compile(r"^Land Use Maps - Planning District (\d+)\s*(?:\((.*?)\)?)?\s*$")
 
 
@@ -82,7 +83,7 @@ def classify(name, plan_id):
         pd = int(m.group(1))
         label = (m.group(2) or "").strip()
         applies = f"PD {pd} ({label})" if label else f"PD {pd}"
-        return f"{plan_id}-PLU-PD{pd}", "plan_sheet", applies
+        return f"{plan_id}-ELU-PD{pd}", "plan_sheet", applies
     return None
 
 
@@ -195,7 +196,7 @@ def main():
         }
 
     def sort_key(row):
-        m = re.search(r"-PLU-PD(\d+)$", row["doc_id"])
+        m = re.search(r"-ELU-PD(\d+)$", row["doc_id"])
         return (
             row["plan_id"],
             1 if m else 0,

@@ -136,7 +136,7 @@ def probe_isolated(path):
 
 
 def sort_key(row):
-    m = re.search(r"-PLU-PD(\d+)$", row["doc_id"])
+    m = re.search(r"-ELU-PD(\d+)$", row["doc_id"])
     return (1 if m else 0, int(m.group(1)) if m else 0, row["doc_id"])
 
 

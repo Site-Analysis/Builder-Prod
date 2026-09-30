@@ -4,3 +4,4 @@ BMRDA-ANK-MP2031,BMRDA-ANK,Anekal Master Plan 2031,2031,final,"Final, sanctioned
 BMRDA-HSK-MP2031,BMRDA-HSK,Hoskote Master Plan 2031,2031,draft,"Status unconfirmed, GO not found yet",,,,unverified,GO to confirm (India-only site hoskote.tpa.gov.in).
 BMRDA-NLM-MP2031,BMRDA-NLM,Nelamangala Master Plan 2031,2031,draft,"Status unconfirmed, GO not found yet",,,,unverified,ZR PDF is titled 'Provisional Zoning Regulations'; treat as draft until a GO is found.
 BIAAPA-MP2031,BIAAPA,BIAAPA Master Plan,,draft,"Status unconfirmed, GO not found yet",,,,unverified,2031 horizon and GO to confirm.
+BDA-ELU2015,BDA,BDA Existing Land Use (on RMP 2015 base),,reference,"Reference only: existing land use, not a zoning plan",,,,unverified,Derived from BDA-RMP2031 Existing Land Use sheets (BDA-RMP2031-ELU composite and BDA-RMP2031-ELU-PD<n>); inherits no plan authority.
