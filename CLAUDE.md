@@ -15,7 +15,7 @@ contracts/                 OpenAPI YAML — one per service + CHANGELOG.md
 infra/supabase/            Supabase SQL setup scripts
 tests/                     Smoke tests (one file per service, run per-process)
 infra/scripts/             One-off data build scripts (LGD index; planning/ = fetch sources, probe PDFs)
-data/planning/             Planning source register CSVs (plans.csv, plan_docs.csv); raw PDFs NOT committed
+infra/planning/            Planning source register CSVs (plans.csv, plan_docs.csv); raw PDFs NOT committed
 docs/plans/                Build plans
 docker-compose.yml         Local dev: cadastral backend only; web runs outside
 .env.example               Root env (docker-compose vars)

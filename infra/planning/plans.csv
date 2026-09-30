@@ -1,0 +1,6 @@
+plan_id,authority,name,horizon,status,status_label,go_ref,go_date,operative_for,checked,notes
+BDA-RMP2031,BDA,BDA Revised Master Plan 2031,2031,draft,"Draft, never approved",,,,verified,Provisionally approved Nov 2017; sent back by the state in 2020. RMP 2015 remains operative for the BDA area. RMP 2041 tender floated 21 Aug 2025.
+BMRDA-ANK-MP2031,BMRDA-ANK,Anekal Master Plan 2031,2031,final,"Final, sanctioned",UDD 151 BMR 2013,2014-09-03,Anekal LPA,verified,GO verified on sheet stamps.
+BMRDA-HSK-MP2031,BMRDA-HSK,Hoskote Master Plan 2031,2031,draft,"Status unconfirmed, GO not found yet",,,,unverified,GO to confirm (India-only site hoskote.tpa.gov.in).
+BMRDA-NLM-MP2031,BMRDA-NLM,Nelamangala Master Plan 2031,2031,draft,"Status unconfirmed, GO not found yet",,,,unverified,ZR PDF is titled 'Provisional Zoning Regulations'; treat as draft until a GO is found.
+BIAAPA-MP2031,BIAAPA,BIAAPA Master Plan,,draft,"Status unconfirmed, GO not found yet",,,,unverified,2031 horizon and GO to confirm.
