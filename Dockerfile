@@ -43,6 +43,10 @@ COPY supervisord.conf /app/supervisord.conf
 
 EXPOSE 3000 8011
 
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+ENV NODE_ENV=production
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=1200s --retries=3 \
     CMD curl -f http://localhost:8011/health || exit 1
 
