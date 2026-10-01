@@ -87,6 +87,9 @@ def _apply_register_status(
         docs.get(d, {}).get("status_label", s)
         for d, s in zip(gdf["doc_id"], gdf["status_label"], strict=True)
     ]
+    gdf["status_condition"] = [
+        docs.get(d, {}).get("status_condition") or None for d in gdf["doc_id"]
+    ]
     return gdf
 
 

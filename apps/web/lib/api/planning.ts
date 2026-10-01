@@ -56,6 +56,7 @@ export interface ZoneProperties {
   cartographic?: boolean; // road space: how the sheet is drawn, not a zoning decision
   status: DocStatus;
   status_label: string;
+  status_condition?: string | null; // e.g. final approval subject to a court case
   inferred_note: string | null;
 }
 
@@ -66,6 +67,7 @@ export interface OverlayProperties {
   overlay_label_native: string;
   status: DocStatus;
   status_label: string;
+  status_condition?: string | null; // e.g. final approval subject to a court case
   note: string;
 }
 
@@ -76,6 +78,7 @@ export interface ZoneHit {
   cartographic?: boolean;
   status: DocStatus;
   status_label: string;
+  status_condition?: string | null; // e.g. final approval subject to a court case
   overlap_pct: number;
   edge_distance_m: number;
   position_uncertainty_m: number;
@@ -90,6 +93,7 @@ export interface OverlayTouch {
   kind: OverlayKind;
   status: DocStatus;
   status_label: string;
+  status_condition?: string | null; // e.g. final approval subject to a court case
   note: string;
   overlap_pct: number;
 }
@@ -98,6 +102,7 @@ export interface StreamNearby {
   overlay_uid: string;
   status: DocStatus;
   status_label: string;
+  status_condition?: string | null; // e.g. final approval subject to a court case
   note: string;
   distance_m: number;
 }

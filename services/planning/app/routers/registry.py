@@ -49,6 +49,7 @@ def list_plans() -> list[dict]:
                 "horizon": int(p["horizon"]) if p.get("horizon") else None,
                 "status": p["status"],
                 "status_label": p["status_label"],
+                "status_condition": _none(p.get("status_condition")),
                 "go_ref": _none(p.get("go_ref")),
                 "go_date": _none(p.get("go_date")),
                 "operative_for": _none(p.get("operative_for")),
@@ -69,10 +70,18 @@ def get_doc(doc_id: str) -> dict:
     return {
         k: (
             _none(v)
-            if k in ("go_ref", "go_date", "applies_to", "amends", "superseded_by")
+            if k
+            in (
+                "go_ref",
+                "go_date",
+                "applies_to",
+                "amends",
+                "superseded_by",
+                "status_condition",
+            )
             else v
         )
-        for k, v in d.items()
+        for k, v in ({"status_condition": None} | d).items()
     }
 
 
@@ -86,6 +95,7 @@ def _plan_ref(plan: dict, coverage: str) -> dict:
         "plan_id": plan["plan_id"],
         "status": plan["status"],
         "status_label": plan["status_label"],
+        "status_condition": _none(plan.get("status_condition")),
         "go_ref": _none(plan.get("go_ref")),
         "coverage": coverage,
     }

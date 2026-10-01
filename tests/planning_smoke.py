@@ -364,3 +364,22 @@ def test_m_road_space_is_cartographic(client, monkeypatch):
         for f in fc["features"]
     }
     assert flags["road_space"] is True and flags["uncoloured"] is False
+
+
+def test_n_status_condition_everywhere(client, monkeypatch):
+    plans = {p["plan_id"]: p for p in client.get("/plans").json()}
+    assert "W.P. 4188/2016" in plans["BMRDA-HSK-MP2031"]["status_condition"]
+    assert plans["BDA-RMP2031"]["status_condition"] is None
+    doc = client.get("/docs/BMRDA-HSK-MP2031-GO-FINALORDER").json()
+    assert doc["status"] == "final" and "4188/2016" in doc["status_condition"]
+    assert client.get("/docs/BDA-RMP2031-PLUCOMP").json()["status_condition"] is None
+    fc = client.get(
+        f"/zones?plan_id=BDA-RMP2031&bbox={_wgs_bbox(_E, _N, _E + 500, _N + 500)}"
+    ).json()
+    assert all("status_condition" in f["properties"] for f in fc["features"])
+    assert "status_condition" in fc["plan"]
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 400, _N + 400, _E + 460, _N + 460))
+    hit = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()["zones"][
+        0
+    ]
+    assert "status_condition" in hit and hit["status_condition"] is None

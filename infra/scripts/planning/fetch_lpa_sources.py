@@ -196,11 +196,12 @@ SOURCES = {
 # regulation stays draft unless a GO approves the regulations themselves.
 ZR_DRAFT = {
     "status": "draft",
-    "status_label": "Draft: no GO found approving the zoning regulations",
+    "status_condition": "",
+    "status_label": "Draft: published with the final plan; the GO does not name it",
     "go_ref": "",
     "go_date": "",
 }
-REFERENCE = {"status": "reference", "go_ref": "", "go_date": ""}
+REFERENCE = {"status": "reference", "status_condition": "", "go_ref": "", "go_date": ""}
 OVERRIDES = {
     "BMRDA-HSK-MP2031-ZR": ZR_DRAFT
     | {
@@ -309,6 +310,8 @@ def main():
     plans = {r["plan_id"]: r for r in read_csv(PLANS_CSV)}
     rows = {r["doc_id"]: r for r in read_csv(DOCS_CSV)}
     fields = list(next(iter(rows.values())).keys())
+    if "status_condition" not in fields:
+        fields.insert(fields.index("status_label") + 1, "status_condition")
     today = datetime.datetime.now(tz=datetime.timezone.utc).date().isoformat()
     failed = []
     for plan_id in args.plans:
@@ -345,6 +348,7 @@ def main():
                 "title": title,
                 "status": plan["status"],
                 "status_label": plan["status_label"],
+                "status_condition": plan.get("status_condition", ""),
                 "go_ref": plan["go_ref"],
                 "go_date": plan["go_date"],
                 "applies_to": plan.get("operative_for") or "",

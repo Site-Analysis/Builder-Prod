@@ -4,6 +4,19 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.15.0 — 2026-10-01 — planning
+
+Additive.
+- `status_condition` (string or null) next to every `status` / `status_label`: Plan, PlanDoc,
+  PlanRef, ZoneProperties, ZoneHit, OverlayProperties, OverlayTouch, StreamNearby. Carries a
+  condition on the status from the GO, e.g. Hoskote Master Plan 2031: final, "Subject to the
+  High Court's final judgment in W.P. 4188/2016".
+- `/authority` beyond the BDA area: Hoskote LPA (authority "BMRDA-HSK", operative plan
+  BMRDA-HSK-MP2031, final with condition) and BIAAPA LPA (authority "BIAAPA", no plan loaded,
+  note "No 2031 plan published; Master Plan 2021 exists (not loaded)").
+
+---
+
 ## 1.14.0 — 2026-09-30 — planning
 
 Additive (audit fixes M1, W6).

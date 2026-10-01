@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.14.0"
+  version: "1.15.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -91,15 +91,18 @@ paths:
       operationId: getAuthority
       summary: Planning authority, operative plan (or none) and draft plans for a village or point
       description: >
-        Pass either all of (dist, taluk, hobli, vlg) or both (lat, lng). BDA area only in
-        this version (build step 1.7): villages come from the village-to-authority table
-        (infra/planning/authority_villages.csv, text schedule of the LPA compared with the
-        LPA boundary on the plan sheet); a point is tested against the LPA boundary polygon.
-        In the BDA area: authority "BDA", `operative_plan` null (RMP 2015 is not loaded),
+        Pass either all of (dist, taluk, hobli, vlg) or both (lat, lng). Villages come from
+        the village-to-authority table (infra/planning/authority_villages.csv); a point is
+        tested against each loaded LPA boundary polygon.
+        BDA area: authority "BDA", `operative_plan` null (RMP 2015 is not loaded),
         `draft_plans` [BDA-RMP2031], note "Only a draft plan is loaded for this area".
-        Outside it: 200 with `coverage: "none"`, `authority: null`, empty plan lists and
-        note "Outside BDA; this area's plan isn't loaded yet". 404 is only for village codes
-        that do not exist. Gated by `feature.planning.layers`.
+        Hoskote LPA: authority "BMRDA-HSK", `operative_plan` BMRDA-HSK-MP2031 (final, with
+        `status_condition`), no draft plans.
+        BIAAPA LPA: authority "BIAAPA", `operative_plan` null, no draft plans, note
+        "No 2031 plan published; Master Plan 2021 exists (not loaded)".
+        Elsewhere: 200 with `coverage: "none"`, `authority: null`, empty plan lists and note
+        "Outside BDA; this area's plan isn't loaded yet" (wording kept for compatibility).
+        404 is only for village codes that do not exist. Gated by `feature.planning.layers`.
       parameters:
         - { name: dist, in: query, required: false, schema: { type: string } }
         - { name: taluk, in: query, required: false, schema: { type: string } }
@@ -262,6 +265,14 @@ components:
       type: string
       enum: [final, draft, superseded, reference]
 
+    StatusCondition:
+      type: [string, "null"]
+      example: "Subject to the High Court's final judgment in W.P. 4188/2016"
+      description: >
+        A condition attached to the document status, from its GO (for example a final
+        approval made subject to a court case). Null when there is none. Returned wherever
+        `status` is returned.
+
     Checked:
       type: string
       enum: [verified, unverified]
@@ -281,6 +292,7 @@ components:
         horizon: { type: [integer, "null"], example: 2031 }
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string, example: "Draft, never approved" }
+        status_condition: { $ref: "#/components/schemas/StatusCondition" }
         go_ref: { type: [string, "null"], example: null }
         go_date: { type: [string, "null"], format: date, example: null }
         operative_for:
@@ -307,6 +319,7 @@ components:
         title: { type: string }
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string, example: "Draft, never approved" }
+        status_condition: { $ref: "#/components/schemas/StatusCondition" }
         go_ref: { type: [string, "null"] }
         go_date: { type: [string, "null"], format: date }
         applies_to: { type: [string, "null"], example: "PD 11 (Doddanekkundi-Whitefield)" }
@@ -324,6 +337,7 @@ components:
         plan_id: { type: string }
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string }
+        status_condition: { $ref: "#/components/schemas/StatusCondition" }
         go_ref: { type: [string, "null"] }
         coverage:
           type: string
@@ -437,6 +451,7 @@ components:
             tables.
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string, example: "Draft, never approved" }
+        status_condition: { $ref: "#/components/schemas/StatusCondition" }
         cartographic:
           type: boolean
           example: false
@@ -492,6 +507,7 @@ components:
           description: Same as ZoneProperties.cartographic
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string, example: "Draft, never approved" }
+        status_condition: { $ref: "#/components/schemas/StatusCondition" }
         zone_uids:
           type: array
           items: { type: string }
@@ -549,6 +565,7 @@ components:
         overlay_label_native: { type: string, example: "NGT Buffer" }
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string, example: "Draft, never approved" }
+        status_condition: { $ref: "#/components/schemas/StatusCondition" }
         note:
           type: string
           example: "Map symbol, not a measured buffer"
@@ -585,6 +602,7 @@ components:
         kind: { $ref: "#/components/schemas/OverlayKind" }
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string }
+        status_condition: { $ref: "#/components/schemas/StatusCondition" }
         note: { type: string, example: "Map symbol, not a measured buffer" }
         overlap_pct: { type: number, description: Share of the parcel's area inside the overlay, 0-100 }
 
@@ -596,6 +614,7 @@ components:
         plan_id: { type: string }
         status: { $ref: "#/components/schemas/DocStatus" }
         status_label: { type: string }
+        status_condition: { $ref: "#/components/schemas/StatusCondition" }
         note: { type: string, example: "Map symbol (stream centreline), not a surveyed stream" }
         distance_m: { type: number, description: Parcel boundary to the centreline; 0 when it crosses the parcel }
 

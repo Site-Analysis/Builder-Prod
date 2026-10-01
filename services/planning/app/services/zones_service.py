@@ -102,6 +102,7 @@ def plan_ref(plan: dict) -> dict:
         "plan_id": plan["plan_id"],
         "status": plan["status"],
         "status_label": plan["status_label"],
+        "status_condition": plan.get("status_condition") or None,
         "go_ref": plan.get("go_ref") or None,
         "coverage": "full",
     }
@@ -116,6 +117,7 @@ ZONE_PROPS = [
     "class_norm",
     "status",
     "status_label",
+    "status_condition",
     "cartographic",
     "inferred_note",
     "qa",
@@ -177,6 +179,7 @@ def overlays_in_bbox(
         "overlay_label_native",
         "status",
         "status_label",
+        "status_condition",
         "note",
         "method",
         "qa",
@@ -329,6 +332,7 @@ def zone_hits(
             "cartographic": _cartographic(first),
             "status": first["status"],
             "status_label": first["status_label"],
+            "status_condition": plain(first.get("status_condition")) or None,
             "zone_uids": list(grp["zone_uid"]),
             "sheet_doc_ids": sorted(set(grp["doc_id"])),
             "overlap_pct": round(100 * ov_area / area, 2),
@@ -366,6 +370,7 @@ def overlays_nearby(layers_list: list[PlanLayers], parcel: shapely.Geometry) -> 
                         "kind": kind,
                         "status": row["status"],
                         "status_label": row["status_label"],
+                        "status_condition": plain(row.get("status_condition")) or None,
                         "note": OVERLAY_NOTES[kind],
                         "overlap_pct": round(
                             100 * parcel.intersection(row.geometry).area / area, 2
@@ -383,6 +388,7 @@ def overlays_nearby(layers_list: list[PlanLayers], parcel: shapely.Geometry) -> 
                     "plan_id": row["plan_id"],
                     "status": row["status"],
                     "status_label": row["status_label"],
+                    "status_condition": plain(row.get("status_condition")) or None,
                     "note": OVERLAY_NOTES["stream_centreline"],
                     "distance_m": round(d, 1),
                 }

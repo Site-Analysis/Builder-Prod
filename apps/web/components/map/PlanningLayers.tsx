@@ -305,6 +305,9 @@ export function PlanningCardSection({ result }: { result: ZonesAtResult | "loadi
             <span style={{ fontWeight: 600 }}>{z.zone_label_native}</span>
             <span style={{ color: "#7B8F83", marginLeft: "auto" }}>{z.overlap_pct.toFixed(1)}%</span>
           </div>
+          {z.status_condition && (
+            <div style={{ color: "#9A4F00", marginLeft: 16 }}>{z.status_label}: {z.status_condition}</div>
+          )}
           {z.cartographic && (
             <div style={{ color: "#7B8F83", marginLeft: 16 }}>Road corridor as drawn on the sheet, not a zone decision</div>
           )}
