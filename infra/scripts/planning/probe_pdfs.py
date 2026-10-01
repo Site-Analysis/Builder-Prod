@@ -8,7 +8,9 @@ Reads plan_sheet rows for the plan from infra/planning/plan_docs.csv, opens
 <data-root>/raw/<plan_id>/<doc_id>.pdf and records per PDF: pages, page size,
 page titles (Existing / Proposed Land Use Map), total, filled and coloured drawing
 paths, distinct fill colours, image tiles and their page coverage, text span count,
-and optional content groups (layers) with names.
+optional content groups (layers) with names, the printed scale ("1:n" in the sheet text),
+whether a legend is in the text, and for raster sheets the largest image in pixels and its
+resolution. Sheets may be PDF or image files (<doc_id>.<ext>).
 
 Writes <data-root>/probe/<plan_id>_probe.csv (summary) and _probe.json (with fill
 colour counts and layer names) and prints a markdown table. Extracts nothing.
@@ -18,6 +20,7 @@ Needs pymupdf (see requirements.txt).
 import argparse
 import collections
 import csv
+import glob
 import json
 import os
 import re
@@ -54,11 +57,14 @@ def page_title(page):
 
 def probe(path):
     doc = pymupdf.open(path)
+    if not doc.is_pdf:  # image sheet (jpg/png): probe it as a one-page PDF
+        doc = pymupdf.open("pdf", doc.convert_to_pdf())
     fills = collections.Counter()
     paths = filled = colour_fills = images = spans = 0
     max_tile_cover = 0.0
     sizes, titles = set(), []
     pages_vector = pages_raster = 0
+    scales, legend, big_img, big_dpi = set(), False, "", 0
     for page in doc:
         rect = page.rect
         sizes.add(f"{rect.width * PT_TO_MM:.0f}x{rect.height * PT_TO_MM:.0f}")
@@ -78,6 +84,20 @@ def probe(path):
             images += 1
             b = pymupdf.Rect(info["bbox"]) & rect
             tile_area += b.width * b.height
+            w_px, h_px = info.get("width", 0), info.get("height", 0)
+            bb = pymupdf.Rect(info["bbox"])
+            if bb.width > 0 and w_px * h_px > 0:
+                dpi = round(w_px / (bb.width / 72))
+                if not big_img or w_px * h_px > int(big_img.split("x")[0]) * int(
+                    big_img.split("x")[1]
+                ):
+                    big_img, big_dpi = f"{w_px}x{h_px}", dpi
+        text = page.get_text()
+        for m in re.finditer(r"1\s*:\s*([\d,]{3,})", text):
+            scales.add("1:" + m.group(1).replace(",", ""))
+        legend = legend or bool(
+            re.search(r"\b(LEGEND|INDEX)\b", text, re.IGNORECASE)
+        )  # BMRDA sheets title it INDEX
         tile_cover = min(tile_area / page_area, 1.0)
         max_tile_cover = max(max_tile_cover, tile_cover)
         if page_colour >= VECTOR_MIN_COLOUR_FILLS:
@@ -115,6 +135,10 @@ def probe(path):
         "layers": len(layers),
         "layer_names": layers,
         "top_fills": fills.most_common(25),
+        "scale_text": ";".join(sorted(scales, key=lambda x: int(x[2:])))[:60] or "",
+        "legend_in_text": "yes" if legend else ("no text" if spans == 0 else "no"),
+        "largest_image_px": big_img,
+        "image_dpi": big_dpi or "",
         "verdict": verdict,
     }
 
@@ -167,7 +191,12 @@ def main():
 
     results = []
     for row in sorted(docs, key=sort_key):
-        path = os.path.join(raw_dir, f"{row['doc_id']}.pdf")
+        found = [
+            p_
+            for p_ in glob.glob(os.path.join(raw_dir, f"{row['doc_id']}.*"))
+            if not p_.endswith(".part")
+        ]
+        path = found[0] if found else os.path.join(raw_dir, f"{row['doc_id']}.pdf")
         if not os.path.exists(path):
             print(f"  MISSING {path}", file=sys.stderr)
             continue
@@ -201,6 +230,10 @@ def main():
         "max_tile_cover_pct",
         "text_spans",
         "layers",
+        "scale_text",
+        "legend_in_text",
+        "largest_image_px",
+        "image_dpi",
         "verdict",
     ]
     base = os.path.join(out_dir, f"{args.plan_id}_probe")
@@ -213,7 +246,7 @@ def main():
 
     head = ["doc_id", "page_titles", "pages", "fill_paths", "colour_fill_paths"]
     head += ["fill_colours", "images", "max_tile_cover_pct", "text_spans", "layers"]
-    head += ["verdict"]
+    head += ["scale_text", "legend_in_text", "largest_image_px", "image_dpi", "verdict"]
     print("| " + " | ".join(head) + " |")
     print("|" + "---|" * len(head))
     for r in results:

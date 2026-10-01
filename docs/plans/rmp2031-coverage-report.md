@@ -9,6 +9,17 @@ CSVs: `<data-root>/planning/audit/` (round 1 copies in `audit_before_fix/`; data
 (A1-A5, C9, C10, summary), `audit_service.py` (B6, B7, planning service venv),
 `crosscheck_pdr.py --all --extents` (C8, PD extents).
 
+## Step 1.8 acceptance
+
+**Self-checked, SME pending.** The acceptance pack (5 parcels: deep in a zone, straddling
+two zones, stream/NGT edge, partial-coverage village, just outside BDA; one page each with
+the source crop, our zones, the parcel outline and the `/zones/at` + `/authority` output) is in
+`<data-root>/planning/acceptance/`, built with `acceptance_pick.py` / `acceptance_pack.py`.
+It was checked against the source map by us; the SME review has not happened. The SME
+questions run on defaults, see `rmp2031-sme-defaults.md`. The pages were rendered on 30 Sep,
+before the round-2 fixes (road space, NGT closing); re-run `acceptance_pack.py` before sending
+them.
+
 ## Before / after
 
 | Check | Round 1 (before) | Round 2 (after) |
