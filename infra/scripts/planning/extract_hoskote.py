@@ -52,6 +52,7 @@ from pyproj import CRS, Transformer
 sys.path.insert(0, os.path.dirname(__file__))
 from extract_plucomp import (
     close,
+    dilate,
     fill_from_neighbours,
     geoparquet,
     polygonise,
@@ -75,6 +76,14 @@ PALE_ALPHA = 0.2
 UNKNOWN, WHITE, PALE = 0, 1, 2
 JUNCTION_MATCH_M = 10.0
 MIN_CHECKS = 3  # fewer matched junctions: 'few ground checks', floor applies
+FOREST_CLOSE_PX = 20  # tree icons sit ~35 px apart at 150 dpi; closing bridges the gaps (tuned on Map 57)
+FOREST_OPEN_PX = (
+    4  # drops thin green linework (narrower than ~8 px) from the forest mask
+)
+# anti-aliased edges of black symbols on white come out light grey (unclassified) or mid grey
+# (transport): isolated pixels (<= N of the class in their 7x7 window) are halos, not zones
+HALO_MAX_UNCLASSIFIED = 12
+HALO_MAX_TRANSPORT = 6  # below a 1 px line through the window (7), so thin roads stay
 JUNCTION_SNAP_PT = 0.5
 GEOREF_PASS_M = 10.0
 CRS_M = CRS.from_epsg(32643)
@@ -90,6 +99,10 @@ CLASSES = [
     ("UNCLASSIFIED", "unclassified", "#e1e1e1"),
     ("AGRICULTURE", "agriculture", "#d4fcc0"),
     ("WATER BODY", "water", "#98dcf0"),
+    # FOREST: the legend swatch is green tree icons on white, not a fill. The icons'
+    # raster colour (median of tree pixels, Map 57) is the key; the forest area is the
+    # white between the icons (see forest_regions).
+    ("FOREST", "forest", "#57a634"),
 ]
 UNCOLOURED_LABEL = "Not coloured on the plan"
 # Master Plan report, Tables 66 (inside the conurbation) and 67 (outside), excluding STRR
@@ -205,16 +218,64 @@ def sheets(doc):
 
 def palette():
     full = np.array([hexrgb(c) for _, _, c in CLASSES])
-    pale = 255 - PALE_ALPHA * (255 - full)
+    tinted = [
+        i for i, c in enumerate(CLASSES) if c[1] != "forest"
+    ]  # icons have no tint
+    pale = 255 - PALE_ALPHA * (255 - full[tinted])
     keys = np.vstack([full, pale, [[255, 255, 255]], [[0, 0, 0]]]).astype(np.float32)
     codes = np.concatenate(
         [
             np.arange(10, 10 + len(CLASSES)),
-            np.full(len(CLASSES), PALE),
+            np.full(len(tinted), PALE),
             [WHITE, UNKNOWN],
         ]
     )
     return keys, codes.astype(np.uint8)
+
+
+def code_of(cnorm):
+    return 10 + [c[1] for c in CLASSES].index(cnorm)
+
+
+def boxsum(m, r):
+    """Count of True in the (2r+1)^2 window around each pixel."""
+    c = np.pad(m.astype(np.int32), ((r + 1, r), (r + 1, r))).cumsum(0).cumsum(1)
+    return (
+        c[2 * r + 1 :, 2 * r + 1 :]
+        - c[: -2 * r - 1, 2 * r + 1 :]
+        - c[2 * r + 1 :, : -2 * r - 1]
+        + c[: -2 * r - 1, : -2 * r - 1]
+    )
+
+
+def forest_regions(cls):
+    """Forest is drawn as tree icons on white. Close the icon mask over the gaps between
+    icons, open it to drop thin green linework, and take the white / unknown / icon pixels
+    inside as forest. Returns the number of forest pixels set."""
+    f = code_of("forest")
+    tree = cls == f
+    if not tree.any():
+        return 0
+    region = close(tree, FOREST_CLOSE_PX)
+    region = dilate(~dilate(~region, FOREST_OPEN_PX), FOREST_OPEN_PX)  # opening
+    hit = region & ((cls == WHITE) | (cls == UNKNOWN) | (cls == PALE) | tree)
+    cls[tree & ~region] = UNKNOWN  # stray icons / green lines: filled from neighbours
+    cls[hit] = f
+    return int(hit.sum())
+
+
+def drop_halos(cls):
+    """Isolated grey pixels around black symbols -> UNKNOWN (filled from neighbours)."""
+    n = 0
+    for cnorm, mx in (
+        ("unclassified", HALO_MAX_UNCLASSIFIED),
+        ("transport", HALO_MAX_TRANSPORT),
+    ):
+        m = cls == code_of(cnorm)
+        iso = m & (boxsum(m, 3) <= mx)
+        cls[iso] = UNKNOWN
+        n += int(iso.sum())
+    return n
 
 
 def classify_rgb(a, keys, codes):
@@ -427,6 +488,8 @@ def process_sheet(doc, s, lpa, plan, osm_j, out_dir):
     page = doc[s["page"] - 1]
     fit = grid_fit(page)
     cls, (x0, y0, cpt, rpt) = class_raster(page, doc)
+    forest_px = forest_regions(cls)
+    halo_px = drop_halos(cls)
     unknown = cls == UNKNOWN
     unknown_pct = 100 * float(unknown.mean())
     cls = fill_from_neighbours(cls, unknown)
@@ -478,6 +541,8 @@ def process_sheet(doc, s, lpa, plan, osm_j, out_dir):
         "grid_max_residual_m": grid_res,
         "grid_labels": fit["E"][3] + fit["N"][3],
         "unknown_px_pct": unknown_pct,
+        "forest_px": forest_px,
+        "halo_px_dropped": halo_px,
         "position_uncertainty_m": unc,
         "osm_junctions": chk,
         "qa": qa,
