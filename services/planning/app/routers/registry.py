@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 
 import shapely
@@ -56,6 +57,7 @@ def list_plans() -> list[dict]:
                 "checked": p["checked"],
                 "notes": _none(p.get("notes")),
                 "enabled": f"feature.planning.plan.{p['plan_id']}" in enabled,
+                "loaded": _loaded(p["plan_id"]),
             }
         )
     return out
@@ -85,17 +87,33 @@ def get_doc(doc_id: str) -> dict:
     }
 
 
-BDA_PLAN = "BDA-RMP2031"
-NOTE_BDA = "Only a draft plan is loaded for this area"
 NOTE_OUTSIDE = "Outside BDA; this area's plan isn't loaded yet"
-NOTE_BIAAPA = "No 2031 plan published; Master Plan 2021 exists (not loaded)"
-# authority code -> (LPA label, note); plans come from the village row / plans.csv
-AUTHORITIES = {
-    "BDA": ("LPA of BDA", NOTE_BDA),
-    "BMRDA-HSK": ("LPA of Hoskote", None),
-    "BIAAPA": ("LPA of BIAAPA", NOTE_BIAAPA),
-}
-LOADED_PLANS = {"BDA": [BDA_PLAN], "BMRDA-HSK": ["BMRDA-HSK-MP2031"], "BIAAPA": []}
+NOTE_NO_PLAN = "No planning authority or master plan found for this location"
+# plan_coverage order: the first that applies is the location's value
+PLAN_COVERAGE = [
+    "plan_loaded",
+    "plan_registered_not_loaded",
+    "lpa_no_zone_map",
+    "no_master_plan_found",
+]
+# notes on a plan's "Not coloured" rows that mean: this part of the LPA has no zone sheet
+NO_SHEET_NOTES = (
+    "LPA area on no published zone sheet",
+    "LPA area on no detail sheet or hobli map",
+)
+
+
+def _loaded(plan_id: str) -> bool:
+    lay = get_store().layers.get(plan_id)
+    return lay is not None and lay.zones is not None
+
+
+def _doc_ids(plan_id: str) -> list[str]:
+    return sorted(
+        d["doc_id"]
+        for d in get_store().docs.values()
+        if d["plan_id"] == plan_id and d["status"] != "superseded"
+    )
 
 
 def _plan_ref(plan: dict, coverage: str) -> dict:
@@ -106,41 +124,158 @@ def _plan_ref(plan: dict, coverage: str) -> dict:
         "status_condition": _none(plan.get("status_condition")),
         "go_ref": _none(plan.get("go_ref")),
         "coverage": coverage,
+        "loaded": _loaded(plan["plan_id"]),
+        "doc_ids": _doc_ids(plan["plan_id"]),
     }
 
 
-def _result(
-    location: dict,
+def _auth_plans(authority: str | None) -> list[str]:
+    a = get_store().authorities.get(authority or "") or {}
+    return [p for p in (a.get("plan_ids") or "").split(";") if p]
+
+
+def _plan_coverage(authority: str | None, plan_ids: list[str]) -> str:
+    if authority is None:
+        return "no_master_plan_found"
+    if any(_loaded(p) for p in plan_ids):
+        return "plan_loaded"
+    if any(p in get_store().plans for p in plan_ids):
+        return "plan_registered_not_loaded"
+    return "lpa_no_zone_map"
+
+
+def _entry(
     authority: str | None,
     coverage: str,
     plan_ids: list[str] | None = None,
+    plan_coverage: str | None = None,
+    note: str | None = None,
     **extra,
 ) -> dict:
     st = get_store()
-    known = authority in AUTHORITIES
-    plans = [
-        st.plans[p]
-        for p in (plan_ids if plan_ids is not None else LOADED_PLANS.get(authority, []))
-        if p in st.plans
-    ]
+    a = st.authorities.get(authority or "")
+    if plan_ids is None:
+        plan_ids = _auth_plans(authority)
+    plans = [st.plans[p] for p in plan_ids if p in st.plans]
     pcov = "full" if coverage == "full" else "partial"
-    operative = next((p for p in plans if p["status"] == "final"), None)
+    operative = [p for p in plans if p["status"] == "final"]
     return {
-        "location": location,
-        "authority": authority if known else None,
-        "lpa": AUTHORITIES[authority][0] if known else None,
-        "coverage": coverage if known else "none",
+        "authority": authority if a else None,
+        "lpa": a["lpa_label"] if a else None,
+        "coverage": coverage if a else "none",
         "share_pct": extra.get("share_pct"),
         "pd": extra.get("pd"),
         "source": extra.get("source"),
         "mismatch_note": extra.get("mismatch_note"),
+        "plan_coverage": plan_coverage
+        or _plan_coverage(authority if a else None, plan_ids),
         # BDA: RMP 2015 (operative) is not loaded; only the draft RMP 2031 is
-        "operative_plan": _plan_ref(operative, pcov) if known and operative else None,
-        "draft_plans": [_plan_ref(p, pcov) for p in plans if p["status"] == "draft"]
-        if known
-        else [],
-        "note": AUTHORITIES[authority][1] if known else NOTE_OUTSIDE,
+        "operative_plan": _plan_ref(operative[0], pcov) if operative else None,
+        "draft_plans": [_plan_ref(p, pcov) for p in plans if p["status"] == "draft"],
+        "note": note if note is not None else (_none(a["note"]) if a else None),
+        "sources_checked": extra.get("sources_checked") or [],
     }
+
+
+TOP_KEYS = (
+    "authority",
+    "lpa",
+    "coverage",
+    "share_pct",
+    "pd",
+    "source",
+    "mismatch_note",
+    "operative_plan",
+    "draft_plans",
+    "note",
+)
+
+
+def _result(
+    location: dict,
+    entries: list[dict],
+    sources: list[dict] | None = None,
+    point: bool = False,
+) -> dict:
+    entries = [e for e in entries if e["authority"] is not None]
+    entries.sort(
+        key=lambda e: -(e["share_pct"] if e["share_pct"] is not None else 100.0)
+    )
+    if entries:
+        top = entries[0]
+        pc = min((e["plan_coverage"] for e in entries), key=PLAN_COVERAGE.index)
+    else:
+        top = _entry(None, "none", [], "no_master_plan_found", NOTE_OUTSIDE)
+        top["source"] = "point" if point else None
+        pc = "no_master_plan_found"
+    if pc == "no_master_plan_found" and not sources:
+        sources = [
+            {k: _none(v) for k, v in r.items()} for r in get_store().sources_checked
+        ]
+    out = {"location": location}
+    out.update({k: top[k] for k in TOP_KEYS})
+    out["plan_coverage"] = pc
+    out["authorities"] = entries
+    out["sources_checked"] = sources or []
+    return out
+
+
+def _row_entries(row: dict) -> tuple[list[dict], list[dict]]:
+    """Village row -> entries. 1.16 rows carry authorities_json / sources_checked_json;
+    older rows have one authority in the flat columns."""
+    raw = (row.get("authorities_json") or "").strip()
+    srcs_raw = (row.get("sources_checked_json") or "").strip()
+    srcs = json.loads(srcs_raw) if srcs_raw else []
+    if raw:
+        return [
+            _entry(
+                e.get("authority"),
+                e.get("coverage", "full"),
+                e.get("plan_ids"),
+                e.get("plan_coverage"),
+                e.get("note"),
+                share_pct=e.get("share_pct"),
+                pd=e.get("pd"),
+                source=e.get("source"),
+                mismatch_note=e.get("mismatch_note"),
+                sources_checked=e.get("sources_checked"),
+            )
+            for e in json.loads(raw)
+        ], srcs
+    authority = _none(row["authority"]) if row["coverage"] != "none" else None
+    if authority is None:
+        return [], srcs
+    return [
+        _entry(
+            authority,
+            row["coverage"],
+            [p for p in (row.get("plan_ids") or "").split(";") if p],
+            share_pct=float(row["share_pct"]) if row["share_pct"] else None,
+            pd=int(row["pd"]) if row["pd"] else None,
+            source=_none(row["source"]),
+            mismatch_note=_none(row["mismatch_note"]),
+        )
+    ], srcs
+
+
+def _point_plan_coverage(authority: str, plan_ids: list[str], pt) -> str:
+    """plan_loaded where a loaded plan has a zone sheet at the point; a loaded plan whose
+    zone there is its 'no sheet' area counts as lpa_no_zone_map."""
+    st = get_store()
+    no_sheet = False
+    for p in plan_ids:
+        lay = st.layers.get(p)
+        if lay is None or lay.zones is None:
+            continue
+        z = lay.zones
+        hit = z.iloc[z.sindex.query(pt, predicate="intersects")]
+        notes = hit["note"].fillna("").tolist() if len(hit) else []
+        if notes and all(n in NO_SHEET_NOTES for n in notes):
+            no_sheet = True
+            continue
+        return "plan_loaded"
+    pc = _plan_coverage(authority, [p for p in plan_ids if not _loaded(p)])
+    return "lpa_no_zone_map" if no_sheet and pc == "no_master_plan_found" else pc
 
 
 @router.get("/authority")
@@ -163,26 +298,34 @@ def get_authority(
                 raise HTTPException(
                     status_code=404, detail="Village codes do not exist"
                 )
-            return _result(loc, None, "none")
-        authority = _none(row["authority"])
-        return _result(
-            loc,
-            authority if row["coverage"] != "none" else None,
-            row["coverage"],
-            [p for p in (row.get("plan_ids") or "").split(";") if p],
-            share_pct=float(row["share_pct"]) if row["share_pct"] else None,
-            pd=int(row["pd"]) if row["pd"] else None,
-            source=_none(row["source"]),
-            mismatch_note=_none(row["mismatch_note"]),
-        )
+            return _result(loc, [])
+        entries, srcs = _row_entries(row)
+        res = _result(loc, entries, srcs)
+        if (row.get("plan_coverage") or "").strip():
+            res["plan_coverage"] = row["plan_coverage"].strip()
+        return res
     if lat is not None and lng is not None:
         loc = {"lat": lat, "lng": lng}
         x, y = _TO_METRIC.transform(lng, lat)
         pt = shapely.Point(x, y)
-        for authority, lpa in st.lpa.items():
-            if lpa.contains(pt):
-                return _result(loc, authority, "full", source="point")
-        return _result(loc, None, "none", source="point")
+        entries, seen = [], set()
+        # plan LPAs first (a loaded plan's own extent, e.g. Anekal before STRR), then
+        # BMRDA's LPA map for authorities without a loaded plan
+        for authority, lpa in list(st.lpa.items()) + list(st.lpa_map.items()):
+            if authority in seen or not lpa.contains(pt):
+                continue
+            seen.add(authority)
+            pids = _auth_plans(authority)
+            entries.append(
+                _entry(
+                    authority,
+                    "full",
+                    pids,
+                    _point_plan_coverage(authority, pids, pt),
+                    source="point",
+                )
+            )
+        return _result(loc, entries, point=True)
     raise HTTPException(
         status_code=400,
         detail="Pass all of dist, taluk, hobli, vlg, or both lat and lng",

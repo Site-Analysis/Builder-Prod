@@ -395,3 +395,29 @@ def test_o_edge_distance_to_other_zone_serialises(client, monkeypatch):
     assert hit["zone_label_native"] == "Residential"
     assert hit["edge_distance_m"] == pytest.approx(100.0, abs=0.5)
     assert hit["near_edge"] is False
+
+
+def test_p_contract_1_16(client, monkeypatch):
+    # /plans: loaded flag; the fixture loads BDA zones only
+    plans = {p["plan_id"]: p for p in client.get("/plans").json()}
+    assert plans["BDA-RMP2031"]["loaded"] is True
+    assert plans["BIAAPA-MP2021"]["loaded"] is False
+    # village inside BDA: one authority entry, its plan loaded, plan refs carry docs
+    full = client.get("/authority?dist=20&taluk=1&hobli=1&vlg=14").json()
+    assert full["plan_coverage"] == "plan_loaded"
+    (entry,) = full["authorities"]
+    assert entry["authority"] == "BDA" and entry["plan_coverage"] == "plan_loaded"
+    (draft,) = entry["draft_plans"]
+    assert draft["loaded"] is True and "BDA-RMP2031-PLUCOMP" in draft["doc_ids"]
+    # village outside every LPA: no_master_plan_found, sources checked listed
+    out = client.get("/authority?dist=21&taluk=1&hobli=1&vlg=1").json()
+    assert out["plan_coverage"] == "no_master_plan_found"
+    assert out["authorities"] == [] and len(out["sources_checked"]) >= 3
+    assert all("checked_on" in s for s in out["sources_checked"])
+    # /zones/at: source layer and sheet on each hit (BDA layer predates 1.16: composite)
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 400, _N + 400, _E + 460, _N + 460))
+    (hit,) = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()[
+        "zones"
+    ]
+    assert hit["source_layer"] == "composite" and hit["mixed_source_layers"] is False
+    assert "sheet" in hit and all("source_layer" in q for q in hit["sheets_qa"])

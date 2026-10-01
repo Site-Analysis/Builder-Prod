@@ -120,6 +120,8 @@ ZONE_PROPS = [
     "status_condition",
     "cartographic",
     "inferred_note",
+    "source_layer",
+    "sheet",
     "qa",
 ]
 
@@ -250,6 +252,10 @@ def _polygonal(g: shapely.Geometry) -> shapely.Geometry:
     return shapely.union_all(parts) if parts else shapely.Polygon()
 
 
+# coarser = higher; position_uncertainty_m of a hit spanning layers comes from the coarser
+LAYER_RANK = {"detail": 0, "hobli": 1, "lpa_map": 2, "composite": 3}
+
+
 def position_uncertainty(qa: dict) -> float:
     rmse = qa.get("georef_rmse_m") or 0.0
     mpx = qa.get("m_per_px") or 0.0
@@ -321,8 +327,28 @@ def zone_hits(
         else:
             # zone pieces lie wholly inside the parcel
             edge = float(rim.distance(local_u))
-        qas = [plain(q) for q in grp["qa"]]
-        unc = max(position_uncertainty(q) for q in qas)
+        layers_r = [plain(x) or "composite" for x in grp["source_layer"]]
+        sheets_r = [plain(x) for x in grp["sheet"]]
+        qas = []
+        for q, lay, sh in zip(grp["qa"], layers_r, sheets_r, strict=True):
+            q = dict(plain(q))
+            q.setdefault("source_layer", lay)
+            q["source_layer"] = q["source_layer"] or lay
+            q.setdefault("sheet", sh)
+            q["sheet"] = q["sheet"] or sh
+            qas.append(q)
+        share = {}
+        for i, lay, sh in zip(inter, layers_r, sheets_r, strict=True):
+            share[(lay, sh)] = share.get((lay, sh), 0.0) + i.area
+        top_layer, top_sheet = max(share, key=share.get)
+        layer_set = {lay for lay, _ in share}
+        # several layers: the coarser layer's uncertainty, never the largest-share sheet's
+        coarse = max(layer_set, key=lambda lay: LAYER_RANK.get(lay, 9))
+        unc = max(
+            position_uncertainty(q)
+            for q, lay in zip(qas, layers_r, strict=True)
+            if lay == coarse
+        )
         first = grp.iloc[0]
         hit = {
             "plan_id": first["plan_id"],
@@ -342,7 +368,10 @@ def zone_hits(
             "inferred": inferred_area > 0,
             "inferred_share_pct": round(100 * inferred_area / ov_area, 1),
             "inferred_notes": sorted({n for n in grp["note"] if n}),
-            "sheets_qa": list({q["doc_id"]: q for q in qas}.values()),
+            "sheets_qa": list({(q["doc_id"], q.get("sheet")): q for q in qas}.values()),
+            "source_layer": top_layer,
+            "sheet": top_sheet,
+            "mixed_source_layers": len(layer_set) > 1,
         }
         (traces if label in trace else hits).append(hit)
     hits.sort(key=lambda h: -h["overlap_pct"])

@@ -64,6 +64,11 @@ class Store:
     authority_dists: set[str] = field(default_factory=set)
     # LPA boundary per authority (EPSG:32643), e.g. {"BDA": polygon}
     lpa: dict[str, shapely.Geometry] = field(default_factory=dict)
+    # current LPA extents from BMRDA's LPA map, for authorities without a loaded plan
+    lpa_map: dict[str, shapely.Geometry] = field(default_factory=dict)
+    # authorities.csv rows (authority -> lpa_label, plan_ids, note); sources_checked.csv
+    authorities: dict[str, dict] = field(default_factory=dict)
+    sources_checked: list[dict] = field(default_factory=list)
 
 
 def _read_csv(path: str) -> list[dict]:
@@ -100,6 +105,12 @@ def _load_layer(path: str, docs: dict[str, dict]) -> gpd.GeoDataFrame | None:
     if gdf.crs is None or gdf.crs.to_epsg() != CRS_METRIC:
         gdf = gdf.to_crs(CRS_METRIC)
     gdf = _apply_register_status(gdf, docs)
+    # contract 1.16: every zone names its source layer and sheet; layers written before
+    # 1.16 (BDA RMP 2031, from the PLUCOMP composite) have neither column
+    if "source_layer" not in gdf.columns:
+        gdf["source_layer"] = "composite"
+    if "sheet" not in gdf.columns:
+        gdf["sheet"] = None
     _ = gdf.sindex  # build the STRtree now, not on the first request
     return gdf
 
@@ -170,6 +181,17 @@ def load_store() -> Store:
         st.lpa[plan["authority"]] = geom
         if plan_id in st.layers:
             st.layers[plan_id].outer_boundary = geom.boundary
+    st.authorities = {
+        r["authority"]: r for r in _read_csv(os.path.join(reg, "authorities.csv"))
+    }
+    st.sources_checked = _read_csv(os.path.join(reg, "sources_checked.csv"))
+    map_path = os.path.join(data, "BMRDA-LPA-MAP_lpas.parquet")
+    if os.path.exists(map_path):
+        m = gpd.read_parquet(map_path).to_crs(CRS_METRIC)
+        for r in m[m["extent"] == "current"].itertuples():
+            g = shapely.make_valid(r.geometry)
+            shapely.prepare(g)
+            st.lpa_map[r.authority] = g
     return st
 
 
