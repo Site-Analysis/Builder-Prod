@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Qnit. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-Proprietary
 //
-// Planning service client (contracts/planning.yaml 1.12.0): RMP 2031 zone and map-symbol
-// overlay layers, and zones touching a parcel. Every record carries its document status.
+// Planning service client (contracts/planning.yaml 1.16.0): 2031 plan zone layers (one per
+// loaded plan), RMP 2031 map-symbol overlays, and zones touching a parcel. Every record
+// carries its document status.
 
 import { getSession } from "next-auth/react";
 import { useAuthStore } from "@/lib/stores/auth";
@@ -10,7 +11,22 @@ import { useAuthStore } from "@/lib/stores/auth";
 const BASE = process.env.NEXT_PUBLIC_PLANNING_API_URL ?? "http://localhost:8012";
 const TIMEOUT_MS = 30_000;
 
-export const PLAN_ID = "BDA-RMP2031";
+export const PLAN_ID = "BDA-RMP2031"; // map-symbol overlays exist for this plan only
+
+/** The 2031 plans the map offers, in switch order. `loaded` comes from /plans. */
+export const WEB_PLANS: { plan_id: string; label: string }[] = [
+  { plan_id: "BDA-RMP2031", label: "BDA RMP 2031" },
+  { plan_id: "BMRDA-HSK-MP2031", label: "Hoskote MP 2031" },
+  { plan_id: "BMRDA-NLM-MP2031", label: "Nelamangala MP 2031" },
+  { plan_id: "BMRDA-ANK-MP2031", label: "Anekal MP 2031" },
+];
+
+/** Badge text for a plan status: "Draft", "Final", or "Final, subject to court case". */
+export function statusBadge(status: DocStatus, condition?: string | null): string {
+  if (status === "final") return condition ? "Final, subject to court case" : "Final";
+  if (status === "draft") return "Draft";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
 export const MAX_BBOX_DEG = 0.05;
 
 async function getToken(): Promise<string | null> {
@@ -58,6 +74,20 @@ export interface ZoneProperties {
   status_label: string;
   status_condition?: string | null; // e.g. final approval subject to a court case
   inferred_note: string | null;
+  source_layer?: SourceLayer;
+  sheet?: string | null;
+}
+
+export type SourceLayer = "detail" | "hobli" | "lpa_map" | "composite";
+
+export interface PlanInfo {
+  plan_id: string;
+  name: string;
+  status: DocStatus;
+  status_label: string;
+  status_condition?: string | null;
+  enabled: boolean;
+  loaded?: boolean;
 }
 
 export interface OverlayProperties {
@@ -86,6 +116,9 @@ export interface ZoneHit {
   inferred: boolean;
   inferred_share_pct: number;
   inferred_notes: string[];
+  source_layer?: SourceLayer;
+  sheet?: string | null;
+  mixed_source_layers?: boolean;
 }
 
 export interface OverlayTouch {
@@ -128,9 +161,13 @@ function bboxParam(b: Bbox): string {
   return b.map((v) => v.toFixed(6)).join(",");
 }
 
-export function fetchZones(bbox: Bbox, simplify: SimplifyM, signal?: AbortSignal) {
+export function fetchPlans(signal?: AbortSignal) {
+  return get<PlanInfo[]>("/plans", signal);
+}
+
+export function fetchZones(planId: string, bbox: Bbox, simplify: SimplifyM, signal?: AbortSignal) {
   return get<GeoJSON.FeatureCollection<GeoJSON.Geometry, ZoneProperties>>(
-    `/zones?plan_id=${PLAN_ID}&bbox=${bboxParam(bbox)}&simplify_m=${simplify}`,
+    `/zones?plan_id=${encodeURIComponent(planId)}&bbox=${bboxParam(bbox)}&simplify_m=${simplify}`,
     signal,
   );
 }
