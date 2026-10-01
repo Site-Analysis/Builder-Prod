@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.15.0"
+  version: "1.16.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -102,6 +102,13 @@ paths:
         "No 2031 plan published; Master Plan 2021 exists (not loaded)".
         Elsewhere: 200 with `coverage: "none"`, `authority: null`, empty plan lists and note
         "Outside BDA; this area's plan isn't loaded yet" (wording kept for compatibility).
+        Every location also gets `plan_coverage` (one of plan_loaded,
+        plan_registered_not_loaded, lpa_no_zone_map, no_master_plan_found) and
+        `authorities`: one entry per planning authority whose LPA covers it, each with its
+        own plans, status, status_condition and source documents. A village split between
+        two LPAs (or BDA and an LPA) lists both; they are never merged. The top-level
+        authority/lpa/coverage/operative_plan/draft_plans repeat the entry with the largest
+        share (unchanged for clients of 1.15).
         404 is only for village codes that do not exist. Gated by `feature.planning.layers`.
       parameters:
         - { name: dist, in: query, required: false, schema: { type: string } }
@@ -304,6 +311,11 @@ components:
         enabled:
           type: boolean
           description: Whether feature.planning.plan.<plan_id> is on
+        loaded:
+          type: boolean
+          description: >
+            Whether a zone layer for this plan is loaded. false for plans that are only
+            registered (e.g. BIAAPA-MP2021, STRR).
 
     PlanDoc:
       type: object
@@ -343,10 +355,72 @@ components:
           type: string
           enum: [full, partial]
           description: partial when the village is split by the plan's boundary
+        loaded:
+          type: boolean
+          description: >
+            true when this plan's zones are loaded (and /zones/at can return them); false
+            for a plan that is registered only, e.g. BIAAPA-MP2021 operative but not loaded.
+        doc_ids:
+          type: array
+          items: { type: string }
+          example: ["BMRDA-HSK-MP2031-MP", "BMRDA-HSK-MP2031-GO"]
+          description: Source-register rows this plan reference rests on (sheets, report, GO)
+
+    PlanCoverage:
+      type: string
+      enum: [plan_loaded, plan_registered_not_loaded, lpa_no_zone_map, no_master_plan_found]
+      description: >
+        What the 2031 layers can say about a location.
+        plan_loaded: a plan's zones are loaded here (any status; the plan refs carry it).
+        plan_registered_not_loaded: a plan is in force or published here and registered,
+        but its zones are not loaded (e.g. BIAAPA Master Plan 2021).
+        lpa_no_zone_map: inside an LPA whose plan publishes no zone map for this area
+        (e.g. the Madhure hobli villages of the Nelamangala LPA).
+        no_master_plan_found: no planning authority or plan found after the sources in
+        `sources_checked` were checked.
+        Where several apply, the top-level value is the first in this order:
+        plan_loaded, plan_registered_not_loaded, lpa_no_zone_map, no_master_plan_found.
+
+    SourceCheck:
+      type: object
+      required: [source, checked_on, finding]
+      properties:
+        source: { type: string, example: "BMRDA Local Planning Areas page" }
+        url: { type: [string, "null"], format: uri }
+        doc_id: { type: [string, "null"], description: "Register row, when the source is registered" }
+        checked_on: { type: string, format: date }
+        finding:
+          type: string
+          example: "village not listed in any LPA"
+
+    AuthorityEntry:
+      type: object
+      description: One planning authority covering the location, with its own plans.
+      required: [authority, lpa, coverage, plan_coverage, operative_plan, draft_plans, sources_checked]
+      properties:
+        authority: { type: [string, "null"], example: "BMRDA-HSK" }
+        lpa: { type: [string, "null"], example: "LPA of Hoskote" }
+        coverage:
+          type: string
+          enum: [full, partial, none]
+          description: Share of the village inside this LPA, same rules as AuthorityResult.coverage
+        share_pct: { type: [number, "null"], example: 100.0 }
+        plan_coverage: { $ref: "#/components/schemas/PlanCoverage" }
+        operative_plan:
+          oneOf:
+            - $ref: "#/components/schemas/PlanRef"
+            - type: "null"
+        draft_plans:
+          type: array
+          items: { $ref: "#/components/schemas/PlanRef" }
+        note: { type: [string, "null"] }
+        sources_checked:
+          type: array
+          items: { $ref: "#/components/schemas/SourceCheck" }
 
     AuthorityResult:
       type: object
-      required: [location, authority, coverage, operative_plan, draft_plans]
+      required: [location, authority, coverage, operative_plan, draft_plans, plan_coverage, authorities]
       properties:
         location:
           type: object
@@ -394,6 +468,28 @@ components:
         note:
           type: [string, "null"]
           example: "No sanctioned plan data loaded for this area"
+        plan_coverage: { $ref: "#/components/schemas/PlanCoverage" }
+        authorities:
+          type: array
+          items: { $ref: "#/components/schemas/AuthorityEntry" }
+          description: >
+            Every authority covering the location, largest share first. Empty only with
+            plan_coverage no_master_plan_found.
+        sources_checked:
+          type: array
+          items: { $ref: "#/components/schemas/SourceCheck" }
+          description: >
+            Sources checked for this location (always set for no_master_plan_found): BMRDA LPA
+            page, BMRDA Revised Structure Plan 2031 village lists, LPA sites.
+
+    SourceLayer:
+      type: string
+      enum: [detail, hobli, lpa_map, composite]
+      description: >
+        Which kind of sheet a zone was taken from. detail: town / detail sheets (1:5,000 or
+        1:10,000). hobli: hobli maps (about 1:15,000-1:35,000). lpa_map: a whole-LPA map
+        (e.g. Nelamangala 1:70,000), coarse. composite: a plan-wide composite sheet
+        (BDA RMP 2031 PLUCOMP).
 
     SheetQA:
       type: object
@@ -425,6 +521,11 @@ components:
           items: { type: string }
           description: Names of failed QA checks (control points, cadastral fit, area totals, seams, topology)
         sheet_scale: { type: [string, "null"], example: "1:10000" }
+        source_layer: { $ref: "#/components/schemas/SourceLayer" }
+        sheet:
+          type: [string, "null"]
+          example: "Map No. 23 (Kasaba)"
+          description: Sheet name inside the source document (map number, grid or PD)
 
     ZoneProperties:
       type: object
@@ -464,6 +565,8 @@ components:
           description: >
             Set when the zone was hidden by a map symbol on the sheet and filled from the
             surrounding land: "zone inferred under hatch" or "zone inferred under stream symbol".
+        source_layer: { $ref: "#/components/schemas/SourceLayer" }
+        sheet: { type: [string, "null"], example: "Map No. 23 (Kasaba)" }
         qa: { $ref: "#/components/schemas/SheetQA" }
 
     SimplifyM:
@@ -495,7 +598,7 @@ components:
       description: One zone of one plan touching the parcel, merged across sheets.
       required:
         [plan_id, zone_label_native, status, status_label, zone_uids, sheet_doc_ids, overlap_pct, edge_distance_m,
-         position_uncertainty_m, near_edge, inferred, sheets_qa]
+         position_uncertainty_m, mixed_source_layers, near_edge, inferred, sheets_qa]
       properties:
         plan_id: { type: string, example: "BDA-RMP2031" }
         zone_label_native: { type: string, example: "Residential (Mixed)" }
@@ -529,7 +632,17 @@ components:
         position_uncertainty_m:
           type: number
           example: 11.2
-          description: sqrt(georef_rmse_m^2 + m_per_px^2) of the sheet (about 11 m for BDA-RMP2031)
+          description: >
+            sqrt(georef_rmse_m^2 + m_per_px^2) of the sheet (about 11 m for BDA-RMP2031).
+            When the hit spans several sheets, the largest value among them; when they come
+            from different source layers (e.g. detail + hobli), the coarser layer's value,
+            never the largest-share sheet's.
+        mixed_source_layers:
+          type: boolean
+          example: false
+          description: >
+            true when the hit spans sheets from more than one source layer; source_layer and
+            sheet then name the largest-share sheet, position_uncertainty_m the coarser layer
         near_edge:
           type: boolean
           description: true when edge_distance_m < position_uncertainty_m
@@ -549,6 +662,15 @@ components:
         sheets_qa:
           type: array
           items: { $ref: "#/components/schemas/SheetQA" }
+        source_layer:
+          $ref: "#/components/schemas/SourceLayer"
+          description: >
+            Source layer of the sheet holding the largest share of this hit; every sheet's
+            own layer is in sheets_qa
+        sheet:
+          type: [string, "null"]
+          example: "Map No. 23 (Kasaba)"
+          description: Sheet holding the largest share of this hit
 
     OverlayKind:
       type: string
@@ -654,7 +776,10 @@ components:
         zones:
           type: array
           items: { $ref: "#/components/schemas/ZoneHit" }
-          description: Hits covering at least 1 % of the parcel and at least 20 m2
+          description: >
+            Hits covering at least 1 % of the parcel and at least 20 m2. A hit belongs to one
+            plan; where two plans overlap the parcel, each plan's hits are returned
+            separately with their own status and status_condition, never merged.
         trace_hits:
           type: array
           items: { $ref: "#/components/schemas/ZoneHit" }

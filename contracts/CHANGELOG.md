@@ -4,6 +4,25 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.16.0 — 2026-10-01 — planning
+
+Additive. Every village in Bengaluru Urban and Rural gets an answer.
+- `/authority`: new `plan_coverage` (PlanCoverage: `plan_loaded`, `plan_registered_not_loaded`,
+  `lpa_no_zone_map`, `no_master_plan_found`), `authorities` (AuthorityEntry per covering
+  authority, largest share first; split villages list each authority, never merged) and
+  `sources_checked` (SourceCheck: source, url, doc_id, checked_on, finding). The 1.15
+  top-level fields stay and repeat the largest-share entry.
+- PlanRef: `loaded` (zones loaded or registered only) and `doc_ids` (source documents).
+- Plan: `loaded`.
+- New SourceLayer enum (`detail`, `hobli`, `lpa_map`, `composite`) on ZoneProperties, SheetQA and
+  ZoneHit, with `sheet` (sheet name). On a hit, the sheet holding its largest share.
+- ZoneHit `mixed_source_layers` (boolean): the hit spans sheets from more than one source layer.
+  `position_uncertainty_m` then uses the coarser layer, not the largest-share sheet.
+- `/zones/at`: hits from overlapping plans are returned per plan with their own status and
+  `status_condition`, never merged (documented; already the behaviour).
+
+---
+
 ## 1.15.0 — 2026-10-01 — planning
 
 Additive.
