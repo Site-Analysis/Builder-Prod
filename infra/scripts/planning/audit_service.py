@@ -437,11 +437,109 @@ def step_b7(args, out_dir):
     print(json.dumps(summ, indent=1), flush=True)
 
 
+def step_http(args, out_dir):
+    """Real HTTP calls to a running planning service: catches what function-level runs
+    cannot (serialisation, routing, auth wiring). ~200 parcels sampled from the authority
+    table's covered villages (seeded)."""
+    import random
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    t0 = time.time()
+    base = args.planning_url.rstrip("/")
+    auth = [
+        r
+        for r in read_csv(
+            os.path.join(REPO, "infra", "planning", "authority_villages.csv")
+        )
+        if r["coverage"] in ("full", "partial")
+    ]
+    rnd = random.Random(2031)
+    rnd.shuffle(auth)
+    jobs = []
+    for r in auth:
+        if len(jobs) >= args.http_n:
+            break
+        k = (r["dist"], r["taluk"], r["hobli"], r["vlg"])
+        p = os.path.join(
+            args.cadastral_dir,
+            f"dist_{k[0]}",
+            f"taluk_{k[1]}",
+            f"hobli_{k[2]}",
+            f"vlg_{k[3]}.parquet",
+        )
+        if not os.path.exists(p) or "survey_no" not in pq.read_schema(p).names:
+            continue
+        sv = [
+            s_
+            for s_ in pq.read_table(p, columns=["survey_no"])
+            .column("survey_no")
+            .to_pylist()
+            if s_
+        ]
+        if sv:
+            jobs.append((k, str(rnd.choice(sv)), r["authority"]))
+    rows, counts = [], collections.Counter()
+
+    def get(path, q):
+        url = f"{base}{path}?{urllib.parse.urlencode(q)}"
+        t = time.time()
+        try:
+            with urllib.request.urlopen(url, timeout=120) as resp:
+                body = resp.read()
+                json.loads(body)
+                return resp.status, "", round(time.time() - t, 3)
+        except urllib.error.HTTPError as e:
+            return (
+                e.code,
+                e.read().decode(errors="replace")[:200],
+                round(time.time() - t, 3),
+            )
+        except Exception as e:  # noqa: BLE001
+            return 0, f"{type(e).__name__}: {e}"[:200], round(time.time() - t, 3)
+
+    for k, survey, authority in jobs:
+        q = dict(zip(("dist", "taluk", "hobli", "vlg"), k, strict=True))
+        for path, params in (("/zones/at", q | {"survey": survey}), ("/authority", q)):
+            status, err, secs = get(path, params)
+            ok = status == 200
+            counts[f"{path} {'ok' if ok else status}"] += 1
+            rows.append(
+                {
+                    "path": path,
+                    "key": "/".join(k),
+                    "survey": survey if path == "/zones/at" else "",
+                    "authority": authority,
+                    "status": status,
+                    "seconds": secs,
+                    "error": err,
+                }
+            )
+    write_csv(
+        os.path.join(out_dir, "http_check.csv"),
+        rows,
+        ["path", "key", "survey", "authority", "status", "seconds", "error"],
+    )
+    secs = sorted(r["seconds"] for r in rows if r["path"] == "/zones/at")
+    summ = dict(counts) | {
+        "parcels": len(jobs),
+        "zones_at_p50_s": secs[len(secs) // 2] if secs else None,
+        "zones_at_p95_s": secs[int(len(secs) * 0.95)] if secs else None,
+        "seconds": round(time.time() - t0),
+    }
+    with open(os.path.join(out_dir, "http_summary.json"), "w") as f:
+        json.dump(summ, f, indent=1)
+    print(json.dumps(summ, indent=1), flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--data-root", required=True)
     ap.add_argument("--cadastral-dir", required=True)
     ap.add_argument("--steps", nargs="+", default=["b6", "b7"])
+    ap.add_argument("--planning-url", default="http://localhost:8012")
+    ap.add_argument("--http-n", type=int, default=200)
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     ap.add_argument(
         "--limit", type=int, default=0, help="b6: first N villages only (timing)"
@@ -451,7 +549,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     for s in args.steps:
         print(f"[{s}]", flush=True)
-        {"b6": step_b6, "b7": step_b7}[s](args, out_dir)
+        {"b6": step_b6, "b7": step_b7, "http": step_http}[s](args, out_dir)
 
 
 if __name__ == "__main__":
