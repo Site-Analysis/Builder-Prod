@@ -159,13 +159,17 @@ def load_store() -> Store:
     for r in _read_csv(auth_csv):
         st.authority[(r["dist"], r["taluk"], r["hobli"], r["vlg"])] = r
         st.authority_dists.add(r["dist"])
-    lpa_path = os.path.join(data, "BDA-RMP2031_lpa.parquet")
-    if os.path.exists(lpa_path):
+    # LPA boundary per authority, from <plan_id>_lpa.parquet of each registered plan
+    for plan_id, plan in st.plans.items():
+        lpa_path = os.path.join(data, f"{plan_id}_lpa.parquet")
+        if not os.path.exists(lpa_path):
+            continue
         lpa = gpd.read_parquet(lpa_path).to_crs(CRS_METRIC)
-        st.lpa["BDA"] = shapely.union_all(list(lpa.geometry))
-        shapely.prepare(st.lpa["BDA"])
-        if "BDA-RMP2031" in st.layers:
-            st.layers["BDA-RMP2031"].outer_boundary = st.lpa["BDA"].boundary
+        geom = shapely.union_all(list(lpa.geometry))
+        shapely.prepare(geom)
+        st.lpa[plan["authority"]] = geom
+        if plan_id in st.layers:
+            st.layers[plan_id].outer_boundary = geom.boundary
     return st
 
 

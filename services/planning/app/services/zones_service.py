@@ -317,10 +317,10 @@ def zone_hits(
             ds = list(shapely.distance(og, parcel)) if len(og) else []
             if outer is not None:
                 ds.append(parcel.distance(outer))
-            edge = min([EDGE_WINDOW_M, *ds])
+            edge = float(min([EDGE_WINDOW_M, *ds]))  # numpy floats break JSON bools
         else:
             # zone pieces lie wholly inside the parcel
-            edge = rim.distance(local_u)
+            edge = float(rim.distance(local_u))
         qas = [plain(q) for q in grp["qa"]]
         unc = max(position_uncertainty(q) for q in qas)
         first = grp.iloc[0]

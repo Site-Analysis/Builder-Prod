@@ -383,3 +383,15 @@ def test_n_status_condition_everywhere(client, monkeypatch):
         0
     ]
     assert "status_condition" in hit and hit["status_condition"] is None
+
+
+def test_o_edge_distance_to_other_zone_serialises(client, monkeypatch):
+    # parcel wholly inside Residential, 100 m from Commercial: the distance comes from an
+    # array computation and must serialise as plain JSON numbers / booleans
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 850, _N + 400, _E + 900, _N + 450))
+    r = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1")
+    assert r.status_code == 200
+    (hit,) = r.json()["zones"]
+    assert hit["zone_label_native"] == "Residential"
+    assert hit["edge_distance_m"] == pytest.approx(100.0, abs=0.5)
+    assert hit["near_edge"] is False

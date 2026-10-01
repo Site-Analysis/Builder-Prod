@@ -88,6 +88,14 @@ def get_doc(doc_id: str) -> dict:
 BDA_PLAN = "BDA-RMP2031"
 NOTE_BDA = "Only a draft plan is loaded for this area"
 NOTE_OUTSIDE = "Outside BDA; this area's plan isn't loaded yet"
+NOTE_BIAAPA = "No 2031 plan published; Master Plan 2021 exists (not loaded)"
+# authority code -> (LPA label, note); plans come from the village row / plans.csv
+AUTHORITIES = {
+    "BDA": ("LPA of BDA", NOTE_BDA),
+    "BMRDA-HSK": ("LPA of Hoskote", None),
+    "BIAAPA": ("LPA of BIAAPA", NOTE_BIAAPA),
+}
+LOADED_PLANS = {"BDA": [BDA_PLAN], "BMRDA-HSK": ["BMRDA-HSK-MP2031"], "BIAAPA": []}
 
 
 def _plan_ref(plan: dict, coverage: str) -> dict:
@@ -101,23 +109,37 @@ def _plan_ref(plan: dict, coverage: str) -> dict:
     }
 
 
-def _result(location: dict, bda: bool, coverage: str, **extra) -> dict:
+def _result(
+    location: dict,
+    authority: str | None,
+    coverage: str,
+    plan_ids: list[str] | None = None,
+    **extra,
+) -> dict:
     st = get_store()
-    plan = st.plans.get(BDA_PLAN)
+    known = authority in AUTHORITIES
+    plans = [
+        st.plans[p]
+        for p in (plan_ids if plan_ids is not None else LOADED_PLANS.get(authority, []))
+        if p in st.plans
+    ]
+    pcov = "full" if coverage == "full" else "partial"
+    operative = next((p for p in plans if p["status"] == "final"), None)
     return {
         "location": location,
-        "authority": "BDA" if bda else None,
-        "lpa": "LPA of BDA" if bda else None,
-        "coverage": coverage if bda else "none",
+        "authority": authority if known else None,
+        "lpa": AUTHORITIES[authority][0] if known else None,
+        "coverage": coverage if known else "none",
         "share_pct": extra.get("share_pct"),
         "pd": extra.get("pd"),
         "source": extra.get("source"),
         "mismatch_note": extra.get("mismatch_note"),
-        "operative_plan": None,  # RMP 2015 (operative for BDA) is not loaded yet
-        "draft_plans": [_plan_ref(plan, "full" if coverage == "full" else "partial")]
-        if bda and plan
+        # BDA: RMP 2015 (operative) is not loaded; only the draft RMP 2031 is
+        "operative_plan": _plan_ref(operative, pcov) if known and operative else None,
+        "draft_plans": [_plan_ref(p, pcov) for p in plans if p["status"] == "draft"]
+        if known
         else [],
-        "note": NOTE_BDA if bda else NOTE_OUTSIDE,
+        "note": AUTHORITIES[authority][1] if known else NOTE_OUTSIDE,
     }
 
 
@@ -141,12 +163,13 @@ def get_authority(
                 raise HTTPException(
                     status_code=404, detail="Village codes do not exist"
                 )
-            return _result(loc, False, "none")
-        bda = row["authority"] == "BDA"
+            return _result(loc, None, "none")
+        authority = _none(row["authority"])
         return _result(
             loc,
-            bda,
+            authority if row["coverage"] != "none" else None,
             row["coverage"],
+            [p for p in (row.get("plan_ids") or "").split(";") if p],
             share_pct=float(row["share_pct"]) if row["share_pct"] else None,
             pd=int(row["pd"]) if row["pd"] else None,
             source=_none(row["source"]),
@@ -154,10 +177,12 @@ def get_authority(
         )
     if lat is not None and lng is not None:
         loc = {"lat": lat, "lng": lng}
-        lpa = st.lpa.get("BDA")
         x, y = _TO_METRIC.transform(lng, lat)
-        inside = bool(lpa is not None and lpa.contains(shapely.Point(x, y)))
-        return _result(loc, inside, "full" if inside else "none", source="point")
+        pt = shapely.Point(x, y)
+        for authority, lpa in st.lpa.items():
+            if lpa.contains(pt):
+                return _result(loc, authority, "full", source="point")
+        return _result(loc, None, "none", source="point")
     raise HTTPException(
         status_code=400,
         detail="Pass all of dist, taluk, hobli, vlg, or both lat and lng",
