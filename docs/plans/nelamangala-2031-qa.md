@@ -90,3 +90,57 @@ the sheets as they are.
 Grid B3 (Drg 39) is published only as `MAP012.jpg`, 1,024 × 705 px: about 4.5 m per pixel
 at 1:5,000, against about 1.3 m for the other grids. Flag `low-res source (1,024 px JPG)`
 applies if the grids are loaded later.
+
+## 5. Second route (round of 2 Oct 2026): LPA map prior + OSM refine near it
+
+`infra/scripts/planning/georef_nlm.py`; outputs in `<data-root>/planning/zones/nlm_sheets/`
+(`map002_georef.json`, `grids_georef.json`). **Result: still not loaded**; every village keeps its
+value (`plan_registered_not_loaded`, Madhure `lpa_no_zone_map`).
+
+### B1. LPA map (MAP002, Drg 03, 1:70,000, 18.25 m/px fitted)
+
+| Check | Bar | Result |
+|---|---|---|
+| Outline IoU vs the LPA the plan was made for (BMRDA pre-STRR less the 37 Madhure villages, 735 km² on the sheet) | ≥ 0.97 | **0.981** (outline median 43 m, p90 253 m) pass (vs BMRDA current extent 0.700, pre-STRR with Madhure 0.876) |
+| Junction refine on major roads (OSM motorway-primary) | ≥ 10 held-out, RMSE ≤ 30 m | **fail**: 1 pair. The sheet's red road mask also takes the red "existing developed area" boundary and settlement outlines; 482 sheet junctions vs 166 OSM major junctions |
+| Classes | ±10 % of a table | **not separable**: MAP002 is coloured by taluk (Nelamangala / Bangalore North / Magadi), no land use. Sub-step stopped |
+
+Uncertainty would be the outline fit (median 43 m), floor 18 m. Used only as the prior for B2.
+
+### B2. Grid sheets (1:5,000)
+
+Prior for each sheet from the plan's own maps: its land-use colours matched (FFT correlation over
+scale) to Drg 31 (MAP004, 1:21,000 conurbation land use, same legend; peak ratio 1.34-2.05, checked
+by overlay on grid A1), MAP004's tanks matched to MAP002 (peak ratio 3.86), MAP002 placed by B1.
+Then OSM roads (all classes, fetched for the Nelamangala box) within ±300 m: road correlation,
+junction affine on half the matches, RMSE on the other half, and the null baseline (the same
+match at 8 placements shifted 1.5-3.5 km; validated on Hoskote, where wrong placements scored as
+well as right ones on held-out RMSE alone).
+
+| Sheet | Grid | Prior peak | Fine peak | Shift from prior (m) | Matches | Held-out | Held-out RMSE (m) | Null mean | Brief bars (≤ 10 m, ≤ 300 m, ≥ 6) | Null ≥ 3x | Status |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
+| MAP005 | A1 | 1.41 | 1.06 | 314 | 15 | 7 | 6.1 | 15.6 | no (shift) | no | rejected |
+| MAP006 | A2 | 1.47 | 1.04 | 317 | 24 | 12 | 6.2 | 19.0 | no (shift) | no | rejected |
+| MAP007 | A3 | 1.38 | 1.05 | 244 | 14 | 7 | 6.7 | 16.5 | yes | no | rejected |
+| MAP008 | B1 | 1.96 | 1.30 | 173 | 51 | 25 | 7.5 | 38.0 | yes | no | rejected |
+| MAP009 | B2 | 2.05 | 1.03 | 378 | 90 | 45 | 6.9 | 53.8 | no (shift) | no | rejected |
+| MAP010 | C1 | 1.64 | 1.06 | 334 | 30 | 15 | 6.8 | 26.4 | no (shift) | no | rejected |
+| MAP011 | C2 | 1.56 | 1.01 | 372 | 15 | 7 | 6.5 | 13.4 | no (shift) | no | rejected |
+| MAP012 | B3 (1,024 px JPG, low-res) | 2.05 | 1.01 | 232 | 3 | 1 | 9.6 | 1.4 | few checks | no | rejected |
+| MAP013 | C3 | 1.34 | 1.00 | 135 | 36 | 18 | 6.2 | 15.6 | yes | no | rejected |
+| MAP014 | D1 | 1.42 | 1.02 | 133 | 7 | 3 | 8.4 | 4.2 | yes | no | rejected |
+| MAP015 | D2 | 1.37 | 1.10 | 375 | 1 | 0 | — | 2.0 | no | no | rejected |
+| MAP017-022, MAP023 | Sompura S1-S6, Thyamagondlu | 1.04-1.37 (tanks on MAP002 only) | | | | | | | not run (Overpass 504 / 429 for hours; priors too weak to bound ±300 m) | | not refined |
+
+Why rejected: the fine road correlation has no distinct peak (ratio 1.00-1.30), and the
+junction matches at the refined position are about what the same sheet gets 1.5-3.5 km away
+(matches / null 0.9-1.4x, bar 3x). In a dense road network same-degree junctions within 10 m match
+by chance, so the held-out RMSE of 6-8 m does not confirm the position. Four sheets (A3, B1, C3,
+D1) pass the brief's three bars but fail the null check; loading them could put zones 100+ m off
+while looking checked. Default applied: rejected (open-decisions #31).
+
+### B3. Rows
+
+No sheet accepted: no zones written; Nelamangala villages unchanged (327 `plan_registered_not_loaded`,
+40 Madhure `lpa_no_zone_map` in Nelamangala taluk). The plan flag `feature.planning.plan.BMRDA-NLM-MP2031`
+is in `run_services.ps1`; `/plans` reports it `loaded: false`, so the web shows no switch for it.
