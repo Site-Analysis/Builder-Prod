@@ -22,6 +22,7 @@ Writes to <data-root>/planning/audit/:
 import argparse
 import collections
 import csv
+import glob
 import json
 import os
 import sys
@@ -533,6 +534,358 @@ def step_http(args, out_dir):
     print(json.dumps(summ, indent=1), flush=True)
 
 
+# ---------------------------------------------------------------- step G: all loaded plans
+LOADED_PLANS = ("BDA-RMP2031", "BMRDA-HSK-MP2031", "BMRDA-ANK-MP2031")
+TALUKS = {
+    ("20", "1"): "Bangalore North",
+    ("20", "2"): "Bangalore South",
+    ("20", "3"): "Anekal",
+    ("20", "4"): "Bangalore East",
+    ("20", "5"): "Yelahanka (Bangalore North Additional)",
+    ("21", "1"): "Nelamangala",
+    ("21", "2"): "Doddaballapura",
+    ("21", "3"): "Devanahalli",
+    ("21", "4"): "Hoskote",
+}
+NOT_A_ZONE = ("uncoloured", "road_space")
+
+
+def _init_plan(zdir, reg, lpa_wkb, plan_id):
+    docs = {r["doc_id"]: r for r in read_csv(os.path.join(reg, "plan_docs.csv"))}
+    zones = store_mod._load_layer(os.path.join(zdir, f"{plan_id}.parquet"), docs)
+    ov_path = os.path.join(zdir, f"{plan_id}_overlays.parquet")
+    overlays = store_mod._load_layer(ov_path, docs) if os.path.exists(ov_path) else None
+    _W["layers"] = store_mod.PlanLayers(plan_id, zones, overlays)
+    _W["lpa"] = shapely.from_wkb(lpa_wkb)
+    shapely.prepare(_W["lpa"])
+    _W["plan_id"] = plan_id
+
+
+def run_village_plan(job):
+    """run_village for one plan + the uncoloured share of parcels inside its LPA."""
+    out, errors, sum_off = run_village(job)
+    out["plan_id"] = _W["plan_id"]
+    # uncoloured area share (parcels inside the LPA), from a second light pass
+    _key, path = job
+    un = tot = 0.0
+    try:
+        t = pq.read_table(path, columns=["survey_no", "geometry"])
+        g = shapely.from_wkb(t.column("geometry").to_numpy(zero_copy_only=False))
+        g = shapely.transform(g, lambda xy: xy[:, ::-1])
+        g = g[shapely.contains(_W["lpa"], g)]
+        if len(g):
+            z = _W["layers"].zones
+            for p in g:
+                idx = z.sindex.query(p, predicate="intersects")
+                if not len(idx):
+                    continue
+                sub = z.iloc[idx]
+                a = shapely.area(
+                    shapely.intersection(np.asarray(sub.geometry.values), p)
+                )
+                tot += float(a.sum())
+                un += float(a[np.isin(sub["class_norm"].to_numpy(), NOT_A_ZONE)].sum())
+    except Exception:  # noqa: BLE001, S110 - the share is informative only
+        pass
+    out["zone_area_m2"] = round(tot, 1)
+    out["uncoloured_area_m2"] = round(un, 1)
+    return out, errors, sum_off
+
+
+def step_all(args, out_dir):
+    """Every parcel in each loaded plan's LPA through the /zones/at functions, one plan at
+    a time (memory), then the per-taluk table (G1)."""
+    t0 = time.time()
+    reg = os.path.join(REPO, "infra", "planning")
+    zdir = os.path.join(args.data_root, "planning", "zones")
+    v = pq.read_table(os.path.join(args.data_root, "planning", "villages.parquet"))
+    vg = shapely.from_wkb(v.column("geometry").to_numpy(zero_copy_only=False))
+    vkeys = list(
+        zip(
+            *(v.column(c).to_pylist() for c in ("dist", "taluk", "hobli", "vlg")),
+            strict=True,
+        )
+    )
+    all_villages, all_errors, all_off = [], [], []
+    for plan_id in args.plans or LOADED_PLANS:
+        lp = os.path.join(zdir, f"{plan_id}_lpa.parquet")
+        if not os.path.exists(
+            os.path.join(zdir, f"{plan_id}.parquet")
+        ) or not os.path.exists(lp):
+            print(f"  {plan_id}: not loaded, skipped", flush=True)
+            continue
+        lpa_g = shapely.union_all(
+            shapely.from_wkb(
+                pq.read_table(lp, columns=["geometry"])
+                .column("geometry")
+                .to_numpy(zero_copy_only=False)
+            )
+        )
+        hit = shapely.intersects(vg, lpa_g) & ~shapely.is_empty(vg)
+        jobs = []
+        for k, h in zip(vkeys, hit, strict=True):
+            if not h:
+                continue
+            p = os.path.join(
+                args.cadastral_dir,
+                f"dist_{k[0]}",
+                f"taluk_{k[1]}",
+                f"hobli_{k[2]}",
+                f"vlg_{k[3]}.parquet",
+            )
+            if os.path.exists(p):
+                jobs.append((k, p))
+        if args.limit:
+            jobs = jobs[: args.limit]
+        workers = 2 if plan_id != "BDA-RMP2031" else args.workers
+        print(
+            f"  {plan_id}: {len(jobs)} villages touching its LPA; {workers} workers",
+            flush=True,
+        )
+        with Pool(
+            workers,
+            initializer=_init_plan,
+            initargs=(zdir, reg, shapely.to_wkb(lpa_g), plan_id),
+        ) as pool:
+            for n, (vv, e, s) in enumerate(
+                pool.imap_unordered(run_village_plan, jobs, chunksize=2), 1
+            ):
+                all_villages.append(vv)
+                all_errors += [x | {"plan_id": plan_id} for x in e]
+                all_off += [x | {"plan_id": plan_id} for x in s]
+                if n % 50 == 0:
+                    print(
+                        f"    {n}/{len(jobs)} villages, {len(all_errors)} errors ({time.time() - t0:.0f}s)",
+                        flush=True,
+                    )
+    fields = [
+        "plan_id",
+        "key",
+        "parcels_run",
+        "parcel_errors",
+        "parcels_empty",
+        "parcels_sum_off",
+        "parcels_below_99",
+        "parcels_partly_outside_lpa",
+        "parts_without_survey_no",
+        "zone_area_m2",
+        "uncoloured_area_m2",
+        "village_error",
+    ]
+    # one file set per run, so plans can be audited separately; the taluk step reads them all
+    tag = "_".join(args.plans) if args.plans else "all"
+    write_csv(
+        os.path.join(out_dir, f"all_zones_at_villages__{tag}.csv"), all_villages, fields
+    )
+    write_csv(
+        os.path.join(out_dir, f"all_zones_at_errors__{tag}.csv"),
+        all_errors,
+        ["plan_id", "key", "survey", "error_type", "error", "where"],
+    )
+    write_csv(
+        os.path.join(out_dir, f"all_zones_at_below99__{tag}.csv"),
+        all_off,
+        ["plan_id", "key", "survey", "sum_pct", "area_m2", "n_hits", "n_trace"],
+    )
+    print(f"  done ({time.time() - t0:.0f}s)", flush=True)
+
+
+def step_taluk(args, out_dir):
+    """G1 table: per taluk, villages, plan_coverage counts, parcels inside loaded plans
+    summing >= 99 %, uncoloured %, /zones/at function errors and HTTP errors."""
+    auth = read_csv(os.path.join(REPO, "infra", "planning", "authority_villages.csv"))
+    vil = [
+        r
+        for f in sorted(
+            glob.glob(os.path.join(out_dir, "all_zones_at_villages__*.csv"))
+        )
+        for r in read_csv(f)
+    ]
+    http = (
+        read_csv(os.path.join(out_dir, "http500_check.csv"))
+        if os.path.exists(os.path.join(out_dir, "http500_check.csv"))
+        else []
+    )
+    rows = []
+    for (d, t), name in TALUKS.items():
+        a = [r for r in auth if (r["dist"], r["taluk"]) == (d, t)]
+        pc = collections.Counter(r["plan_coverage"] or "(blank)" for r in a)
+        vv = [r for r in vil if r["key"].split("/")[:2] == [d, t]]
+        run = sum(int(r["parcels_run"] or 0) for r in vv)
+        outside = sum(int(r["parcels_partly_outside_lpa"] or 0) for r in vv)
+        empty = sum(int(r["parcels_empty"] or 0) for r in vv)
+        below = sum(int(r["parcels_below_99"] or 0) for r in vv)
+        inside = run - outside - empty - sum(int(r["parcel_errors"] or 0) for r in vv)
+        za = sum(float(r["zone_area_m2"] or 0) for r in vv)
+        ua = sum(float(r["uncoloured_area_m2"] or 0) for r in vv)
+        he = [
+            h
+            for h in http
+            if h["key"].split("/")[:2] == [d, t] and h["status"] != "200"
+        ]
+        rows.append(
+            {
+                "taluk": f"{name} ({d}/{t})",
+                "villages": len(a),
+                **{
+                    k: pc.get(k, 0)
+                    for k in (
+                        "plan_loaded",
+                        "plan_registered_not_loaded",
+                        "lpa_no_zone_map",
+                        "no_master_plan_found",
+                        "(blank)",
+                    )
+                },
+                "parcels_inside_loaded_plans": inside,
+                "parcels_sum_ge_99": inside - below,
+                "parcels_sum_ge_99_pct": round(100 * (inside - below) / inside, 3)
+                if inside
+                else None,
+                "uncoloured_pct": round(100 * ua / za, 2) if za else None,
+                "zones_at_errors": sum(int(r["parcel_errors"] or 0) for r in vv),
+                "http_errors": len(he),
+            }
+        )
+    write_csv(os.path.join(out_dir, "g1_taluks.csv"), rows)
+    with open(os.path.join(out_dir, "g1_taluks.json"), "w") as f:
+        json.dump(rows, f, indent=1)
+    print(json.dumps(rows, indent=1), flush=True)
+
+
+def step_http500(args, out_dir):
+    """G2: ~500 parcels over HTTP, spread across plans and plan_coverage values (seeded):
+    status codes, JSON validity, p50/p95 latency per endpoint."""
+    import random
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    t0 = time.time()
+    base = args.planning_url.rstrip("/")
+    auth = read_csv(os.path.join(REPO, "infra", "planning", "authority_villages.csv"))
+    strata = collections.defaultdict(list)
+    for r in auth:
+        strata[(r["plan_coverage"], r["authority"] or "-")].append(r)
+    rnd = random.Random(2031)
+    n_target = args.http_n
+    per = max(5, n_target // max(1, len(strata)))
+    jobs = []
+    for _s, rs in sorted(strata.items()):
+        rnd.shuffle(rs)
+        for r in rs[: per * 3]:
+            if sum(1 for j in jobs if j[3] == _s) >= per:
+                break
+            k = (r["dist"], r["taluk"], r["hobli"], r["vlg"])
+            p = os.path.join(
+                args.cadastral_dir,
+                f"dist_{k[0]}",
+                f"taluk_{k[1]}",
+                f"hobli_{k[2]}",
+                f"vlg_{k[3]}.parquet",
+            )
+            survey = None
+            if os.path.exists(p) and "survey_no" in pq.read_schema(p).names:
+                sv = [
+                    x
+                    for x in pq.read_table(p, columns=["survey_no"])
+                    .column("survey_no")
+                    .to_pylist()
+                    if x
+                ]
+                survey = str(rnd.choice(sv)) if sv else None
+            jobs.append((k, survey, r["authority"], _s))
+    # top up from the largest strata to reach the target
+    big = sorted(strata.items(), key=lambda kv: -len(kv[1]))
+    i = 0
+    while len(jobs) < n_target and i < 5000:
+        s_, rs = big[i % len(big)]
+        r = rs[rnd.randrange(len(rs))]
+        k = (r["dist"], r["taluk"], r["hobli"], r["vlg"])
+        p = os.path.join(
+            args.cadastral_dir,
+            f"dist_{k[0]}",
+            f"taluk_{k[1]}",
+            f"hobli_{k[2]}",
+            f"vlg_{k[3]}.parquet",
+        )
+        if os.path.exists(p) and "survey_no" in pq.read_schema(p).names:
+            sv = [
+                x
+                for x in pq.read_table(p, columns=["survey_no"])
+                .column("survey_no")
+                .to_pylist()
+                if x
+            ]
+            if sv:
+                jobs.append((k, str(rnd.choice(sv)), r["authority"], s_))
+        i += 1
+
+    def get(path, q):
+        url = f"{base}{path}?{urllib.parse.urlencode(q)}"
+        t = time.time()
+        try:
+            with urllib.request.urlopen(url, timeout=180) as resp:
+                body = resp.read()
+                try:
+                    json.loads(body)
+                    valid = True
+                except ValueError:
+                    valid = False
+                return resp.status, valid, "", round(time.time() - t, 3)
+        except urllib.error.HTTPError as e:
+            return (
+                e.code,
+                False,
+                e.read().decode(errors="replace")[:200],
+                round(time.time() - t, 3),
+            )
+        except Exception as e:  # noqa: BLE001
+            return 0, False, f"{type(e).__name__}: {e}"[:200], round(time.time() - t, 3)
+
+    rows = []
+    for k, survey, authority, stratum in jobs:
+        q = dict(zip(("dist", "taluk", "hobli", "vlg"), k, strict=True))
+        calls = [("/authority", q)]
+        if survey:
+            calls.append(("/zones/at", q | {"survey": survey}))
+        for path, params in calls:
+            status, valid, err, secs = get(path, params)
+            rows.append(
+                {
+                    "path": path,
+                    "key": "/".join(k),
+                    "survey": survey or "",
+                    "authority": authority,
+                    "plan_coverage": stratum[0],
+                    "status": status,
+                    "json_valid": valid,
+                    "seconds": secs,
+                    "error": err,
+                }
+            )
+    write_csv(os.path.join(out_dir, "http500_check.csv"), rows)
+    summ = {"parcels": len(jobs), "calls": len(rows), "strata": len(strata)}
+    for path in ("/zones/at", "/authority"):
+        rr = [r for r in rows if r["path"] == path]
+        secs = sorted(r["seconds"] for r in rr)
+        summ[path] = {
+            "status": dict(collections.Counter(str(r["status"]) for r in rr)),
+            "json_valid": sum(1 for r in rr if r["json_valid"]),
+            "p50_s": secs[len(secs) // 2] if secs else None,
+            "p95_s": secs[int(len(secs) * 0.95)] if secs else None,
+        }
+    summ["by_plan_coverage"] = dict(
+        collections.Counter(
+            r["plan_coverage"] for r in rows if r["path"] == "/authority"
+        )
+    )
+    summ["seconds"] = round(time.time() - t0)
+    with open(os.path.join(out_dir, "http500_summary.json"), "w") as f:
+        json.dump(summ, f, indent=1)
+    print(json.dumps(summ, indent=1), flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--data-root", required=True)
@@ -540,6 +893,12 @@ def main():
     ap.add_argument("--steps", nargs="+", default=["b6", "b7"])
     ap.add_argument("--planning-url", default="http://localhost:8012")
     ap.add_argument("--http-n", type=int, default=200)
+    ap.add_argument(
+        "--plans",
+        nargs="*",
+        default=None,
+        help="all: plan_ids to audit (default: every loaded plan)",
+    )
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     ap.add_argument(
         "--limit", type=int, default=0, help="b6: first N villages only (timing)"
@@ -549,7 +908,14 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     for s in args.steps:
         print(f"[{s}]", flush=True)
-        {"b6": step_b6, "b7": step_b7, "http": step_http}[s](args, out_dir)
+        {
+            "b6": step_b6,
+            "b7": step_b7,
+            "http": step_http,
+            "all": step_all,
+            "http500": step_http500,
+            "taluk": step_taluk,
+        }[s](args, out_dir)
 
 
 if __name__ == "__main__":

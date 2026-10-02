@@ -48,8 +48,8 @@ class PlanLayers:
     zones: gpd.GeoDataFrame | None = None
     overlays: gpd.GeoDataFrame | None = None
     # tolerance (m) -> geometry array aligned with the layer rows (map display only)
-    zones_simplified: dict[int, np.ndarray] = field(default_factory=dict)
-    overlays_simplified: dict[int, np.ndarray] = field(default_factory=dict)
+    zones_simplified: dict[int, np.ndarray] = field(default_factory=dict)  # lazy
+    overlays_simplified: dict[int, np.ndarray] = field(default_factory=dict)  # lazy
     # the plan's outer boundary (its LPA) as a line; a zone edge for edge distances
     outer_boundary: shapely.Geometry | None = None
 
@@ -115,28 +115,42 @@ def _load_layer(path: str, docs: dict[str, dict]) -> gpd.GeoDataFrame | None:
     return gdf
 
 
-def simplify_levels(
-    gdf: gpd.GeoDataFrame, group: str | None = None
-) -> dict[int, np.ndarray]:
-    """Pre-simplified geometry per tolerance. Polygons that form a coverage (per group)
-    are simplified together so shared edges stay shared; lines are simplified singly."""
-    out = {}
-    geoms = np.asarray(gdf.geometry.values)
-    if group is None:
-        groups = [np.arange(len(gdf))]
-    else:
-        col = gdf[group].to_numpy()
-        groups = [np.flatnonzero(col == v) for v in np.unique(col)]
-    for tol in SIMPLIFY_LEVELS:
-        res = geoms.copy()
-        for idx in groups:
-            part = geoms[idx]
-            if np.isin(shapely.get_type_id(part), (3, 6)).all():
-                res[idx] = shapely.coverage_simplify(part, tol)
-            else:
-                res[idx] = shapely.simplify(part, tol, preserve_topology=True)
-        out[tol] = res
-    return out
+def _simplify_one(geoms: np.ndarray, groups: list[np.ndarray], tol: int) -> np.ndarray:
+    res = geoms.copy()
+    for idx in groups:
+        part = geoms[idx]
+        if np.isin(shapely.get_type_id(part), (3, 6)).all():
+            res[idx] = shapely.coverage_simplify(part, tol)
+        else:
+            res[idx] = shapely.simplify(part, tol, preserve_topology=True)
+    return res
+
+
+class SimplifyLevels(dict):
+    """Simplified geometry per tolerance, computed on first use and cached (map display
+    only). Polygons that form a coverage (per group) are simplified together so shared
+    edges stay shared; lines are simplified singly. Lazy because precomputing every level
+    for every plan (~2.5 M zones with the LPA plans) needed more memory than the host has."""
+
+    def __init__(self, gdf: gpd.GeoDataFrame, group: str | None = None):
+        super().__init__()
+        self._geoms = np.asarray(gdf.geometry.values)
+        if group is None:
+            self._groups = [np.arange(len(gdf))]
+        else:
+            col = gdf[group].to_numpy()
+            self._groups = [np.flatnonzero(col == v) for v in np.unique(col)]
+
+    def __missing__(self, tol: int) -> np.ndarray:
+        if tol not in SIMPLIFY_LEVELS:
+            raise KeyError(tol)
+        res = _simplify_one(self._geoms, self._groups, tol)
+        self[tol] = res
+        return res
+
+
+def simplify_levels(gdf: gpd.GeoDataFrame, group: str | None = None) -> SimplifyLevels:
+    return SimplifyLevels(gdf, group)
 
 
 def load_store() -> Store:
