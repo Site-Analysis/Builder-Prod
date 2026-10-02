@@ -373,14 +373,29 @@ def merge_sheet(s, meta, covs, out_dir):
             before += 1
     del G
     out_g, out_c = [], []
+    class_u = []
     for code in sorted(by_code):
         u = shapely.union_all(np.array(by_code[code], dtype=object), grid_size=0.01)
+        class_u.append(u)
         for p in shapely.get_parts(u):
             if p.geom_type == "Polygon" and not p.is_empty:
                 out_g.append(p)
                 out_c.append(code)
     out_g = np.array(out_g, dtype=object)
-    foot = shapely.union_all(out_g, grid_size=0.01) if len(out_g) else None
+    # footprint: the per-class unions tile without overlap (one raster), so a coverage
+    # union is enough; a snapped union_all over every piece crashed GEOS (access violation)
+    foot = None
+    if len(out_g):
+        cu = np.array([shapely.make_valid(u) for u in class_u], dtype=object)
+        try:
+            foot = shapely.make_valid(shapely.coverage_union_all(cu))
+        except shapely.errors.GEOSException:
+            # snapping can leave hairline overlaps between classes: union the few class
+            # unions (not every piece, which crashed GEOS) on the 1 cm grid
+            foot = shapely.union_all(cu, grid_size=0.01)
+        foot = shapely.union_all(
+            [q for q in shapely.get_parts(foot) if q.geom_type == "Polygon"]
+        )
     base = os.path.join(out_dir, f"merged_{key}")
     with open(os.path.join(out_dir, f"foot_{key}.wkb"), "wb") as f:
         f.write(shapely.to_wkb(foot) if foot is not None else b"")

@@ -110,6 +110,7 @@ def lab_to_hex(lab):
 # 31 and 293 ha in the plan's table), so they are not extracted; their pixels are filled from
 # their neighbours. docs/plans/open-decisions.md #13.
 NOT_EXTRACTED = {"PUBLIC UTILITY", "HILLOCKS/QUARRIES"}
+ROAD_GREYS = ["#a0a0a0", "#959899", "#8c8c8c"]
 
 
 def page_classes(report):
@@ -122,6 +123,11 @@ def page_classes(report):
         cols = []
         if p and name not in NOT_EXTRACTED:
             cols = [p["hex"]] + [lab_to_hex(e) for e in p.get("extra", [])]
+        if name == "TRANSPORTATION":
+            # road bands are drawn mid-grey on the map; the legend swatch is a light grey
+            # (#ddd8d5), so mid-grey went to the hillock hatch key (round 1) and then to
+            # forest (round 2, seen on the acceptance pages)
+            cols += ROAD_GREYS
         out.append({"label": name, "cnorm": CLASS_NORM[name], "colours": cols})
     return out
 

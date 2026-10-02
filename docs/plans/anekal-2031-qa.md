@@ -4,8 +4,8 @@ Plan `BMRDA-ANK-MP2031`, status **final**, GO UDD 151 BMR 2013, 03-09-2014 (veri
 sheet stamps). Source: `BMRDA-ANK-MP2031-MP` ("Anekal MP.pdf", 22 raster sheets at 110 ppi;
 URL unverified, from the "DTCP Docs" Drive folder). Built by
 `infra/scripts/planning/extract_anekal.py` + `raster_plan.py` (2 Oct 2026). Output:
-`<data-root>/planning/zones/BMRDA-ANK-MP2031.parquet` (1,187,469 polygons), `_lpa.parquet`,
-`_qa.json` (round 1 kept as `_qa_v1.json`).
+`<data-root>/planning/zones/BMRDA-ANK-MP2031.parquet` (1,233,332 polygons, round 3), `_lpa.parquet`,
+`_qa.json` (rounds 1 and 2 kept as `_qa_v1.json`, `_qa_v2.json`).
 
 Self-checked. SME pending.
 
@@ -41,72 +41,81 @@ hillocks / quarries. Their hatch-line colours match edges and linework on every 
 Map No. 39 "Proposed Landuse Analysis - Anekal LPA": urbanisable + non-urbanisable rows added
 per class, total 40,230.03 ha.
 
-| Class | Plan table (ha) | Round 1 (ha) | Round 2 (ha) | Round 2 diff | ±10 %? |
-|---|---:|---:|---:|---:|---|
-| Residential | 11,230.69 | 9,588.75 | 10,940.52 | -2.6 % | yes |
-| Commercial | 768.32 | 590.58 | 673.61 | -12.3 % | no (-95 ha) |
-| Industrial | 5,099.95 | 4,558.33 | 4,991.39 | -2.1 % | yes |
-| Public & semi-public | 840.27 | 754.36 | 793.13 | -5.6 % | yes |
-| Park & open space | 2,003.78 | 1,684.85 | 1,780.59 | -11.1 % | no (-223 ha) |
-| Public utility | 31.16 | 2,196.74 | not extracted | | (hatched) |
-| Agriculture | 10,891.44 | 10,612.11 | 11,205.88 | +2.9 % | yes |
-| Water bodies | 2,147.11 | 2,402.15 | 2,462.14 | +14.7 % | no (+315 ha) |
-| **Forest** | 2,126.92 | 2,888.14 | **4,876.18** | **+129 %** | **no** |
-| Hillocks / quarries | 293.29 | 3,361.73 | not extracted | | (hatched) |
-| Transportation | 3,943.22 | 2,603.70 | 3,242.17 | -17.8 % | cartographic |
-| Not coloured on the plan | — | 1,915.97 | 2,191.93 | | |
+Round 3 fix (found on the acceptance pages): the map draws road bands **mid-grey**, but the
+legend's transportation swatch is a light grey (#ddd8d5). Mid-grey went to the hillock hatch key
+in round 1 (3,362 ha "hillocks") and, once that class was dropped, to forest in round 2 (forest
+4,876 ha). Round 3 adds the road greys (#a0a0a0, #959899, #8c8c8c) as transport keys.
 
-**Forest fails the bar and is flagged for the SME.** 4,742 ha of it lies inside BMRDA's Anekal
-extent (so it is not land outside the LPA). Most likely the hillock / quarry hatch areas (on
-the hills, next to forest) are now filled from their forest neighbours: round 1 had 2,888 ha
-forest + 3,362 ha hillocks. Commercial, park and water are 11-15 % off (95-315 ha), within
-what the scanned palette (110 ppi JPEG) and the halo filling move between neighbouring
-classes. Treat Anekal forest areas as unconfirmed until checked against the sheets.
+| Class | Plan table (ha) | Round 1 | Round 2 | **Round 3** | Round 3 diff | ±10 %? |
+|---|---:|---:|---:|---:|---:|---|
+| Residential | 11,230.69 | 9,588.75 | 10,940.52 | **10,715.70** | -4.6 % | yes |
+| Commercial | 768.32 | 590.58 | 673.61 | **585.91** | -23.7 % | no (-182 ha) |
+| Industrial | 5,099.95 | 4,558.33 | 4,991.39 | **4,708.79** | -7.7 % | yes |
+| Public & semi-public | 840.27 | 754.36 | 793.13 | **777.13** | -7.5 % | yes |
+| Park & open space | 2,003.78 | 1,684.85 | 1,780.59 | **1,766.16** | -11.9 % | no (-238 ha) |
+| Public utility | 31.16 | 2,196.74 | not extracted | not extracted | | (hatched) |
+| Agriculture | 10,891.44 | 10,612.11 | 11,205.88 | **10,621.65** | -2.5 % | yes |
+| Water bodies | 2,147.11 | 2,402.15 | 2,462.14 | **2,397.66** | +11.7 % | no (+251 ha) |
+| Forest | 2,126.92 | 2,888.14 | 4,876.18 | **2,823.07** | +32.7 % | no (+696 ha) |
+| Hillocks / quarries | 293.29 | 3,361.73 | not extracted | not extracted | | (hatched) |
+| Transportation | 3,943.22 | 2,603.70 | 3,242.17 | **6,893.12** | +74.8 % | cartographic |
+| Not coloured on the plan | — | 1,915.97 | 2,191.93 | **1,868.30** | | |
+
+Not within ±10 % (round 3), with reasons:
+- **Transportation +75 %** (cartographic, not compared): the road-grey keys also take other grey
+  linework (village / survey boundaries, text) that used to be filled from neighbours. This is
+  where most of the residential, commercial and park shortfall went (thin grey lines through
+  them). Acceptable for zoning answers: transport pieces on a parcel are small slivers.
+- **Forest +33 % (+696 ha)**: the hillock / quarry hatch (293 ha in the table, not extracted)
+  sits on the same hills and fills partly from forest; the forest swatch colour (#87b57f) is also
+  close to some park greens. Flagged for the SME (open-decisions #19).
+- **Commercial -24 %, park -12 %, water +12 %**: 180-250 ha each; scanned palette (110 ppi JPEG)
+  and grey linework through small commercial plots.
 
 LPA: the title map's coloured extent (closed 60 m, holes filled) is **43,157.9 ha**; the plan
 table says 40,230 ha; BMRDA's LPA map before STRR gives 40,464 ha (title minus BMRDA: 2,718 ha,
 mostly agriculture and not-coloured land at the edge). Area check: zones 43,157.5 ha vs LPA
-43,157.9 ha (-0.001 %, pass).
+43,157.9 ha (-0.001 %, pass). Polygons: 1,233,332.
 
 ## 3. Georeferencing and OSM check
 
 Georeference: primeocr's margin-label affine (3.3 m/px on the 1:10,000 sheets). OSM check:
 Overpass was unavailable on 1-2 Oct (504 / 429 on every mirror), so junctions were checked
 against the cached OSM extracts of 30 Sep (motorway to tertiary only, 11,841 junctions;
-open-decisions #15). That network is sparse on a 1:10,000 sheet, so most sheets have fewer
-than 3 matches. Where sheet junctions do have a major-road junction within 60 m, the median
-offset is (-1, -7) m (Map No. 41), which supports the margin-label georeference.
+open-decisions #15). With the road bands now transport, **13 of the 16 detail sheets have ≥ 3
+matches** (round 2: 4), RMSE 5.9-8.2 m: an independent check that supports the margin-label
+georeference.
 
-- **Floor** = median RMSE of the 4 well-matched sheets (≥ 3 matches): **6.50 m**.
+- **Floor** = median RMSE of the 13 well-matched detail sheets: **7.02 m**.
 - **No sheet above 10 m.**
 
 | Sheet | Layer | Scale | m/px | Matched / sheet junctions | OSM RMSE (m) | Georef used (m) | Uncertainty (m) | Unknown px % | Flags |
 |---|---|---|---:|---:|---:|---:|---:|---:|---|
-| Map No. 41 (Sarjapura SP-1) | detail | 1:10,000 | 3.30 | 0/615 | — | 6.5 floor | 7.3 | 10.7 | few ground checks |
-| Map No. 42 (Sarjapura SP-2) | detail | 1:10,000 | 3.30 | 0/388 | — | 6.5 floor | 7.3 | 6.1 | few ground checks |
-| Map No. 43 (Sarjapura SP-3) | detail | 1:10,000 | 3.29 | 14/2185 | 6.6 | 6.6 own | 7.3 | 7.1 | |
-| Map No. 45 (Attibele AT-1) | detail | 1:10,000 | 3.32 | 0/983 | — | 6.5 floor | 7.3 | 9.8 | few ground checks |
-| Map No. 46 (Attibele AT-2) | detail | 1:10,000 | 3.30 | 2/1044 | 6.6 | 6.5 floor | 7.3 | 14.5 | few ground checks |
-| Map No. 47 (Attibele AT-3) | detail | 1:10,000 | 3.33 | 1/1148 | 7.9 | 6.5 floor | 7.3 | 12.8 | few ground checks |
-| Map No. 49 (Jigani JI-1) | detail | 1:10,000 | 3.33 | 0/566 | — | 6.5 floor | 7.3 | 10.6 | few ground checks |
-| Map No. 50 (Jigani JI-2) | detail | 1:10,000 | 3.31 | 0/416 | — | 6.5 floor | 7.3 | 11.4 | few ground checks |
-| Map No. 51 (Jigani JI-3) | detail | 1:10,000 | 3.31 | 0/1345 | — | 6.5 floor | 7.3 | 9.5 | few ground checks |
-| Map No. 52 (Jigani JI-4) | detail | 1:10,000 | 3.35 | 2/4821 | 7.0 | 6.5 floor | 7.3 | 3.7 | few ground checks |
-| Map No. 54 (Anekal AN-1) | detail | 1:10,000 | 3.29 | 6/6754 | 6.3 | 6.3 own | 7.1 | 8.9 | |
-| Map No. 55 (Anekal AN-2) | detail | 1:10,000 | 3.28 | 9/4799 | 6.4 | 6.4 own | 7.2 | 10.3 | |
-| Map No. 56 (Anekal AN-3) | detail | 1:10,000 | 3.30 | 0/1007 | — | 6.5 floor | 7.3 | 10.5 | few ground checks |
-| Map No. 57 (Anekal AN-4) | detail | 1:10,000 | 3.31 | 1/767 | 3.8 | 6.5 floor | 7.3 | 8.2 | few ground checks |
-| Map No. 58 (Anekal AN-5) | detail | 1:10,000 | 3.31 | 1/2595 | 3.6 | 6.5 floor | 7.3 | 2.9 | few ground checks |
-| Map No. 59 (Anekal AN-6) | detail | 1:10,000 | 3.31 | 5/3751 | 6.6 | 6.6 own | 7.4 | 5.9 | |
-| Map No. 39 (title map) | lpa_map | 1:45,000 | 14.86 | 2/6847 | 2.8 | 6.5 floor | 16.2 | 9.6 | few ground checks |
+| Map No. 41 (Sarjapura SP-1) | detail | 1:10,000 | 3.30 | 3/2887 | 5.9 | 5.9 own | 6.8 | 8.7 | |
+| Map No. 42 (Sarjapura SP-2) | detail | 1:10,000 | 3.30 | 2/1964 | 7.6 | 7.0 floor | 7.8 | 4.8 | few ground checks |
+| Map No. 43 (Sarjapura SP-3) | detail | 1:10,000 | 3.29 | 11/2620 | 7.8 | 7.8 own | 8.5 | 6.6 | |
+| Map No. 45 (Attibele AT-1) | detail | 1:10,000 | 3.32 | 7/4030 | 8.2 | 8.2 own | 8.9 | 7.9 | |
+| Map No. 46 (Attibele AT-2) | detail | 1:10,000 | 3.30 | 5/5052 | 6.2 | 6.2 own | 7.0 | 12.0 | |
+| Map No. 47 (Attibele AT-3) | detail | 1:10,000 | 3.33 | 12/4969 | 7.6 | 7.6 own | 8.3 | 10.4 | |
+| Map No. 49 (Jigani JI-1) | detail | 1:10,000 | 3.33 | 8/3912 | 7.2 | 7.2 own | 8.0 | 8.7 | |
+| Map No. 50 (Jigani JI-2) | detail | 1:10,000 | 3.31 | 12/3372 | 7.5 | 7.5 own | 8.2 | 9.5 | |
+| Map No. 51 (Jigani JI-3) | detail | 1:10,000 | 3.31 | 3/4606 | 6.2 | 6.2 own | 7.0 | 7.2 | |
+| Map No. 52 (Jigani JI-4) | detail | 1:10,000 | 3.35 | 1/5983 | 8.2 | 7.0 floor | 7.8 | 2.8 | few ground checks |
+| Map No. 54 (Anekal AN-1) | detail | 1:10,000 | 3.29 | 11/7381 | 6.5 | 6.5 own | 7.3 | 8.1 | |
+| Map No. 55 (Anekal AN-2) | detail | 1:10,000 | 3.28 | 8/4387 | 7.0 | 7.0 own | 7.7 | 9.2 | |
+| Map No. 56 (Anekal AN-3) | detail | 1:10,000 | 3.30 | 14/4531 | 7.0 | 7.0 own | 7.7 | 8.4 | |
+| Map No. 57 (Anekal AN-4) | detail | 1:10,000 | 3.31 | 4/3220 | 7.8 | 7.8 own | 8.5 | 6.0 | |
+| Map No. 58 (Anekal AN-5) | detail | 1:10,000 | 3.31 | 1/2698 | 3.6 | 7.0 floor | 7.8 | 2.6 | few ground checks |
+| Map No. 59 (Anekal AN-6) | detail | 1:10,000 | 3.31 | 7/3972 | 6.8 | 6.8 own | 7.6 | 5.4 | |
+| Map No. 39 (title map) | lpa_map | 1:45,000 | 14.86 | 3/11219 | 5.6 | 7.0 floor | 16.4 | 7.9 | |
 
 ## 4. Coverage by layer
 
 | Layer | Area (ha) | Share of LPA |
 |---|---:|---:|
-| Detail sheets (1:10,000) | 39,130.9 | 90.7 % |
-| Title map (1:45,000, `lpa_map`, coarse) | 1,834.7 | 4.3 % |
-| Not coloured on the plan | 2,191.9 | 5.1 % |
+| Detail sheets (1:10,000) | 39,322.5 | 91.1 % |
+| Title map (1:45,000, `lpa_map`, coarse) | 1,966.7 | 4.6 % |
+| Not coloured on the plan | 1,868.3 | 4.3 % |
 | **Total** | **43,157.5** | LPA 43,157.9 ha, diff -0.001 % (pass) |
 
 ## 5. Authority rows
@@ -125,4 +134,7 @@ plan's LPA; 209 full, 18 partial.
 
 - Two GEOS access violations in the merge (union of the footprints cut on the title map):
   that cut now runs on the footprints' 1 cm grid (< 1 cm change). Merge resumes per sheet.
-- Map No. 60 picked up in round 1 and removed; hatched classes dropped (round 2).
+- Map No. 60 picked up in round 1 and removed; hatched classes dropped (round 2); road greys
+  added as transport keys (round 3).
+- Footprint of a merged sheet: coverage union of the per-class unions (a snapped union of every
+  piece crashed GEOS), with a snapped fallback on a topology error.
