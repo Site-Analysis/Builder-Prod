@@ -1,3 +1,65 @@
+# 2031 planning layers: coverage and accuracy report (all plans)
+
+Round of 1-2 Oct 2026 ("every village in Bengaluru Urban and Rural gets an answer"), branch
+`feat/planning-2031-phase0`, contract `planning` 1.16.0. Per-plan QA:
+`hoskote-2031-qa.md`, `anekal-2031-qa.md`, `nelamangala-2031-qa.md`; seams: `2031-seams.md`;
+defaults applied: `open-decisions.md`. The BDA RMP 2031 audit of 30 Sep - 1 Oct follows below
+unchanged.
+
+## Plans
+
+| Plan | Status | Zones | Source layers | Class agreement with the plan's own table | Georef / OSM check |
+|---|---|---|---|---|---|
+| BDA RMP 2031 | **draft** (never approved) | loaded (331,194) | composite (PLUCOMP) | see the BDA audit below | ~11 m position uncertainty |
+| Hoskote MP 2031 | **final**, subject to W.P. 4188/2016 | loaded (1,029,504) | detail 79.8 %, hobli 1.8 %, not coloured 18.3 % | all classes ±10 % except unclassified (+40 %, explained) and transport (cartographic) | grid labels; floor 6.85 m; no sheet > 10 m |
+| Anekal MP 2031 | **final** | loaded (1,233,332) | detail 91.1 %, lpa_map 4.6 %, not coloured 4.3 % | residential, industrial, PSP, agriculture ±8 %; commercial -24 %, park -12 %, water +12 %, forest +33 % (flagged); hatched PU / hillocks not extracted; transport cartographic | margin labels (primeocr); floor 7.02 m; 13/16 sheets ≥ 3 checks; no sheet > 10 m |
+| Nelamangala MP 2031 | **final** | **not loaded** (sheets print no coordinates) | — | — | OSM-only georef rejected in validation |
+| BIAAPA MP 2021 | final (2021 horizon) | registered, not loaded | — | — | — |
+| BMICAPA ODP 2004 | unconfirmed (no GO found) | registered, not loaded | — | — | — |
+| STRR LPA | no master plan | — | — | — | — |
+
+## G1: per taluk (all 2,287 villages)
+
+`audit_service.py --steps all` (every parcel in each loaded plan's LPA through the /zones/at
+functions) and `--steps http500`; `planning/audit/g1_taluks.csv`.
+
+| Taluk | Villages | plan_loaded | registered_not_loaded | lpa_no_zone_map | no_master_plan_found | blank | Parcels inside loaded plans | sum ≥ 99 % | Uncoloured % | /zones/at errors | HTTP errors |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Bangalore North (20/1) | 188 | 107 | 43 | 0 | 38 | 0 | 19,114 | 19,114 (100.000 %) | 15.49 | 0 | 0 |
+| Bangalore South (20/2) | 224 | 161 | 15 | 47 | 1 | 0 | 9,217 | 9,216 (99.989 %) | 18.42 | 0 | 0 |
+| Anekal (20/3) | 304 | 304 | 0 | 0 | 0 | 0 | 77,792 | 77,789 (99.996 %) | 6.03 | 0 | 0 |
+| Bangalore East (20/4) | 186 | 186 | 0 | 0 | 0 | 0 | 14,595 | 14,595 (100.000 %) | 15.44 | 0 | 0 |
+| Yelahanka (Bangalore North Additional) (20/5) | 196 | 108 | 87 | 0 | 1 | 0 | 24,817 | 24,815 (99.992 %) | 16.1 | 0 | 0 |
+| Nelamangala (21/1) | 367 | 0 | 327 | 40 | 0 | 0 | 0 | 0 (—) | — | 0 | 0 |
+| Doddaballapura (21/2) | 302 | 0 | 237 | 65 | 0 | 0 | 0 | 0 (—) | — | 0 | 0 |
+| Devanahalli (21/3) | 226 | 2 | 188 | 35 | 1 | 0 | 6 | 6 (100.000 %) | 96.52 | 0 | 0 |
+| Hoskote (21/4) | 294 | 267 | 0 | 27 | 0 | 0 | 63,834 | 63,834 (100.000 %) | 16.19 | 0 | 0 |
+
+Pass bar: **0 villages without a value** (met); **0 errors** (met: 0 function errors over
+289,101 parcels run (BDA 118,588, Hoskote 85,499, Anekal 85,014), 0 HTTP errors); **≥ 99 % sum inside loaded plans**: met except 6 BDA
+parcels (98.72-98.99 %, all fully inside the LPA): 20/2/17/34 29/*/*, 20/3/6/49 164/*/1,
+20/3/8/22 120/*/3, 20/3/9/21 7/*/*, 20/5/5/21 158/*/*, 20/5/8/20 27/*/*. Reason: cut slivers
+under half a source pixel are dropped at zone seams (about 1 % of these parcels' area).
+
+Uncoloured %: share of the zone area on parcels inside a loaded plan that is "Not coloured on
+the plan" or road space (BDA). Devanahalli's 6 parcels sit on the Hoskote edge (not coloured).
+
+## G2: HTTP pass
+
+500 parcels across 18 strata (plan × plan_coverage), 938 calls: **all HTTP 200, all JSON valid**.
+`/zones/at` p50 3.2 s, p95 3.7 s; `/authority` p50 2.1 s, p95 2.1 s.
+
+## G3: acceptance pages
+
+`<data-root>/planning/acceptance/`: BDA (5, `acceptance_pack.py`), `BMRDA-HSK-MP2031/` and
+`BMRDA-ANK-MP2031/` (5 each, `acceptance_lpa.py`: deep in a zone, across two zones, water edge,
+partial village, just outside). Source sheet crop next to our zones, with the live /zones/at and
+/authority answers; raw JSON next to each PNG. The Anekal pages found the round 2 road-as-forest
+error (fixed in round 3). Hoskote: base-map building outlines show as small forest / transport
+specks in settlements (a tighter forest colour cut real forest by 13 %, so not applied).
+
+---
+
 # BDA RMP 2031 (Draft): coverage and accuracy audit
 
 Round 1: 30 Sep 2026 (audit only). Round 2: 1 Oct 2026 (fixes decided by Tanmay on 30 Sep,

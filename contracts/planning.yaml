@@ -109,6 +109,9 @@ paths:
         two LPAs (or BDA and an LPA) lists both; they are never merged. The top-level
         authority/lpa/coverage/operative_plan/draft_plans repeat the entry with the largest
         share (unchanged for clients of 1.15).
+        A point in no LPA but within 100 m of one or more (LPA boundaries come from different
+        sources, ~15 m apart at the median) returns those LPAs with coverage "partial" and a
+        note, so no point falls between two LPAs.
         404 is only for village codes that do not exist. Gated by `feature.planning.layers`.
       parameters:
         - { name: dist, in: query, required: false, schema: { type: string } }

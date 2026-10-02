@@ -14,4 +14,4 @@ item is reopened and the layer re-extracted.
 | D6 | Village name aliases between the LPA schedule and our village list | Accepted aliases stay matched and keep their mismatch/alias note (flagged), rejected ones stay unmatched and listed. | `village_aliases.csv`, `authority_villages.csv` |
 | D7 | NGT buffer extent | The drawn band (closed by 2 px to bridge road lines), not a measured buffer; the PDR's lower NGT figures in outer PDs are left as a difference to explain. | `extract_plucomp.py` (`HATCH_CLOSE_PX = 2`) |
 | D8 | Mapping of the 13 legend colours to the draft Zoning Regulations (Vol 6) | Matched by name, `zr_mapping_status` = "unconfirmed" (step 1.1). | `legend_map.csv` (`zr_zone`) |
-| D9 | Step 1.8 acceptance pack | Self-checked, SME pending. | `rmp2031-coverage-report.md`, `<data-root>/planning/acceptance/` |
+| D9 | Step 1.8 acceptance pack | Self-checked, SME pending. | `2031-coverage-report.md`, `<data-root>/planning/acceptance/` |

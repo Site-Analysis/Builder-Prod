@@ -388,3 +388,17 @@ All rows are "default, SME to confirm".
 - **PDR cross-check** (7 PDs, automatic registration): agreement 47-76 %, 78-91 % excluding PDR greys. PD17 is below its baseline: its figure colours only PD17 and draws the surrounding districts as grey base map, which the colour classifier reads as Defense (14,765 of 18,776 such cells fall on neighbouring Residential). Not fixed.
 - **Uncoloured** stays unguessed until the SME answers: 15.3 % of the LPA as polygons.
 - **Next:** step 1.3, planning service skeleton serving this layer. Overlays are not in the contract yet.
+
+## Decisions log, 1-2 Oct 2026: every village in Bengaluru Urban + Rural gets an answer
+
+Full list with the default applied and what would change it: `docs/plans/open-decisions.md`.
+
+| Decision | Detail |
+|---|---|
+| Contract 1.16.0 (Tanmay, 1 Oct) | `plan_coverage` (plan_loaded / plan_registered_not_loaded / lpa_no_zone_map / no_master_plan_found), `authorities[]` per covering authority (never merged), `sources_checked`; `source_layer` (detail / hobli / lpa_map / composite), `sheet`, `mixed_source_layers` on hits; a hit spanning layers takes the coarser layer's uncertainty. |
+| Hoskote | Forest added (tree icons, not a fill), grey halos dropped; every class within ±10 % of Tables 66/67 except unclassified (explained) and transport (cartographic). `docs/plans/hoskote-2031-qa.md`. |
+| Nelamangala | Final plan registered; **zones not loaded**: the grids print no coordinates, and OSM-only georeferencing failed validation on Hoskote sheets with a known grid. Villages: `plan_registered_not_loaded`, Madhure `lpa_no_zone_map`. `docs/plans/nelamangala-2031-qa.md`. |
+| Anekal | Loaded (final). primeocr merged layer failed QA (overlapping sheets); Hoskote method on the raw sheets with primeocr's georeference and palette. Hatched classes not extracted; road bands needed the map's mid-grey as a transport key (found on the acceptance pages). `docs/plans/anekal-2031-qa.md`. |
+| Authorities | BMRDA's LPA map (vector, strrpa site) georeferenced to our LPAs; STRR band painted over older LPAs. BIAAPA: MP2021 operative, registered not loaded. STRR: no master plan. BMICAPA ODP 2004, Doddaballapura PA registered. BDA keeps Anekal-taluk villages it covers fully. |
+| Seams | Overlaps reported (`docs/plans/2031-seams.md`); points between LPAs whose boundaries come from different sources get the LPAs within 100 m. |
+| Web | One sub-switch per plan with "Draft" / "Final" / "Final, subject to court case"; card lists every plan hit with its own status. |

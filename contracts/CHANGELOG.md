@@ -20,6 +20,10 @@ Additive. Every village in Bengaluru Urban and Rural gets an answer.
   `position_uncertainty_m` then uses the coarser layer, not the largest-share sheet.
 - `/zones/at`: hits from overlapping plans are returned per plan with their own status and
   `status_condition`, never merged (documented; already the behaviour).
+- `/authority` points within 100 m of an LPA they are not inside (boundary sources differ) return
+  that LPA as `partial` with a note (no point falls between two LPAs).
+- New plans in the registry (`/plans`, `loaded: false`): STRR-LPA, BMRDA-LPAS, BMRDA-RSP2031,
+  BMICAPA-ODP2004, DPA-LPA; BMRDA-ANK-MP2031 zones loaded (Hoskote reloaded with forest).
 
 ---
 
