@@ -1,4 +1,7 @@
-# Round of 2 Oct 2026: progress checkpoint (battery stop, ~17:00)
+# Round of 2 Oct 2026: progress checkpoint
+
+**Round complete (all steps committed); see the commits below and 2031-coverage-report.md.**
+Earlier checkpoint (battery stop, ~17:00) kept below.
 
 Branch `feat/planning-2031-phase0`. Not pushed. PR #20 untouched.
 

@@ -402,3 +402,18 @@ Full list with the default applied and what would change it: `docs/plans/open-de
 | Authorities | BMRDA's LPA map (vector, strrpa site) georeferenced to our LPAs; STRR band painted over older LPAs. BIAAPA: MP2021 operative, registered not loaded. STRR: no master plan. BMICAPA ODP 2004, Doddaballapura PA registered. BDA keeps Anekal-taluk villages it covers fully. |
 | Seams | Overlaps reported (`docs/plans/2031-seams.md`); points between LPAs whose boundaries come from different sources get the LPAs within 100 m. |
 | Web | One sub-switch per plan with "Draft" / "Final" / "Final, subject to court case"; card lists every plan hit with its own status. |
+
+## Decisions log, 2 Oct 2026 (round: close what full coverage left)
+
+- Contract 1.17.0: `SheetQA.warnings` (Anekal hatched-class caution), near-edge note with the
+  distance, and `plan_coverage` wording for unregistered LPAs (no new values).
+- Anekal round 4: random-pixel QA drove three fixes (forest vs park on averaged colour; forest /
+  water colour checks; transport only as bands ≥ 3 px). Every class within ±10 % of Map No. 39 on
+  the plan's own extent except water +20 % (SME pending, default applied).
+- Nelamangala second route: LPA map outline fit passes; grid sheets placed from the plan's own
+  maps and refined against OSM, all rejected by the null baseline. Not loaded.
+- Taluk rows: BDA village list for the old-city Kasaba villages; unregistered LPAs are
+  `no_master_plan_found`; uncoloured slivers of a loaded plan do not make a village `plan_loaded`.
+- Web lists only loaded plans.
+- Deployment footprint measured (11.7 GB peak private); proposal to serve pre-built tiles and
+  precomputed parcel answers instead (open-decisions #33).
