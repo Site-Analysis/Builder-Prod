@@ -13,7 +13,8 @@ const TIMEOUT_MS = 30_000;
 
 export const PLAN_ID = "BDA-RMP2031"; // map-symbol overlays exist for this plan only
 
-/** The 2031 plans the map offers, in switch order. `loaded` comes from /plans. */
+/** Switch order and labels of the 2031 plans; the switches list only those /plans reports
+ * as loaded. */
 export const WEB_PLANS: { plan_id: string; label: string }[] = [
   { plan_id: "BDA-RMP2031", label: "BDA RMP 2031" },
   { plan_id: "BMRDA-HSK-MP2031", label: "Hoskote MP 2031" },
@@ -119,6 +120,7 @@ export interface ZoneHit {
   source_layer?: SourceLayer;
   sheet?: string | null;
   mixed_source_layers?: boolean;
+  sheets_qa?: { doc_id: string; sheet?: string | null; warnings?: string[] }[];
 }
 
 export interface OverlayTouch {

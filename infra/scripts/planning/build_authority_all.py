@@ -437,7 +437,10 @@ def main():
         zg = shapely.from_wkb(z.column("geometry").to_numpy(zero_copy_only=False))
         zg = zg[
             np.array(
-                [c not in (None, "uncoloured") for c in z.column("class_norm").to_pylist()]
+                [
+                    c not in (None, "uncoloured")
+                    for c in z.column("class_norm").to_pylist()
+                ]
             )
         ]
         tree = shapely.STRtree(zg)

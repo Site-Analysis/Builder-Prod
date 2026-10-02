@@ -275,6 +275,11 @@ function usePlans(): Record<string, PlanInfo> | null {
   return plans;
 }
 
+/** The WEB_PLANS that /plans reports as loaded (none until /plans answers). */
+function loadedPlans(plans: Record<string, PlanInfo> | null): { plan_id: string; label: string }[] {
+  return plans ? WEB_PLANS.filter((wp) => plans[wp.plan_id]?.loaded === true) : [];
+}
+
 /** Master switch, then one sub-switch per 2031 plan with its status badge (all off by
  * default); the RMP 2031 map-symbol switches sit under the BDA plan. */
 export function PlanningControls({
@@ -294,15 +299,14 @@ export function PlanningControls({
       background: "#FDFCFB", minWidth: isMobile ? 220 : 240,
     }}>
       <Switch on={toggles.zones} label="2031 plan zones" onClick={() => flip("zones")} isMobile={isMobile} />
-      {toggles.zones && WEB_PLANS.map((wp) => {
+      {toggles.zones && loadedPlans(plans).map((wp) => {
         const info = plans?.[wp.plan_id];
-        const notLoaded = info !== undefined && info.loaded === false;
         return (
           <div key={wp.plan_id} style={{ borderTop: "1px solid #E8EEE4" }}>
             <Switch
-              on={toggles.plans[wp.plan_id] === true && !notLoaded}
-              label={notLoaded ? `${wp.label} (zones not loaded)` : wp.label}
-              onClick={() => flipPlan(wp.plan_id)} isMobile={isMobile} indent disabled={notLoaded}
+              on={toggles.plans[wp.plan_id] === true}
+              label={wp.label}
+              onClick={() => flipPlan(wp.plan_id)} isMobile={isMobile} indent
               badge={info ? <StatusBadge status={info.status} condition={info.status_condition} /> : undefined}
             />
             {wp.plan_id === PLAN_ID && toggles.plans[PLAN_ID] && OVERLAY_KINDS.map((k) => (
@@ -415,11 +419,16 @@ export function PlanningCardSection({ result }: { result: ZonesAtResult | "loadi
           {hits[0].status_condition && (
             <div style={{ color: "#8D6E00", fontSize: 10, marginBottom: 3 }}>{hits[0].status_condition}</div>
           )}
+          {[...new Set(hits.flatMap((z) => (z.sheets_qa ?? []).flatMap((q) => q.warnings ?? [])))].map((w) => (
+            <div key={w} style={{ color: "#9A4F00", fontSize: 10, marginBottom: 3 }}>{w}</div>
+          ))}
           {hits.map((z) => (
             <div key={`${planId}-${z.zone_label_native}`} style={{ marginBottom: 4, fontSize: 11 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 10, height: 10, background: hitColour(z), border: "1px solid rgba(0,0,0,0.2)", flexShrink: 0 }} />
-                <span style={{ fontWeight: 600 }}>{z.zone_label_native}</span>
+                <span style={{ fontWeight: 600 }}>
+                  {z.zone_label_native}{z.source_layer === "lpa_map" ? " (coarse map)" : ""}
+                </span>
                 <span style={{ color: "#7B8F83", marginLeft: "auto" }}>{z.overlap_pct.toFixed(1)}%</span>
               </div>
               {z.cartographic && (
