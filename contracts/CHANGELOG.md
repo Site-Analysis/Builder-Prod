@@ -4,6 +4,42 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.18.0 — 2026-10-02 — planning
+
+Additive (new enum values, new optional fields); one value's meaning narrowed (below).
+- `PlanCoverage`: new value `authority_no_master_plan` (authority known, the sources checked show
+  no master plan, e.g. STRR). `lpa_no_zone_map` now means only "the plan exists but has no zone
+  map here" (Madhure; a loaded plan leaving the place uncoloured, e.g. the STRR band in Hoskote).
+  `no_master_plan_found` is never used for a plan that exists but is not registered: Magadi and
+  Kanakapura are registered instead. Order: plan_loaded, plan_registered_not_loaded,
+  lpa_no_zone_map, authority_no_master_plan, no_master_plan_found.
+- F9 rule: a point outside every LPA but within 100 m of one is `plan_loaded` only when a loaded
+  zone covers the point; otherwise `no_master_plan_found`, with the near-edge LPA in
+  `authorities` as partial with the distance note.
+- F1-F5: point and parcel answers come from geometry; village rows are summaries.
+  `AuthorityResult` (lat/lng) and `ZonesAtResult` gain `village_summary` (VillageSummary) and
+  `disagreement_note`, e.g. "Most of village X is in Y; this location is in Z".
+- `build_id` (BuildId) on AuthorityResult, ZoneFeatureCollection, OverlayFeatureCollection and
+  ZonesAtResult: the layer-index version behind the answer.
+- `pending_sheets[]` (PendingSheet: sheet, plan_id, doc_id, state downloading / extracting /
+  source_changed / failed, source, message, retry_after_s) on ZoneFeatureCollection,
+  OverlayFeatureCollection and ZonesAtResult. Zones are extracted on demand from the layer index;
+  a sheet whose download no longer matches the indexed sha256 is not served and shows
+  "Source changed; needs re-indexing".
+- `OverlayKind`: new kinds `proposed_road` (note always "Proposed road (plan), shown as a warning,
+  not an input"), `water_body`, `metro_rail`, `drawn_buffer`. `OverlaysNearby.others[]` lists
+  them for a parcel.
+- `Plan.extent` (Bbox) and `Plan.sheets[]` (SheetState: state ready / not_loaded / downloading /
+  extracting / source_changed / failed, placement_confirmed, extent, source_url) for the layer
+  side panel and "Zoom to plan".
+- `SheetQA.placement_confirmed` (default true) and `SheetQA.position_uncertainty_m`. Sheets
+  indexed without an independent placement check (Nelamangala A3, B1, C3, D1) carry false, the
+  warning "Placement not confirmed by an independent check; zones may be 100 m or more off.
+  Verify on site." and uncertainty max(100 m, measured RMSE).
+- `simplify_m` wording: geometry is simplified when a sheet is extracted, not at startup.
+
+---
+
 ## 1.17.0 — 2026-10-02 — planning
 
 Additive.
