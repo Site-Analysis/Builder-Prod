@@ -182,10 +182,18 @@ def process_sheet(s, plan, classes, lpa, osm, out_dir, max_dist):
     x0, y0, x1, y1 = s["map_rect"]
     keys, codes = class_keys(classes)
     cls = classify(a, keys, codes, max_dist)
-    del a
     frame = np.zeros(cls.shape, bool)
     frame[y0:y1, x0:x1] = True
     cls[~frame] = WHITE
+    # plan-specific checks on the source pixels (refine): the zones use the refined classes,
+    # the OSM junction check keeps the unrefined road mask (thin road strokes still meet)
+    cls0 = None
+    if s.get("refine"):
+        cls0 = cls.copy()
+        s["refine"](a, cls, classes)
+        drop_halos(cls0, classes)
+        cls0 = fill_from_neighbours(cls0, (cls0 == UNKNOWN) & frame)
+    del a
     halo = drop_halos(cls, classes)
     unknown = (cls == UNKNOWN) & frame
     unknown_pct = 100 * float(unknown.sum()) / max(1, int(frame.sum()))
@@ -205,8 +213,11 @@ def process_sheet(s, plan, classes, lpa, osm, out_dir, max_dist):
     tcodes = [10 + i for i, c in enumerate(classes) if c["cnorm"] == "transport"]
     chk = {"sheet_junctions": 0, "matched": 0}
     if tcodes and osm is not None:
-        sj, sdeg = raster_junctions(np.isin(cls, tcodes), m_px, px_to_ground)
+        sj, sdeg = raster_junctions(
+            np.isin(cls if cls0 is None else cls0, tcodes), m_px, px_to_ground
+        )
         chk = junction_check(sj, sdeg, *osm)
+    del cls0
     polys = polygonise(np.where(cls >= 10, cls, 0).astype(np.uint8))
     del cls
     rows, geoms = [], []

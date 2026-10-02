@@ -37,9 +37,12 @@ import pyarrow.parquet as pq
 import pymupdf
 import shapely
 from extract_hoskote import osm_junctions, read_csv, read_json
+from extract_plucomp import dilate, erode
 from pyproj import Transformer
 from raster_plan import (
     LAYER_RANK,
+    UNKNOWN,
+    hexrgb,
     merge,
     osm_index,
     process_sheet,
@@ -117,6 +120,72 @@ HATCH_WARNING = (
 )
 
 
+# Round 4 (random-pixel QA, 200 per class, open-decisions #19): nearest-colour forest took dark
+# text, symbols and linework (27 % of its samples), water took near-white gaps (13 %), and
+# transport was mostly thin lines, text and hatch strokes (about 70 %), which is where the
+# commercial and park shortfall went. A pixel keeps these classes only if it looks like them.
+FOREST_MIN_GREEN = 15  # G - max(R, B): the forest swatch is a chromatic green
+WATER_MIN_BLUE = 20  # B - R: the water swatch is a pale cyan, white is 0
+TRANSPORT_MIN_PX = 3  # road bands survive a 3 x 3 opening; 1-2 px strokes do not
+# Forest vs park: on the 110 ppi JPEG sheets single park pixels fall within 17-38 of the forest
+# swatch (25 % of forest samples were park-green); the two are told apart on the colour
+# averaged over the green pixels of a 7 x 7 window (about 23 m) instead of pixel by pixel.
+GREEN_R = 3
+
+
+def _box(v, r):
+    """Sum of v over the (2r+1)^2 window around each pixel."""
+    c = np.pad(v, ((r + 1, r), (r + 1, r))).cumsum(0).cumsum(1)
+    return (
+        c[2 * r + 1 :, 2 * r + 1 :]
+        - c[: -2 * r - 1, 2 * r + 1 :]
+        - c[2 * r + 1 :, : -2 * r - 1]
+        + c[: -2 * r - 1, : -2 * r - 1]
+    )
+
+
+def forest_or_park(a, cls, classes, code):
+    fi, pi = code["forest"] - 10, code["open_space"] - 10
+    fk = np.array([hexrgb(h) for h in classes[fi]["colours"]], np.float32)
+    pk = np.array([hexrgb(h) for h in classes[pi]["colours"]], np.float32)
+    if not len(fk) or not len(pk):
+        return 0
+    gm = (cls == code["forest"]) | (cls == code["open_space"])
+    n = np.maximum(_box(gm.astype(np.int32), GREEN_R), 1).astype(np.float32)
+    mean = np.stack(
+        [
+            _box(np.where(gm, a[..., i], 0).astype(np.int32), GREEN_R) / n
+            for i in range(3)
+        ],
+        -1,
+    )[gm]
+    df = np.sqrt(((mean[:, None] - fk[None]) ** 2).sum(-1)).min(1)
+    dp = np.sqrt(((mean[:, None] - pk[None]) ** 2).sum(-1)).min(1)
+    new = np.where(df < dp, code["forest"], code["open_space"]).astype(cls.dtype)
+    changed = int((cls[gm] != new).sum())
+    cls[gm] = new
+    return changed
+
+
+def refine(a, cls, classes):
+    """Pixels that fail their class's check become unknown (filled from neighbours)."""
+    code = {c["cnorm"]: 10 + i for i, c in enumerate(classes)}
+    r, g, b = (a[..., i].astype(np.int16) for i in range(3))
+    if "forest" in code and "open_space" in code:
+        forest_or_park(a, cls, classes, code)
+    bad = np.zeros(cls.shape, bool)
+    if "forest" in code:
+        bad |= (cls == code["forest"]) & (g - np.maximum(r, b) < FOREST_MIN_GREEN)
+    if "water" in code:
+        bad |= (cls == code["water"]) & (b - r < WATER_MIN_BLUE)
+    if "transport" in code:
+        m = cls == code["transport"]
+        k = TRANSPORT_MIN_PX // 2
+        bad |= m & ~dilate(erode(m, k), k)
+    cls[bad] = UNKNOWN
+    return int(bad.sum())
+
+
 def page_classes(report):
     """Class list in fixed order, colours from this page's legend (hex + extra shades). A
     class with no colour gets no palette key (it can never be assigned)."""
@@ -181,6 +250,9 @@ def sheets(doc_path, pdir):
                 if any(p["name"] in NOT_EXTRACTED for p in r["palette"])
                 else [],
                 "load": load,
+                "refine": refine
+                if layer == "detail"
+                else None,  # 1:45,000: 3 px = 45 m
             }
         )
     return out
@@ -246,7 +318,7 @@ def main():
     lpa_raw = os.path.join(out_dir, "map_lpa_raw.parquet")
     if not os.path.exists(lpa_raw):
         process_sheet(
-            {**title, "key": "lpa_raw"},
+            {**title, "key": "lpa_raw", "refine": None},
             plan,
             title["classes"],
             None,
