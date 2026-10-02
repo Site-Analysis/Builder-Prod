@@ -1,7 +1,8 @@
 # 2031 planning layers: coverage and accuracy report (all plans)
 
-Round of 1-2 Oct 2026 ("every village in Bengaluru Urban and Rural gets an answer"), branch
-`feat/planning-2031-phase0`, contract `planning` 1.16.0. Per-plan QA:
+Round of 1-2 Oct 2026 ("every village in Bengaluru Urban and Rural gets an answer"), updated by
+the round of 2 Oct (Anekal round 4, Nelamangala second route, taluk rows), branch
+`feat/planning-2031-phase0`, contract `planning` 1.17.0. Per-plan QA:
 `hoskote-2031-qa.md`, `anekal-2031-qa.md`, `nelamangala-2031-qa.md`; seams: `2031-seams.md`;
 defaults applied: `open-decisions.md`. The BDA RMP 2031 audit of 30 Sep - 1 Oct follows below
 unchanged.
@@ -12,8 +13,8 @@ unchanged.
 |---|---|---|---|---|---|
 | BDA RMP 2031 | **draft** (never approved) | loaded (331,194) | composite (PLUCOMP) | see the BDA audit below | ~11 m position uncertainty |
 | Hoskote MP 2031 | **final**, subject to W.P. 4188/2016 | loaded (1,029,504) | detail 79.8 %, hobli 1.8 %, not coloured 18.3 % | all classes ±10 % except unclassified (+40 %, explained) and transport (cartographic) | grid labels; floor 6.85 m; no sheet > 10 m |
-| Anekal MP 2031 | **final** | loaded (1,233,332) | detail 91.1 %, lpa_map 4.6 %, not coloured 4.3 % | residential, industrial, PSP, agriculture ±8 %; commercial -24 %, park -12 %, water +12 %, forest +33 % (flagged); hatched PU / hillocks not extracted; transport cartographic | margin labels (primeocr); floor 7.02 m; 13/16 sheets ≥ 3 checks; no sheet > 10 m |
-| Nelamangala MP 2031 | **final** | **not loaded** (sheets print no coordinates) | — | — | OSM-only georef rejected in validation |
+| Anekal MP 2031 | **final** | loaded (729,417, round 4) | detail 89.9 %, lpa_map 5.7 %, not coloured 4.4 % | on the plan's own extent every class ±10 % except water +20 % (measured cause, SME pending); hatched PU / hillocks not extracted (sheet warning on every hit); transport cartographic | margin labels (primeocr); floor 7.02 m; 13/16 sheets ≥ 3 checks; no sheet > 10 m |
+| Nelamangala MP 2031 | **final** | **not loaded** | — | — | LPA map outline fit IoU 0.981; 11 grids refined against OSM near that prior: all rejected (matches no better than the null baseline) |
 | BIAAPA MP 2021 | final (2021 horizon) | registered, not loaded | — | — | — |
 | BMICAPA ODP 2004 | unconfirmed (no GO found) | registered, not loaded | — | — | — |
 | STRR LPA | no master plan | — | — | — | — |
@@ -25,15 +26,22 @@ functions) and `--steps http500`; `planning/audit/g1_taluks.csv`.
 
 | Taluk | Villages | plan_loaded | registered_not_loaded | lpa_no_zone_map | no_master_plan_found | blank | Parcels inside loaded plans | sum ≥ 99 % | Uncoloured % | /zones/at errors | HTTP errors |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Bangalore North (20/1) | 188 | 107 | 43 | 0 | 38 | 0 | 19,114 | 19,114 (100.000 %) | 15.49 | 0 | 0 |
-| Bangalore South (20/2) | 224 | 161 | 15 | 47 | 1 | 0 | 9,217 | 9,216 (99.989 %) | 18.42 | 0 | 0 |
-| Anekal (20/3) | 304 | 304 | 0 | 0 | 0 | 0 | 77,792 | 77,789 (99.996 %) | 6.03 | 0 | 0 |
+| Bangalore North (20/1) | 188 | 143 | 43 | 0 | 2 | 0 | 19,114 | 19,114 (100.000 %) | 15.49 | 0 | 0 |
+| Bangalore South (20/2) | 224 | 161 | 15 | 0 | 48 | 0 | 9,217 | 9,216 (99.989 %) | 18.42 | 0 | 0 |
+| Anekal (20/3) | 304 | 304 | 0 | 0 | 0 | 0 | 77,797 | 77,794 (99.996 %) | 6.08 | 0 | 0 |
 | Bangalore East (20/4) | 186 | 186 | 0 | 0 | 0 | 0 | 14,595 | 14,595 (100.000 %) | 15.44 | 0 | 0 |
 | Yelahanka (Bangalore North Additional) (20/5) | 196 | 108 | 87 | 0 | 1 | 0 | 24,817 | 24,815 (99.992 %) | 16.1 | 0 | 0 |
 | Nelamangala (21/1) | 367 | 0 | 327 | 40 | 0 | 0 | 0 | 0 (—) | — | 0 | 0 |
 | Doddaballapura (21/2) | 302 | 0 | 237 | 65 | 0 | 0 | 0 | 0 (—) | — | 0 | 0 |
-| Devanahalli (21/3) | 226 | 2 | 188 | 35 | 1 | 0 | 6 | 6 (100.000 %) | 96.52 | 0 | 0 |
-| Hoskote (21/4) | 294 | 267 | 0 | 27 | 0 | 0 | 63,834 | 63,834 (100.000 %) | 16.19 | 0 | 0 |
+| Devanahalli (21/3) | 226 | 0 | 190 | 35 | 1 | 0 | 6 | 6 (100.000 %) | 96.52 | 0 | 0 |
+| Hoskote (21/4) | 294 | 252 | 0 | 42 | 0 | 0 | 63,834 | 63,834 (100.000 %) | 16.2 | 0 | 0 |
+
+Changes this round (open-decisions #27-#29): Bangalore North 36 old-city Kasaba villages BDA by
+the RMP 2031 village list; Bangalore South 47 Magadi / Kanakapura villages
+`no_master_plan_found` (their plans are not registered); Devanahalli's 2 and 15 STRR-band
+villages in Hoskote taluk keep their own authority's value where the loaded plan leaves their
+sliver uncoloured. Anekal parcels re-audited on the round-4 zones: 231 villages, 0 errors,
+0 parcels below 99 %.
 
 Pass bar: **0 villages without a value** (met); **0 errors** (met: 0 function errors over
 289,101 parcels run (BDA 118,588, Hoskote 85,499, Anekal 85,014), 0 HTTP errors); **≥ 99 % sum inside loaded plans**: met except 6 BDA
@@ -46,8 +54,8 @@ the plan" or road space (BDA). Devanahalli's 6 parcels sit on the Hoskote edge (
 
 ## G2: HTTP pass
 
-500 parcels across 18 strata (plan × plan_coverage), 938 calls: **all HTTP 200, all JSON valid**.
-`/zones/at` p50 3.2 s, p95 3.7 s; `/authority` p50 2.1 s, p95 2.1 s.
+500 parcels across 18 strata (plan × plan_coverage), 961 calls (2 Oct, round-4 zones): **all
+HTTP 200, all JSON valid**. `/zones/at` p50 2.6 s, p95 2.8 s; `/authority` p50 2.1 s, p95 2.1 s.
 
 ## G3: acceptance pages
 
@@ -55,8 +63,38 @@ the plan" or road space (BDA). Devanahalli's 6 parcels sit on the Hoskote edge (
 `BMRDA-ANK-MP2031/` (5 each, `acceptance_lpa.py`: deep in a zone, across two zones, water edge,
 partial village, just outside). Source sheet crop next to our zones, with the live /zones/at and
 /authority answers; raw JSON next to each PNG. The Anekal pages found the round 2 road-as-forest
-error (fixed in round 3). Hoskote: base-map building outlines show as small forest / transport
+error (fixed in round 3). Anekal round 4 (2 Oct; round 3 kept as `BMRDA-ANK-MP2031_round3/`):
+deep (industrial 100 %, matches the sheet), across two zones (industrial 62 % / road band 38 %,
+matches), water edge (industrial 77 % / stream 19 %, matches), just outside (no Anekal hit, BDA
+only, correct); partial village: the parcel lies on the title map's margin grid label "796000",
+extracted as transport inside the title-map extent (open-decisions #32). Hoskote: base-map building outlines show as small forest / transport
 specks in settlements (a tighter forest colour cut real forest by 13 %, so not applied).
+
+## G4: service memory, load time, and what a deployment needs
+
+Measured 2 Oct on this machine (planning service, plans BDA, Hoskote, Anekal loaded; lazy
+simplification): first request per plan 48 s (BDA), 60 s (Hoskote), 47 s (Anekal), about 2.6
+minutes for all three; then /zones/at p50 2.6 s. Peak during the 500-parcel HTTP pass: **working
+set 10.2 GB, private 11.7 GB**.
+
+Build-time only (never on a server): source PDFs `raw/` 885 MB, OSM caches 94 MB, per-sheet
+checkpoints and earlier rounds (`*_sheets*`) about 1.2 GB, audit / acceptance outputs 20 MB.
+
+What the service reads today: zone parquets 136 MB (BDA) + 69 MB (Hoskote) + 46 MB (Anekal) +
+21 MB (BDA overlays) + LPA / village files ~10 MB, about 280 MB on disk, which expand to ~11 GB in
+memory (GeoDataFrames, spatial indexes, simplified copies). That does not fit a small server.
+
+The build output can go to the map and the API without the server holding the polygons:
+1. Map display: pre-build vector tiles (one PMTiles file per plan, zoom 10-17, at build time)
+   served as static files (S3 / CDN or the web app's static folder); the browser draws them and
+   the server holds nothing for /zones.
+2. Parcel answers: /zones/at is already computed for every parcel in every loaded LPA by the audit
+   (289k parcels); store those answers (zones, overlap %, edge distance, flags, sheets_qa) in one
+   SQLite / parquet keyed by (dist, taluk, hobli, vlg, survey), tens of MB, read per request.
+   /authority already comes from `authority_villages.csv` (2,287 rows).
+3. Points between parcels (/authority by lat/lng) need only the LPA polygons (~2 MB).
+This is a contract-compatible change (same responses), but a design change: it needs Tanmay's OK
+(open-decisions #33); nothing was changed this round.
 
 ---
 
