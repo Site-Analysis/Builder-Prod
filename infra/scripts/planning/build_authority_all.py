@@ -18,6 +18,7 @@ Entries:
     the rest from BMRDA's LPA map (current extents; lpa_map_bmrda.py).
   - Anekal: its plan extent (before STRR); a village also in the STRR LPA gets both, with a
     note that the area moved to the STRR LPA (GO NAI 89 BMR 2021) after the plan was made.
+    In Anekal taluk, BDA keeps the villages it covers fully; partial villages list both.
   - Nelamangala: final plan registered but its zones are not loaded (no coordinates on the
     sheets; docs/plans/open-decisions.md #4): plan_registered_not_loaded. The 37 Madhure
     villages (added 2015, no zone map in the plan): lpa_no_zone_map.
@@ -229,6 +230,15 @@ def main():
                     pc, note = "lpa_no_zone_map", NOTE_MADHURE
                 if a == "BMRDA-ANK" and in_strr:
                     note = NOTE_STRR_MOVED
+                if (
+                    a == "BMRDA-ANK"
+                    and k[:2] == ("20", "3")
+                    and any(
+                        e["authority"] == "BDA" and e["coverage"] == "full"
+                        for e in ents
+                    )
+                ):
+                    continue  # Anekal taluk: BDA keeps the villages it covers fully (step C3)
                 ents.append(entry(a, s, pids, pc, note))
         else:
             pending.append(len(out_rows))
