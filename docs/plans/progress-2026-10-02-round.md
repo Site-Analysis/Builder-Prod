@@ -21,7 +21,7 @@ E2: `seams.py` re-run: slivers 333 ha, 259 village touches, largest width 197.5 
   - B2 priors done (`<data-root>/planning/zones/nlm_sheets/grids_georef.json`): Nelamangala grids via MAP004 colour match (peak 1.34–2.05); Sompura/Thyamagondlu via MAP002 tanks (weak, 1.04–1.37).
   - OSM refine waits on Overpass (504/429): tiles cached in `<data-root>/osm/nlm_nelamangala_tiles` (44/63). Resume: `run_nlm.ps1` (WMI), it reuses priors and cached tiles.
   - Still to do: extraction of accepted sheets (none yet), B3 rows, run_services flag (added), nelamangala-2031-qa.md.
-- **E**: planning service restarted 16:53 with new Anekal + authority rows. First request per plan 47–60 s (BDA 48, HSK 60, ANK 47), private memory ≈10.4 GB after 3 plans (peak not final). Anekal function audit was running (`run_audit_all.ps1 -plans BMRDA-ANK-MP2031`); re-run it, then taluk step + `run_http500.ps1`, Anekal acceptance pages (`acceptance_lpa.py`).
+- **E**: planning service restarted 16:53 with new Anekal + authority rows. First request per plan 47–60 s (BDA 48, HSK 60, ANK 47), private memory ≈10.4 GB after 3 plans (peak not final). **Anekal function audit done 17:06: 231 villages, 0 errors, 0 parcels below 99 %.** Still to do: taluk step, `run_http500.ps1`, Anekal acceptance pages (`acceptance_lpa.py`).
 - **F**: docs (coverage report, CHANGELOG data notes, plan_docs.csv, decisions log).
 
 ## After the round
