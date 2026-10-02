@@ -89,6 +89,11 @@ def get_doc(doc_id: str) -> dict:
 
 NOTE_OUTSIDE = "Outside BDA; this area's plan isn't loaded yet"
 NOTE_NO_PLAN = "No planning authority or master plan found for this location"
+EDGE_TOLERANCE_M = 100.0
+NOTE_NEAR_EDGE = (
+    "Point is {d} m outside this LPA's drawn boundary, between LPAs whose boundaries come "
+    "from different sources; shown so no point falls between two LPAs"
+)
 # plan_coverage order: the first that applies is the location's value
 PLAN_COVERAGE = [
     "plan_loaded",
@@ -325,6 +330,25 @@ def get_authority(
                     source="point",
                 )
             )
+        if not entries:
+            # a point between two LPAs whose boundaries come from different sources (a plan's
+            # own LPA vs BMRDA's LPA map, ~15 m apart at the median): the LPAs within
+            # EDGE_TOLERANCE_M, partial, with a note (step E: no gap along shared edges)
+            for authority, lpa in list(st.lpa.items()) + list(st.lpa_map.items()):
+                if authority in seen or lpa.distance(pt) > EDGE_TOLERANCE_M:
+                    continue
+                seen.add(authority)
+                pids = _auth_plans(authority)
+                entries.append(
+                    _entry(
+                        authority,
+                        "partial",
+                        pids,
+                        _point_plan_coverage(authority, pids, pt),
+                        NOTE_NEAR_EDGE.format(d=round(lpa.distance(pt))),
+                        source="point",
+                    )
+                )
         return _result(loc, entries, point=True)
     raise HTTPException(
         status_code=400,
