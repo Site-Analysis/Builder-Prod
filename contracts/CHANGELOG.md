@@ -4,6 +4,20 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.17.0 — 2026-10-02 — planning
+
+Additive.
+- `SheetQA.warnings` (string[]): sheet-level cautions for every zone from that sheet; empty when
+  none (layers built before 1.17 return []). Anekal LPA Master Plan 2031: every sheet whose legend
+  lists a hatched class carries "This sheet has hatched classes (public utility,
+  hillocks/quarries; 324 ha across the LPA per the plan) that are not extracted. The zone shown
+  here may be one of them." Hatched areas take the neighbouring zone in the extraction (not
+  white), so "Not coloured on the plan" is unchanged.
+- `/authority` near-edge note (approved 2 Oct with the 100 m rule) gives the distance to the
+  LPA edge: "Outside the LPA by 42 m; boundary sources differ by about 15 m here."
+
+---
+
 ## 1.16.0 — 2026-10-01 — planning
 
 Additive. Every village in Bengaluru Urban and Rural gets an answer.

@@ -25,3 +25,12 @@ would change it. All defaults are reversible; none is a KGIS / Dishaank / Land B
 | 18 | E | Points that fall between two LPAs whose boundaries come from different sources (a plan's own LPA vs BMRDA's map, ~15 m apart at the median) | `/authority` returns the LPAs within 100 m as partial, with a note; villages are unaffected (shares) | One boundary source for all LPAs |
 | 19 | C | Anekal forest: round 2 had 4,876 ha vs 2,127 ha in the plan table because mid-grey road bands were classified as forest (seen on the acceptance pages) | Round 3 adds the road greys as transport keys: forest 2,823 ha (+33 %), the remaining excess likely the not-extracted hillock hatch next to forest; flagged in the QA doc for the SME. Transport now over-counts (+75 %, grey linework) but is cartographic | SME check of the forest areas; pattern-based hatch detection (#13) |
 | 20 | C | Anekal taluk villages covered by both BDA and the Anekal LPA | BDA keeps the villages it covers fully (21, no Anekal entry); partial villages list both plans (4) | — |
+
+### Round of 2 Oct 2026 (closing what the full-coverage round left)
+
+| # | Step | Decision needed | Default applied | To change it |
+|---|---|---|---|---|
+| 21 | 0.1 | The repo lives inside OneDrive, which has blanked contract files before (this round's check: clean; OneDrive shut down for the round) | Stay at `C:\Users\tanny\OneDrive\Desktop\builder_prod` for this round | Tanmay's call after the round: move to `C:\dev\Builder-Prod` |
+| 22 | 0.2a | 100 m near-edge tolerance for `/authority` points (approved 2 Oct) | Kept at 100 m; after E2, if the largest real gap between LPA boundaries is under 40 m, tighten to twice that gap next round | E2 result |
+| 23 | 0.2b | Anekal hatched classes (public utility, hillocks / quarries) | Not extracted: needs hatch-pattern detection (a known primeocr limit). Every Anekal hit carries `SheetQA.warnings` with the hatched-class caution; fill rule unchanged; "Not coloured on the plan" unchanged | Hatch-pattern detection |
+| 24 | 0.2b | Future `/classify` on sheets with unextracted hatched classes | Confidence capped at MEDIUM for hits on those sheets. SME pending, default applied | SME review |

@@ -254,6 +254,7 @@ def process_sheet(s, plan, classes, lpa, osm, out_dir, max_dist):
                 "sheet_scale": f"1:{s['scale']:,}" if s.get("scale") else None,
                 "source_layer": s["layer"],
                 "sheet": s["name"],
+                "warnings": list(s.get("qa_warnings", [])),
             },
             "zone_area_ha": sum(q.area for q in geoms) / 1e4,
             "class_area_ha": {
@@ -483,6 +484,7 @@ QA_TYPE = pa.struct(
         ("sheet_scale", pa.string()),
         ("source_layer", pa.string()),
         ("sheet", pa.string()),
+        ("warnings", pa.list_(pa.string())),
     ]
 )
 ZONE_SCHEMA = pa.schema(
@@ -612,6 +614,7 @@ def write_zones(path, order, metas, covs, lpa, plan, classes, out_dir, lpa_doc_i
             "sheet_scale": None,
             "source_layer": None,
             "sheet": None,
+            "warnings": [],
         }
         rows = [
             zone_row(

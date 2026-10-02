@@ -90,10 +90,7 @@ def get_doc(doc_id: str) -> dict:
 NOTE_OUTSIDE = "Outside BDA; this area's plan isn't loaded yet"
 NOTE_NO_PLAN = "No planning authority or master plan found for this location"
 EDGE_TOLERANCE_M = 100.0
-NOTE_NEAR_EDGE = (
-    "Point is {d} m outside this LPA's drawn boundary, between LPAs whose boundaries come "
-    "from different sources; shown so no point falls between two LPAs"
-)
+NOTE_NEAR_EDGE = "Outside the LPA by {d} m; boundary sources differ by about 15 m here."
 # plan_coverage order: the first that applies is the location's value
 PLAN_COVERAGE = [
     "plan_loaded",

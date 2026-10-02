@@ -421,3 +421,5 @@ def test_p_contract_1_16(client, monkeypatch):
     ]
     assert hit["source_layer"] == "composite" and hit["mixed_source_layers"] is False
     assert "sheet" in hit and all("source_layer" in q for q in hit["sheets_qa"])
+    # 1.17: sheet-level warnings on every SheetQA ([] for layers built before 1.17)
+    assert all(q["warnings"] == [] for q in hit["sheets_qa"])

@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.16.0"
+  version: "1.17.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -111,7 +111,8 @@ paths:
         share (unchanged for clients of 1.15).
         A point in no LPA but within 100 m of one or more (LPA boundaries come from different
         sources, ~15 m apart at the median) returns those LPAs with coverage "partial" and a
-        note, so no point falls between two LPAs.
+        note giving the distance to that LPA's edge, e.g. "Outside the LPA by 42 m; boundary
+        sources differ by about 15 m here.", so no point falls between two LPAs.
         404 is only for village codes that do not exist. Gated by `feature.planning.layers`.
       parameters:
         - { name: dist, in: query, required: false, schema: { type: string } }
@@ -524,6 +525,15 @@ components:
           items: { type: string }
           description: Names of failed QA checks (control points, cadastral fit, area totals, seams, topology)
         sheet_scale: { type: [string, "null"], example: "1:10000" }
+        warnings:
+          type: array
+          items: { type: string }
+          example:
+            - "This sheet has hatched classes (public utility, hillocks/quarries; 324 ha across the LPA per the plan) that are not extracted. The zone shown here may be one of them."
+          description: >
+            Free-text, sheet-level cautions that apply to every zone from this sheet (empty when
+            none). Unlike qa_failures (names of failed checks), these describe known limits of
+            what the sheet's zones can say.
         source_layer: { $ref: "#/components/schemas/SourceLayer" }
         sheet:
           type: [string, "null"]

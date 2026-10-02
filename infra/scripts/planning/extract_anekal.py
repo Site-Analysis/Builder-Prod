@@ -111,6 +111,10 @@ def lab_to_hex(lab):
 # their neighbours. docs/plans/open-decisions.md #13.
 NOT_EXTRACTED = {"PUBLIC UTILITY", "HILLOCKS/QUARRIES"}
 ROAD_GREYS = ["#a0a0a0", "#959899", "#8c8c8c"]
+HATCH_WARNING = (
+    "This sheet has hatched classes (public utility, hillocks/quarries; 324 ha across the LPA "
+    "per the plan) that are not extracted. The zone shown here may be one of them."
+)
 
 
 def page_classes(report):
@@ -173,6 +177,9 @@ def sheets(doc_path, pdir):
                 "georef_res_m": None,
                 "georef_inliers": [g.get("easting_inliers"), g.get("northing_inliers")],
                 "classes": page_classes(r),
+                "qa_warnings": [HATCH_WARNING]
+                if any(p["name"] in NOT_EXTRACTED for p in r["palette"])
+                else [],
                 "load": load,
             }
         )

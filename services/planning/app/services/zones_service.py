@@ -336,6 +336,7 @@ def zone_hits(
             q["source_layer"] = q["source_layer"] or lay
             q.setdefault("sheet", sh)
             q["sheet"] = q["sheet"] or sh
+            q["warnings"] = list(q.get("warnings") or [])  # 1.17; [] for older layers
             qas.append(q)
         share = {}
         for i, lay, sh in zip(inter, layers_r, sheets_r, strict=True):
