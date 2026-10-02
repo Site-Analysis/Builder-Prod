@@ -423,3 +423,14 @@ def test_p_contract_1_16(client, monkeypatch):
     assert "sheet" in hit and all("source_layer" in q for q in hit["sheets_qa"])
     # 1.17: sheet-level warnings on every SheetQA ([] for layers built before 1.17)
     assert all(q["warnings"] == [] for q in hit["sheets_qa"])
+
+
+def test_q_unregistered_lpa_is_no_plan_found(client):
+    # 1.17: an LPA registered as having no master plan (STRR) has no zone map; an LPA with
+    # no register row at all (Magadi) gets no_master_plan_found
+    client.get("/plans")  # store loaded
+    from app.routers.registry import _plan_coverage
+
+    assert _plan_coverage("STRR", []) == "lpa_no_zone_map"
+    assert _plan_coverage("MAGADI", []) == "no_master_plan_found"
+    assert _plan_coverage("BIAAPA", ["BIAAPA-MP2021"]) == "plan_registered_not_loaded"

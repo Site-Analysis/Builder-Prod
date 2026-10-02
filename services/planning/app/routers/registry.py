@@ -141,9 +141,14 @@ def _plan_coverage(authority: str | None, plan_ids: list[str]) -> str:
         return "no_master_plan_found"
     if any(_loaded(p) for p in plan_ids):
         return "plan_loaded"
-    if any(p in get_store().plans for p in plan_ids):
+    plans = get_store().plans
+    if any(p in plans for p in plan_ids):
         return "plan_registered_not_loaded"
-    return "lpa_no_zone_map"
+    # an LPA registered as having no master plan (STRR, DPA) has no zone map; an LPA with
+    # no register row at all (Magadi, Kanakapura, ...): no plan was found for it (1.17)
+    if any(r.get("authority") == authority for r in plans.values()):
+        return "lpa_no_zone_map"
+    return "no_master_plan_found"
 
 
 def _entry(

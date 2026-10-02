@@ -20,6 +20,7 @@ import itertools
 import json
 import os
 
+import numpy as np
 import pyarrow.parquet as pq
 import shapely
 
@@ -117,7 +118,32 @@ def main():
         gap = shapely.difference(shapely.intersection(near, study), allu)
         ha = gap.area / 1e4
         if ha >= 0.1:
-            slivers.append({"a": a, "b": b, "ha": round(ha, 2)})
+            idx = vtree.query(gap, predicate="intersects")
+            vil = [
+                vkeys[i] for i in idx if shapely.intersection(vg[i], gap).area > 100.0
+            ]
+            # gap width at a point = distance to A + distance to B (10 m grid of points)
+            x0, y0, x1, y1 = gap.bounds
+            xx, yy = np.meshgrid(np.arange(x0, x1, 10.0), np.arange(y0, y1, 10.0))
+            pts = shapely.points(xx.ravel(), yy.ravel())
+            pts = pts[shapely.contains(gap, pts)]
+            w = (
+                shapely.distance(pts, polys[a]) + shapely.distance(pts, polys[b])
+                if len(pts)
+                else np.zeros(1)
+            )
+            slivers.append(
+                {
+                    "a": a,
+                    "b": b,
+                    "ha": round(ha, 2),
+                    "villages": len(vil),
+                    "village_keys": vil[:50],
+                    "width_max_m": round(float(w.max()), 1),
+                    "width_p95_m": round(float(np.percentile(w, 95)), 1),
+                    "width_median_m": round(float(np.median(w)), 1),
+                }
+            )
     report = {
         "polygons": {
             k: {"source": kind[k], "km2": round(v.area / 1e6, 1)}

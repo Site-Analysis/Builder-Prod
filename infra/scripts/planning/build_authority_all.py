@@ -40,7 +40,10 @@ import re
 
 import numpy as np
 import pyarrow.parquet as pq
+import pymupdf
 import shapely
+from build_authority import annexure_rows, norm_hobli, text_core
+from build_authority import norm as name_key
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 AUTH_CSV = os.path.join(REPO, "infra", "planning", "authority_villages.csv")
@@ -65,6 +68,34 @@ NOTE_MADHURE = (
     "Added to the LPA in 2015 (UDD 141 BMR 2015, agricultural zone until the plan is "
     "revised); the plan has no zone map for it"
 )
+NOTE_NOT_REGISTERED = (
+    "LPA on BMRDA's LPA map; its master plan is not registered here (LPAs of the "
+    "ex-Ramanagara district are outside this phase), so no plan was searched for"
+)
+NOTE_BY_LIST = (
+    "Coverage by village list (RMP 2031 Vol 3 Annexure 1, sl {sl}: {name}), "
+    "no parcel geometry"
+)
+NOTE_UNCOLOURED = (
+    "Only {pct:.1f} % of the village is coloured on this plan (its LPA covers "
+    "{share:.1f} %; the rest of that is not coloured on the plan)"
+)
+# BDA Annexure 1 taluk -> our taluk codes in Bengaluru Urban (dist 20)
+ANNEX_TALUKS = {
+    "Bengaluru North": ("1", "5"),
+    "Bengaluru South": ("2",),
+    "Bengaluru East": ("4",),
+    "Anekal Taluk": ("3",),
+    "Bengaluru": ("1", "2", "4", "5"),
+}
+# Annexure 1 sl 261 lists Kasaba (Bengaluru) hobli as "City Survey Sheets 1 to 97": the old
+# city's revenue villages (Domlur, Lalbagh, Mavalli, ...) carry hobli KASABA in our data
+CITY_SURVEY = {
+    "taluk": "1",
+    "hobli_name": "KASABA",
+    "annex_hobli": "Kasaba (Bengaluru)",
+}
+LOADED_COLOURED = ("BMRDA-HSK", "BMRDA-ANK")  # loaded plans with "Not coloured" areas
 # authority -> (plan_ids, plan_coverage, note) for map-derived entries
 MAP_AUTH = {
     "BMRDA-ANK": (["BMRDA-ANK-MP2031"], "plan_loaded", None),
@@ -72,11 +103,11 @@ MAP_AUTH = {
     "BIAAPA": (["BIAAPA-MP2021"], "plan_registered_not_loaded", None),
     "BMICAPA": (["BMICAPA-ODP2004"], "plan_registered_not_loaded", None),
     "BMRDA-NLM": (["BMRDA-NLM-MP2031"], "plan_registered_not_loaded", NOTE_NLM),
-    "KANAKAPURA": ([], "lpa_no_zone_map", None),
-    "MAGADI": ([], "lpa_no_zone_map", None),
-    "RAMANAGARA": ([], "lpa_no_zone_map", None),
-    "CHANNAPATNA": ([], "lpa_no_zone_map", None),
-    "GBBSC": ([], "lpa_no_zone_map", None),
+    "KANAKAPURA": ([], "no_master_plan_found", NOTE_NOT_REGISTERED),
+    "MAGADI": ([], "no_master_plan_found", NOTE_NOT_REGISTERED),
+    "RAMANAGARA": ([], "no_master_plan_found", NOTE_NOT_REGISTERED),
+    "CHANNAPATNA": ([], "no_master_plan_found", NOTE_NOT_REGISTERED),
+    "GBBSC": ([], "no_master_plan_found", NOTE_NOT_REGISTERED),
 }
 
 
@@ -100,6 +131,34 @@ def hobli_names(cad_dir):
         if len(p) >= 4 and len(n) >= 4:
             out[(p[3], p[2], p[1])] = n[1].strip().upper()
     return out
+
+
+def annex_match(annex, k, village, hobli):
+    """BDA Annexure 1 row for a Bengaluru Urban village: exact name + hobli, or the city
+    survey sheets row for the old city's Kasaba hobli; None if neither."""
+    if k[0] != "20":
+        return None
+    key, hk = name_key(village), norm_hobli(hobli)
+    rows = [
+        a
+        for a in annex
+        if k[1] in ANNEX_TALUKS.get(a["taluk"], ())
+        and name_key(text_core(a["village"])) == key
+        and norm_hobli(a["hobli"]) == hk
+    ]
+    if len(rows) == 1:
+        return rows[0]
+    if k[1] == CITY_SURVEY["taluk"] and hobli == CITY_SURVEY["hobli_name"]:
+        return next(
+            (
+                a
+                for a in annex
+                if a["hobli"] == CITY_SURVEY["annex_hobli"]
+                and a["village"].startswith("City Survey Sheets")
+            ),
+            None,
+        )
+    return None
 
 
 def entry(authority, share, plan_ids, pc, note=None, source="spatial"):
@@ -130,6 +189,11 @@ def main():
     with open(SOURCES_CSV, encoding="utf-8", newline="") as f:
         sources = [{k: (v or None) for k, v in r.items()} for r in csv.DictReader(f)]
     hob = hobli_names(args.cadastral_dir)
+    annex = annexure_rows(
+        pymupdf.open(
+            os.path.join(args.data_root, "raw", "BDA-RMP2031", "BDA-RMP2031-MPD.pdf")
+        )
+    )
 
     # polygons
     m = pq.read_table(os.path.join(zdir, "BMRDA-LPA-MAP_lpas.parquet"))
@@ -329,7 +393,69 @@ def main():
                 out_rows[i] = (r, k, [e])
                 stats["inferred_from_taluk"] += 1
             else:
-                stats["no_geometry_unresolved"] += 1
+                # (4) BDA's notified village list, by exact name + hobli (no fuzzy guess)
+                a = annex_match(annex, k, r["village_name"], hob.get(k[:3], ""))
+                if a:
+                    e = {
+                        "authority": "BDA",
+                        "coverage": "full"
+                        if "Full" in a["coverage_text"]
+                        else "partial",
+                        "share_pct": None,
+                        "plan_ids": ["BDA-RMP2031"],
+                        "plan_coverage": "plan_loaded",
+                        "pd": None,
+                        "source": "list",
+                        "note": NOTE_BY_LIST.format(sl=a["sl"], name=a["village"]),
+                    }
+                    out_rows[i] = (r, k, [e])
+                    stats["inferred_from_bda_list"] += 1
+                else:
+                    stats["no_geometry_unresolved"] += 1
+
+    # a loaded plan whose LPA takes in a sliver of a village that it leaves uncoloured says
+    # nothing there: that entry counts as lpa_no_zone_map (the village keeps its own value)
+    cand = [
+        (i, e)
+        for i, (_r, k, ents) in enumerate(out_rows)
+        if k in geom
+        for e in ents
+        if e["authority"] in LOADED_COLOURED
+        and e["plan_coverage"] == "plan_loaded"
+        and e.get("share_pct") is not None
+        and e["share_pct"] <= FULL_SHARE
+    ]
+    pid = {"BMRDA-HSK": "BMRDA-HSK-MP2031", "BMRDA-ANK": "BMRDA-ANK-MP2031"}
+    for auth in LOADED_COLOURED:
+        mine = [(i, e) for i, e in cand if e["authority"] == auth]
+        if not mine:
+            continue
+        z = pq.read_table(
+            os.path.join(zdir, f"{pid[auth]}.parquet"),
+            columns=["class_norm", "geometry"],
+        )
+        zg = shapely.from_wkb(z.column("geometry").to_numpy(zero_copy_only=False))
+        zg = zg[
+            np.array(
+                [c not in (None, "uncoloured") for c in z.column("class_norm").to_pylist()]
+            )
+        ]
+        tree = shapely.STRtree(zg)
+        for i, e in mine:
+            g = geom[out_rows[i][1]]
+            hit = zg[tree.query(g, predicate="intersects")]
+            pct = 100 * float(shapely.area(shapely.intersection(hit, g)).sum()) / g.area
+            if pct < MIN_SHARE:
+                e["plan_coverage"] = "lpa_no_zone_map"
+                e["note"] = "; ".join(
+                    x
+                    for x in (
+                        e.get("note"),
+                        NOTE_UNCOLOURED.format(pct=pct, share=e["share_pct"]),
+                    )
+                    if x
+                )
+                stats[f"uncoloured_sliver_{auth}"] += 1
 
     with open(AUTH_CSV, "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(
@@ -357,7 +483,19 @@ def main():
                         "source": top.get("source") or "",
                     }
                 )
-                src = []
+                src = (
+                    [
+                        {
+                            "source": 'BMRDA map "Local Planning Areas in Bengaluru Metropolitan Region" (1:125,000)',
+                            "url": "https://strrpa.karnataka.gov.in/uploads/media_to_upload1756733506.pdf",
+                            "doc_id": "BMRDA-LPA-MAP",
+                            "checked_on": "2026-10-02",
+                            "finding": f"inside the {top['authority'].title()} LPA; its master plan is not registered (outside this phase)",
+                        }
+                    ]
+                    if pc == "no_master_plan_found"
+                    else []
+                )
             else:
                 pc = "no_master_plan_found"
                 row.update({"authority": "", "coverage": "none", "plan_ids": ""})

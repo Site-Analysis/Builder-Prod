@@ -379,9 +379,12 @@ components:
         plan_registered_not_loaded: a plan is in force or published here and registered,
         but its zones are not loaded (e.g. BIAAPA Master Plan 2021).
         lpa_no_zone_map: inside an LPA whose plan publishes no zone map for this area
-        (e.g. the Madhure hobli villages of the Nelamangala LPA).
-        no_master_plan_found: no planning authority or plan found after the sources in
-        `sources_checked` were checked.
+        (e.g. the Madhure hobli villages of the Nelamangala LPA), or an LPA registered as
+        having no master plan (STRR, Doddaballapura), or a loaded plan's LPA where that plan
+        leaves the location uncoloured.
+        no_master_plan_found: no planning authority, or no plan for its authority, found after
+        the sources in `sources_checked` were checked (e.g. the Magadi and Kanakapura LPAs,
+        whose plans are not registered; the authority is still listed in `authorities`).
         Where several apply, the top-level value is the first in this order:
         plan_loaded, plan_registered_not_loaded, lpa_no_zone_map, no_master_plan_found.
 
@@ -478,7 +481,8 @@ components:
           items: { $ref: "#/components/schemas/AuthorityEntry" }
           description: >
             Every authority covering the location, largest share first. Empty only with
-            plan_coverage no_master_plan_found.
+            plan_coverage no_master_plan_found (which can also list an authority whose plan
+            is not registered).
         sources_checked:
           type: array
           items: { $ref: "#/components/schemas/SourceCheck" }

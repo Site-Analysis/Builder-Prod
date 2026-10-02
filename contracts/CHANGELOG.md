@@ -15,6 +15,15 @@ Additive.
   white), so "Not coloured on the plan" is unchanged.
 - `/authority` near-edge note (approved 2 Oct with the 100 m rule) gives the distance to the
   LPA edge: "Outside the LPA by 42 m; boundary sources differ by about 15 m here."
+- `plan_coverage` values (no new value; descriptions of `PlanCoverage` and `authorities`
+  extended): an LPA with no register row at all (Magadi, Kanakapura, Ramanagara,
+  Channapatna, GBBSC) is `no_master_plan_found` with the authority still listed and the
+  sources checked; `lpa_no_zone_map` stays for LPAs registered as having no master plan (STRR,
+  Doddaballapura) and for a loaded plan whose LPA takes in a sliver of a village (or a point)
+  that the plan leaves uncoloured (< 5 % of the village coloured).
+- Data (authority_villages.csv): Bengaluru North's old-city Kasaba villages are BDA by the RMP
+  2031 village list (Annexure 1 sl 261, City Survey Sheets 1-97), note "Coverage by village
+  list ..., no parcel geometry".
 
 ---
 
