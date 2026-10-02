@@ -43,3 +43,33 @@ would change it. All defaults are reversible; none is a KGIS / Dishaank / Land B
 | 31 | B2 | Nelamangala grids: 4 sheets (A3, B1, C3, D1) pass the brief's bars (held-out RMSE ≤ 10 m, shift ≤ 300 m, ≥ 6 matches) but their junction matches are no better than the same sheet shifted 1.5-3.5 km (null baseline, 0.9-1.4x against a 3x bar) and the road correlation has no distinct peak | All 11 Nelamangala grids rejected; Sompura / Thyamagondlu not refined (weak tank-only priors, Overpass down). Plan stays `plan_registered_not_loaded` | Ground control per sheet (≥ 3 surveyed points), or accept on the brief's bars alone (risk: zones 100+ m off) |
 | 32 | E | Anekal title-map extent includes the map frame: the acceptance page "partial village" (20/4/4/3 survey 10) lands on the margin grid label "796000", extracted as transport. Same cause as the 961 ha of "transport" in the 2,718 ha margin (#25) | Not changed this round (would change the LPA polygon and the authority rows). Logged | Clip the Anekal LPA to BMRDA's pre-STRR extent (or mask the title map's frame and labels) and re-merge |
 | 33 | E (Tanmay, 2 Oct) | The planning service holds every loaded plan in memory (peak 11.7 GB private, ~2.6 min first load) | Nothing changed this round. Proposed: build-time vector tiles (PMTiles per plan) for the map, precomputed /zones/at answers per parcel (SQLite / parquet, tens of MB) and the small LPA / village files for /authority; same contract | Tanmay's OK to build it |
+
+### Frontend test, 2 Oct
+
+Test only (US-02): services + web run locally, 18 cases a-r through the API, 15 through the UI (Playwright, `<data-root>/planning/frontend_test/`). Nothing fixed.
+
+| # | Case | Defect | Seen |
+|---|---|---|---|
+| F1 | k (20/3/9/12 NEKKUNDIDOMMASANDRA 5/*/XX) | Point `/authority` (12.929601, 77.780435) lists BMRDA-ANK and BMRDA-HSK but not BDA, while the village row says BDA full and `/zones/at` returns BDA hits; the village row lists only BDA although Anekal and Hoskote zones touch the parcel | api_checks.json k |
+| F2 | g (21/4/5/1 NANDAGUDI 200/XX/8) | Village `plan_loaded` although Hoskote leaves the parcel 100 % "Not coloured" (no sheet); the point says `lpa_no_zone_map`. The uncoloured-sliver rule (#29) only covers partial entries | api_checks.json g |
+| F3 | n (21/2/3/1 KANNAMANGALA, Madhure) | Village `lpa_no_zone_map`, point `/authority` `plan_registered_not_loaded` (the point path does not know the Madhure rule) | api_checks.json n |
+| F4 | p (20/2/21/1 CHOLANAYAKANAHALLI) | Point note "Outside Bengaluru Urban and Rural; plan not registered" for a village in Bangalore South (Bengaluru Urban) | api_checks.json p |
+| F5 | i (20/3/2/50 BANDENALLA SANDRA 86/*/3) | Point `/authority` `lpa_no_zone_map` while the parcel is 72 % Anekal residential and the village is `plan_loaded` (the point falls in the parcel's 5 % uncoloured part) | api_checks.json i |
+| F6 | i, j, k | Anekal "Not coloured on the plan" hits report `source_layer` "composite" (Hoskote's report none/null) | api_checks.json |
+| F7 | j, k | Title-map margin artefact (#32) also hits case k: TRANSPORTATION (coarse map) 30.6 % from Map No. 39's frame | api_checks.json k; layers/ank_title_map_margin_32_z16.png |
+| F8 | m, n, o, p (UI) | Parcel card shows only "No 2031 plan zone on this parcel"; it does not show the authority or `plan_coverage` (registered / no zone map / no plan found), so the registered Nelamangala plan, Madhure and Magadi cases look the same | ui_checks.json m, n, p (parcel screenshots removed) |
+| F9 | l (12.868169, 77.846985) | Point outside every LPA (32 m from Anekal) gets top-level `plan_coverage` "plan_loaded" from a near-edge partial entry; could read as "inside a loaded plan" | api_checks.json l |
+| F10 | UI, all | With all plan switches on, zone fills are hard to see under the loaded parcel fill at village zoom (c: Bellandur shows no industrial fill) | ui_switches.json (parcel screenshots removed); layer-only shots in `frontend_test/layers/` show fills clearly |
+| F11 | o | Devanahalli town village (21/3/2/61) has no parcel data: `/zones/at` cannot be tested there; authority comes from its hobli | cases.json o |
+
+Layer pass (zone layers only, no parcels; 25 regions at zoom 16 and 14, `<data-root>/planning/frontend_test/layers/`, 54 screenshots):
+
+| # | Where | Defect | Screenshot |
+|---|---|---|---|
+| L1 | First view after start (CBD) | The first BDA `/zones` request took 37 s; the map showed "Planning layers unavailable: signal is aborted without reason" and drew nothing. The same view drew 1,418 zones in 7 s on retry | layers/bda_cbd_mg_road_z16.png vs bda_cbd_mg_road_retry1_z16.png |
+| L2 | Every region at zoom 14 | "Zoom in to load the 2031 plan layers": at 1600 x 1000 px zoom 14 needs more than 4 service boxes (MAX_TILES 4 x 0.05 deg), so the plan layers appear only at zoom 15+ | layers/*_z14.png |
+| L3 | Anekal Jigani (Map 49 / 50 seam) and Anekal town | A straight pale vertical band across the zones at the sheet seam: small "Not coloured on the plan" strips between the two detail sheets | layers/ank_jigani_industrial_z16.png, ank_anekal_town_z16.png, ank_jigani_seam_band_z16.png |
+| L4 | Anekal title-map margin (#32) | The title map's frame band shows as a grey strip across Varthur Road (Siddapura) | layers/ank_title_map_margin_32_z16.png |
+| L5 | Hoskote (Jadigenahalli, Nandagudi edge, BDA-Hoskote seam) | Scattered purple (industrial) and grey specks over agriculture: base-map building outlines extracted as zones (known, hoskote-2031-qa.md G3) | layers/hsk_jadigenahalli_z16.png, seam_bda_hoskote_only_hoskote.png |
+| L6 | Wide view (zoom 11) | The "Zoom in" status sits bottom-left under the legend panel and the Next.js dev badge; easy to miss | layers/wide_z11_zoom_guard.png |
+
