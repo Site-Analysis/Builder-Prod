@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.18.0"
+  version: "1.19.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -149,7 +149,8 @@ paths:
       summary: Zone polygons for one plan within a bbox (map layer)
       description: >
         Maximum bbox is 0.05 degrees per side (maxLng - minLng <= 0.05 and
-        maxLat - minLat <= 0.05); larger boxes return 400.
+        maxLat - minLat <= 0.05), or 0.25 degrees per side when simplify_m is 25 (map zoom
+        10-12, 1.19); larger boxes return 400.
         Every feature carries `status` and `status_label` copied from its source sheet's
         register row. Gated by `feature.planning.layers` AND `feature.planning.plan.<plan_id>`.
         Zones are extracted on demand from the sheets in the layer index whose extent meets
@@ -170,7 +171,7 @@ paths:
           schema:
             type: string
             pattern: "^-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?$"
-          description: "minLng,minLat,maxLng,maxLat in WGS84; at most 0.05 degrees per side"
+          description: "minLng,minLat,maxLng,maxLat in WGS84; at most 0.05 degrees per side (0.25 with simplify_m 25)"
           example: "77.60,12.95,77.65,13.00"
         - name: simplify_m
           in: query
@@ -179,7 +180,8 @@ paths:
           description: >
             Geometry pre-simplified when the sheet is extracted, with this tolerance in metres (topology kept).
             Default 8. Suggested by map zoom: 2 at zoom >= 16, 8 at 13-15, 25 at <= 12.
-            /zones/at always uses full geometry.
+            Display only (1.19): pieces under 100 m2 (simplify 8) or 0.25 ha (simplify 25) are
+            left out. /zones/at always uses full geometry and every piece.
       responses:
         "200":
           description: GeoJSON FeatureCollection of zones
@@ -188,7 +190,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ZoneFeatureCollection"
         "400":
-          description: Malformed bbox, or bbox wider/taller than 0.05 degrees
+          description: Malformed bbox, or bbox wider/taller than 0.05 degrees (0.25 with simplify_m 25)
         "403":
           description: Feature flag disabled (layers or this plan)
         "404":
@@ -202,7 +204,7 @@ paths:
         Symbols drawn on the plan sheet that are not zones: the NGT Buffer hatch, the forest
         tree-glyph area and stream centrelines. They are map symbols, not measured buffers
         or boundaries, and every feature says so in `note`. Same bbox cap as /zones
-        (0.05 degrees per side; larger returns 400). Gated by `feature.planning.layers`
+        (0.05 degrees per side, 0.25 with simplify_m 25; larger returns 400). Gated by `feature.planning.layers`
         AND `feature.planning.plan.<plan_id>`.
         1.18 adds the kinds proposed_road, water_body, metro_rail and drawn_buffer (lines
         or areas only, never zones). A proposed_road feature's note is always "Proposed road
@@ -220,7 +222,7 @@ paths:
           schema:
             type: string
             pattern: "^-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?,-?[0-9]+(\\.[0-9]+)?$"
-          description: "minLng,minLat,maxLng,maxLat in WGS84; at most 0.05 degrees per side"
+          description: "minLng,minLat,maxLng,maxLat in WGS84; at most 0.05 degrees per side (0.25 with simplify_m 25)"
           example: "77.60,12.95,77.65,13.00"
         - name: kind
           in: query
@@ -242,11 +244,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/OverlayFeatureCollection"
         "400":
-          description: Malformed bbox, bbox wider/taller than 0.05 degrees, or unknown kind
+          description: Malformed bbox, bbox wider/taller than 0.05 degrees (0.25 with simplify_m 25), or unknown kind
         "403":
           description: Feature flag disabled (layers or this plan)
         "404":
           description: Unknown plan_id, or plan has no overlay layer loaded
+
+  /coverage:
+    get:
+      operationId: getCoverage
+      summary: Villages coloured by plan_coverage within a bbox (Coverage status map layer, 1.19)
+      description: >
+        One feature per village of Bengaluru Urban and Rural (authority_villages.csv) whose
+        outline meets the bbox, with the village table's `authority` and `plan_coverage`.
+        Outlines are the cadastral service's parcel unions, held in the planning service's
+        memory only; they load in the background on the first request (about 5 minutes):
+        until then `state` is "loading" and `features` is empty, and the client polls again.
+        "unavailable" means the outlines could not be fetched. Villages without parcel data
+        have no outline and are not returned. Maximum bbox 0.5 degrees per side; larger
+        returns 400. Gated by `feature.planning.layers` AND `feature.planning.coverage-layer`.
+      parameters:
+        - name: bbox
+          in: query
+          required: true
+          schema: { type: string }
+          description: "minLng,minLat,maxLng,maxLat in WGS84; at most 0.5 degrees per side"
+          example: "77.40,12.80,77.90,13.20"
+      responses:
+        "200":
+          description: Village outlines with their plan_coverage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoverageFeatureCollection"
+        "400":
+          description: Malformed bbox, or bbox wider/taller than 0.5 degrees
+        "403":
+          description: Feature flag disabled
 
   /zones/at:
     get:
@@ -716,6 +750,38 @@ components:
       type: integer
       enum: [2, 8, 25]
       default: 8
+
+    CoverageFeatureCollection:
+      type: object
+      required: [type, state, features]
+      properties:
+        type: { type: string, enum: [FeatureCollection] }
+        state:
+          type: string
+          enum: [loading, ready, unavailable]
+          description: Whether the village outlines are loaded in the service (1.19)
+        build_id: { $ref: "#/components/schemas/BuildId" }
+        features:
+          type: array
+          items:
+            type: object
+            required: [type, geometry, properties]
+            properties:
+              type: { type: string, enum: [Feature] }
+              geometry:
+                type: object
+                description: GeoJSON Polygon or MultiPolygon, EPSG:4326, simplified to 25 m
+              properties:
+                type: object
+                required: [dist, taluk, hobli, vlg, plan_coverage]
+                properties:
+                  dist: { type: string }
+                  taluk: { type: string }
+                  hobli: { type: string }
+                  vlg: { type: string }
+                  village_name: { type: [string, "null"] }
+                  authority: { type: [string, "null"] }
+                  plan_coverage: { $ref: "#/components/schemas/PlanCoverage" }
 
     ZoneFeatureCollection:
       type: object

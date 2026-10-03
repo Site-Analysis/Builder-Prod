@@ -4,6 +4,30 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.19.0 — 2026-10-03 — planning
+
+Additive.
+- `/zones` and `/overlays`: bbox up to 0.25 degrees per side when `simplify_m` is 25 (map
+  zoom 10-12), so plan layers show from zoom 10 (L2); 0.05 degrees otherwise, unchanged.
+  Display only: `/zones` leaves out pieces under 100 m2 at `simplify_m` 8 and under 0.25 ha at
+  25 (a Hoskote town box went from 37,865 features / 45 MB, 95 % specks, to the visible ones);
+  `/zones/at` answers are unchanged.
+- New `GET /coverage?bbox=` (CoverageFeatureCollection): villages of Bengaluru Urban and
+  Rural coloured by the village table's `plan_coverage`, for the side panel's "Coverage status"
+  layer. Outlines are the cadastral service's parcel unions, in the service's memory only;
+  `state` is loading / ready / unavailable. Gated by `feature.planning.layers` and
+  `feature.planning.coverage-layer`.
+- Behaviour within 1.18 (no schema change): a lat/lng `/authority` answer's `village_summary`
+  is null until the village outlines have loaded (they start on the first point query); zone
+  `qa` (SheetQA) now always carries `placement_confirmed` and `position_uncertainty_m`; "Not
+  coloured on the plan" hits report `source_layer` null for every plan (F6).
+- Data: Magadi (`MAGADI-MP2031`, draft: no approval GO published) and Kanakapura
+  (`KPA-MP2031`, final, UDD 153 BMR 2013 of 07-08-2015) are registered, not loaded (town maps
+  without coordinates); their villages are `plan_registered_not_loaded`. STRR and
+  Doddaballapura are `authority_no_master_plan`.
+
+---
+
 ## 1.18.0 — 2026-10-02 — planning
 
 Additive (new enum values, new optional fields); one value's meaning narrowed (below).
