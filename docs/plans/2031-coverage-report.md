@@ -2,12 +2,35 @@
 
 Round of 1-2 Oct 2026 ("every village in Bengaluru Urban and Rural gets an answer"), updated by
 the round of 2 Oct (Anekal round 4, Nelamangala second route, taluk rows), branch
-`feat/planning-2031-phase0`, contract `planning` 1.17.0. Per-plan QA:
+`feat/planning-2031-phase0`, contract `planning` 1.17.0; the round of 3 Oct (contract 1.19) is summarised first. Per-plan QA:
 `hoskote-2031-qa.md`, `anekal-2031-qa.md`, `nelamangala-2031-qa.md`; seams: `2031-seams.md`;
 defaults applied: `open-decisions.md`. The BDA RMP 2031 audit of 30 Sep - 1 Oct follows below
 unchanged.
 
-## Plans
+## What's on the map (round of 3 Oct 2026, contract 1.19)
+
+Zones are not stored in the repo. The planning service extracts them on demand from the indexed sheets
+(`infra/planning/layer_index.json`, `LAYER_INDEX.md`) for exact answers (`/zones/at`, `/authority`). The map draws
+the pre-drawn tiles from Supabase Storage (`planning-tiles`, #65), so switching a plan on shows it at once.
+
+| Plan | Status | On the map | Sheets indexed | Placement | Map display |
+|---|---|---|---|---|---|
+| BDA RMP 2031 | **draft** (never approved) | yes | 1 composite (PLUCOMP) | confirmed, ~11 m | pre-drawn tiles (zoom 10-15) |
+| Hoskote MP 2031 | **final**, subject to W.P. 4188/2016 | yes | 51 (detail + hobli) | confirmed; floor 6.85 m | pre-drawn tiles |
+| Anekal MP 2031 | **final** | yes | 1 (Map No. 39, vector, #44) | **unconfirmed** (100 m; OSM check pending, #45) | pre-drawn tiles, dashed outline |
+| Nelamangala MP 2031 | **final** | yes, 5 town sheets | S2, T1 confirmed (5.6 / 6.0 m); A3, B1, D1 unconfirmed (100 m) | 2 confirmed, 3 unconfirmed | on demand; pre-drawn after the next tile run |
+| Magadi MP 2031 | draft (no GO published) | no: registered | 0 (town maps without coordinates) | — | — |
+| Kanakapura MP 2031 | final (GO from the site label) | no: registered | 0 (town maps without coordinates) | — | — |
+| BIAAPA MP 2021 | final (2021 horizon) | no: registered | 0 | — | — |
+| BMICAPA ODP 2004 | unconfirmed | no: registered | 0 | — | — |
+| STRR LPA, Doddaballapura PA | no master plan (`authority_no_master_plan`) | — | — | — | — |
+
+Map navigation:
+- toolbar "2031 plan area" then "Sub-area" (the places checked in the US-02 test) flies there and switches the plan on;
+- the side panel lists every plan with its switch, opacity, legend, sources, sheet states and the Coverage status
+  layer.
+
+## Plans (round of 2 Oct, kept for reference)
 
 | Plan | Status | Zones | Source layers | Class agreement with the plan's own table | Georef / OSM check |
 |---|---|---|---|---|---|
