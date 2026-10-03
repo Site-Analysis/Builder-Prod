@@ -24,6 +24,7 @@ interface Props {
   onLocBounds?: (bbox: [[number, number], [number, number]]) => void;
   onCoordGo?: (coords: { lat: number; lon: number }) => void;
   onVillageSelect?: (hier: VillageCoords) => void;
+  extra?: React.ReactNode; // rendered after the search controls (e.g. the 2031 plan area picker)
   autoSelect?: VillageCoords | null;
   autoStatus?: string;
   loadedSurveyNos?: Set<string>;
@@ -125,7 +126,7 @@ function SearchDropdown({ results, loadedSurveyNos, loadedVillage, onSelect }: {
   );
 }
 
-export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, onLocBounds, onCoordGo, onVillageSelect, autoSelect, autoStatus, loadedSurveyNos }: Props) {
+export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, onLocBounds, onCoordGo, onVillageSelect, autoSelect, autoStatus, loadedSurveyNos, extra }: Props) {
   const [districts, setDistricts] = useState<HierarchyItem[]>([]);
   const [taluks, setTaluks]       = useState<HierarchyItem[]>([]);
   const [hoblis, setHoblis]       = useState<HierarchyItem[]>([]);
@@ -525,6 +526,8 @@ export function CadastralToolbar({ onLoad, onSearch, onHighlight, onFlyTo, onLoc
           )}
         </>
       )}
+
+      {extra}
 
       {status && (
         <span style={{ fontSize: 11, color: "#9EAD98", marginLeft: "auto", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: isMobile ? "100%" : 220 }}>

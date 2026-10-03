@@ -1,0 +1,5 @@
+dist,taluk,hobli,vlg,village_name,authority,plan_ids,coverage,share_pct,pd,source,text_coverage,text_name,mismatch_note
+20,1,1,14,FIXTURE FULL,BDA,BDA-RMP2031,full,100.0,8,both,full,Fixture Full,
+20,1,1,11,FIXTURE PART,BDA,BDA-RMP2031,partial,42.5,,both,partial,Fixture Part,
+20,1,1,12,FIXTURE EDGE,BDA,BDA-RMP2031,partial,0.4,,text,full,Fixture Edge,"text lists it (Full Village); map share 0.4%"
+21,1,1,1,FIXTURE RURAL,,,none,0.0,,,,,

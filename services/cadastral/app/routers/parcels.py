@@ -58,7 +58,10 @@ def get_nearby_villages(
 ) -> Response:
     """LGD village polygons within radius_km of (lat, lng). Green=has data, red=no data."""
     _require_flag()
-    return Response(content=cs.build_nearby_boundaries(lat, lng, radius_km), media_type="application/json")
+    return Response(
+        content=cs.build_nearby_boundaries(lat, lng, radius_km),
+        media_type="application/json",
+    )
 
 
 @router.get("/data")

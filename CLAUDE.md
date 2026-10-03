@@ -11,9 +11,13 @@ Standalone production repo for the Qnit Builders module. Features land one at a 
 ```
 apps/web/                  Next.js 16 + React 19 frontend (port 3000)
 services/cadastral/        FastAPI cadastral service (port 8011)
+services/planning/         FastAPI planning service (port 8012): 2031 zone + overlay layers
 contracts/                 OpenAPI YAML — one per service + CHANGELOG.md
 infra/supabase/            Supabase SQL setup scripts
 tests/                     Smoke tests (one file per service, run per-process)
+infra/scripts/             One-off data build scripts (LGD index; planning/ = fetch sources, probe PDFs)
+infra/planning/            Planning source register CSVs (plans.csv, plan_docs.csv); raw PDFs NOT committed
+docs/plans/                Build plans
 docker-compose.yml         Local dev: cadastral backend only; web runs outside
 .env.example               Root env (docker-compose vars)
 apps/web/.env.example      Frontend env
@@ -24,6 +28,7 @@ apps/web/.env.example      Frontend env
 | Feature | Branch | Status | Phases |
 |---------|--------|--------|--------|
 | Karnataka Cadastral Explorer | `Cadestral` | Complete | 1A (scaffold), 1B (backend), 1D (search + click) |
+| 2031 planning layers (BDA, Hoskote, Anekal) | `feat/planning-2031-phase0` | In review (draft PR #20) | on-demand layer index (contract 1.19), pre-drawn map tiles in Supabase Storage, side panel + area picker + legend card; setup in README "2031 planning layers — Setup" |
 
 Phase 1C (CockroachDB) was cancelled — filesystem + SQLite approach used instead.
 
@@ -49,7 +54,7 @@ No external database for parcel data. Pure filesystem:
 
 Every parquet stores `Polygon(Northing, Easting)` instead of `Polygon(Easting, Northing)` — upstream scraper bug. `load_village()` in `cadastral_service.py` fixes this with `affine_transform([0,1,1,0,0,0])` before reprojecting to WGS84. Never read parquets directly without this fix.
 
-**Datum**: Source data is in Kalianpur 1975 datum (Everest ellipsoid + 3-param Bursa-Wolf shift: towgs84=295,736,257). Set `CADASTRAL_DATUM=kalianpur` (confirmed via visual alignment test — parcels match satellite boundaries). Default in docker-compose and `.env.example`. Do NOT use `wgs84` (shifts parcels ~60 m S / ~108 m E).
+**Datum**: Parcels are raw **EPSG:32643** (WGS84 / UTM 43N) after the `[0,1,1,0,0,0]` X/Y swap. `load_village()` applies the swap, then `set_crs(32643).to_crs(4326)`. No Kalianpur correction and no `CADASTRAL_DATUM` env var — the earlier Kalianpur shift was removed (size of the resulting coordinate shift not measured).
 
 ### Request flow
 
