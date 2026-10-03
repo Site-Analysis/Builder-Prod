@@ -98,7 +98,7 @@ export function loadPlanningToggles(): PlanningToggles {
     const plans = { ...NO_PLANS };
     const opacity = { ...FULL };
     for (const p of WEB_PLANS) {
-      plans[p.plan_id] = saved.plans?.[p.plan_id] === true;
+      // plan switches always start off on reload (Tanmay, 3 Oct); opacity is remembered
       const o = saved.opacity?.[p.plan_id];
       if (typeof o === "number" && o >= 0.1 && o <= 1) opacity[p.plan_id] = o;
     }
@@ -260,7 +260,7 @@ export function PlanningMapLayers({
       const zoom = map.getZoom();
       if (!ids.length && !overlays.length && !toggles.coverage) {
         setData({ zones: {} });
-        onStatus(pre.length && zoom < MIN_ZOOM ? "Zoom in to level 10 or closer to see the 2031 plan layers" : "");
+        onStatus(""); // pre-drawn plans show at every zoom
         onView(withPre({ zoom, legend: {}, warnings: {} }));
         return;
       }
@@ -848,7 +848,7 @@ export function PlanningAreaPicker({
           role="switch" aria-checked={on} aria-label="Show zones of this plan"
           onClick={() => {
             setToggles({ ...toggles, plans: { ...toggles.plans, [area]: !on } });
-            if (!on && !sub && plans?.[area]?.extent) onFit(plans[area].extent!);
+            if (!on && plans?.[area]?.extent) onFit(plans[area].extent!);
           }}
           style={{
             display: "flex", alignItems: "center", gap: 6, padding: "3px 9px", border: "1px solid #CFD6C4",

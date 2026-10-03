@@ -50,8 +50,11 @@ export function PrebuiltPlanLayer({ plan, opacity }: { plan: PrebuiltPlan; opaci
   useEffect(() => {
     const layers: Layer[] = plan.files.map((f, i) => {
       const last = i === plan.files.length - 1;
+      const first = i === 0;
       return leafletRasterLayer(new PMTiles(f.url), {
-        minZoom: f.minzoom,
+        // the first file is scaled down below its native zoom, so the plan stays visible
+        // from far out (zoom 5+); the last is scaled up beyond its native zoom
+        minZoom: first ? 5 : f.minzoom,
         // the last file is over-zoomed beyond its native zoom (scaled by Leaflet)
         maxZoom: last ? 22 : f.maxzoom,
         maxNativeZoom: f.maxzoom,
