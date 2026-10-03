@@ -123,6 +123,91 @@ curl http://localhost:8011/districts
 
 ---
 
+## 2031 planning layers — Setup
+
+The map shows the 2031 master-plan zones of BDA (RMP 2031, draft), Hoskote and Anekal:
+- a side panel with plan switches, opacity, legend and sources;
+- an area / sub-area picker in the toolbar;
+- a zone legend card;
+- the plans that touch the parcel, on the parcel card.
+
+**No plan data is stored in the repo or on disk.**
+
+| Part | Where it comes from |
+|---|---|
+| Map zones | Pre-drawn raster tiles (PMTiles) in the public Supabase Storage bucket `planning-tiles`, read by the browser. Built once by `infra/scripts/planning/build_tiles.py` |
+| Parcel answers (`/zones/at`, `/authority`) | The planning service (port 8012). It downloads the plan sheets listed in `infra/planning/layer_index.json` on demand, extracts them in a memory-capped worker, keeps the result in RAM, and deletes the download. See `infra/planning/LAYER_INDEX.md` |
+
+### 1. Python environments
+
+```bash
+# planning service
+cd services/planning && python3.12 -m venv .venv
+.venv/Scripts/pip install -r requirements.txt        # Windows (macOS/Linux: .venv/bin/pip)
+
+# sheet worker + build scripts
+cd ../../infra/scripts/planning && python3.12 -m venv .venv
+.venv/Scripts/pip install -r requirements.txt
+```
+
+### 2. Env vars (`apps/web/.env.local`)
+
+```
+NEXT_PUBLIC_PLANNING_API_URL=http://localhost:8012
+NEXT_PUBLIC_ENABLE_PLANNING_LAYERS=1
+NEXT_PUBLIC_PLANNING_PREBUILT_TILES=1
+```
+
+`NEXT_PUBLIC_SUPABASE_URL` must point to the Supabase project that holds the `planning-tiles` bucket. The tiles are
+public, so the browser needs no key.
+
+### 3. Run the planning service
+
+```powershell
+cd services/planning
+$env:FLAGS = "feature.planning.layers feature.planning.coverage-layer feature.planning.plan.BDA-RMP2031 feature.planning.plan.BMRDA-HSK-MP2031 feature.planning.plan.BMRDA-ANK-MP2031"
+$env:PLANNING_REGISTER_DIR = "..\..\infra\planning"
+$env:PLANNING_WORKER_PYTHON = "..\..\infra\scripts\planning\.venv\Scripts\python.exe"
+$env:CADASTRAL_URL = "http://127.0.0.1:8011"
+$env:CORS_ORIGINS = '["http://localhost:3000"]'
+$env:DEV_BYPASS_AUTH = "1"   # local only
+.venv\Scripts\uvicorn app.main:app --port 8012
+```
+
+On Windows, `infra\scripts\dev\builders_all.ps1` starts the cadastral service, the planning service and the web app
+with these settings. `-Stop` stops them and deletes the temporary logs.
+
+With Docker, `docker-compose up --build` runs the planning service with the worker mounted from `infra/scripts/planning`.
+
+- Use `127.0.0.1` for the services: `localhost` adds a 2 s IPv6 delay on some Windows machines.
+- The web session is bound to `localhost:3000`.
+
+### 4. Check
+
+```bash
+curl http://127.0.0.1:8012/health          # {"status":"ok","service":"planning"}
+services/planning/.venv/Scripts/python -m pytest tests/planning_smoke.py
+```
+
+Open `http://localhost:3000/dashboard` and open a project:
+- toolbar: **2031 plan area**, then **Sub-area**; the map flies there and draws the zones;
+- or the right panel **2031 plan layers**: switching a plan on zooms to it.
+
+### Re-drawing the map tiles (after a plan is re-indexed)
+
+```bash
+infra/scripts/planning/.venv/Scripts/python infra/scripts/planning/build_tiles.py \
+  --plans BDA-RMP2031,BMRDA-HSK-MP2031,BMRDA-ANK-MP2031 \
+  --raw-plans BDA-RMP2031,BMRDA-HSK-MP2031,BMRDA-ANK-MP2031
+```
+
+- It reads `SUPABASE_SERVICE_ROLE_KEY` from `apps/web/.env.local` (never printed or committed).
+- It uploads one file per plan plus `manifest.json`; the map picks the new tiles up within a minute.
+- It needs the planning service running (for `/plans`).
+- Downloads go to the temp folder and are deleted afterwards.
+
+---
+
 ## Development rules
 
 - One feature per PR, targeting the feature branch (e.g. `Cadestral`)

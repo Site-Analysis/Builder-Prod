@@ -4,7 +4,9 @@
 # Required env vars (set in .env at repo root):
 #   KEYCLOAK_ADMIN_PASSWORD  — Keycloak admin console password (set before first run)
 #   CADASTRAL_DATA_ROOT      — host path to dir containing cadastral_lake_v2/ + echawadi_village_list.json
-#   PLANNING_DATA_ROOT       — planning data root (holds planning/zones/<plan_id>.parquet)
+# The planning service keeps no data on disk: it reads infra/planning (register + layer_index.json)
+# and extracts plan sheets on demand from their source URLs (contract 1.18+). The map's zone layers
+# are pre-drawn tiles in Supabase Storage (bucket planning-tiles), read by the web app directly.
 # survey_index.db lives in Docker named volume (survey_index_vol) for fast WSL2 I/O.
 
 services:
@@ -59,17 +61,22 @@ services:
     ports:
       - "8012:8012"
     environment:
-      FLAGS: feature.planning.layers feature.planning.plan.BDA-RMP2031
-      PLANNING_DATA_DIR: /data/zones
+      FLAGS: >-
+        feature.planning.layers feature.planning.coverage-layer
+        feature.planning.plan.BDA-RMP2031 feature.planning.plan.BMRDA-HSK-MP2031
+        feature.planning.plan.BMRDA-ANK-MP2031
       PLANNING_REGISTER_DIR: /register
+      # sheet extraction runs in a capped worker subprocess (infra/scripts/planning)
+      PLANNING_WORKER_PYTHON: python
+      PLANNING_WORKER_SCRIPT: /worker/sheet_worker.py
       CADASTRAL_URL: http://cadastral:8011
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-sat}
       CORS_ORIGINS: '["http://localhost:3000","https://builder.qnit.site"]'
       # DEV_BYPASS_AUTH: "1"   # uncomment to skip JWT validation locally
     volumes:
-      - ${PLANNING_DATA_ROOT:-./data/planning}/planning/zones:/data/zones:ro
       - ./infra/planning:/register:ro
+      - ./infra/scripts/planning:/worker:ro
     depends_on:
       cadastral:
         condition: service_started
