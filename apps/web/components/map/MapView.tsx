@@ -18,9 +18,10 @@ import { useIsMobile } from "@/lib/useIsMobile";
 import { isEnabled } from "@/lib/flags";
 import { fetchZonesAt, type ZonesAtResult } from "@/lib/api/planning";
 import {
-  PlanningCardSection, PlanningControls, PlanningLegend, PlanningMapLayers, type PlanningToggles,
-  effectiveToggles, loadPlanningToggles, savePlanningToggles,
+  PlanningAreaPicker, PlanningCardSection, PlanningMapLayers, PlanningPanel, type PlanningToggles, type PlanningView,
+  effectiveToggles, loadPlanningToggles, savePlanningToggles, usePlanningPlans,
 } from "./PlanningLayers";
+import { usePrebuiltManifest } from "./PrebuiltPlanLayers";
 import "leaflet/dist/leaflet.css";
 
 // Build step 1.4 — RMP 2031 (Draft) planning layers; with the flag off nothing below renders.
@@ -48,9 +49,11 @@ const PROP_LABELS: Record<string, string> = {
 function ParcelLayer({
   fc,
   mapLayer,
+  faint = false,
 }: {
   fc: GeoJSON.FeatureCollection;
   mapLayer: "base" | "satellite";
+  faint?: boolean; // 2031 zones shown: outline only, so the zone fills stay readable (F10)
 }) {
   const map = useMap();
   const filteredFc: GeoJSON.FeatureCollection = {
@@ -69,7 +72,7 @@ function ParcelLayer({
       weight:      isSat ? 1.5 : 1,
       opacity:     0.9,
       fillColor:   isSat ? "#FFFFFF" : "#306223",
-      fillOpacity: isSat ? 0.10 : 0.08,
+      fillOpacity: faint ? 0.01 : isSat ? 0.10 : 0.08,
     }),
     onEachFeature: (feature: GeoJSON.Feature, layer: Layer) => {
       const surveyNo = (feature.properties as Record<string, string>)?.survey_no;
@@ -314,8 +317,22 @@ export function MapView() {
   const [zonesAt, setZonesAt]                       = useState<ZonesAtResult | "loading" | { error: string } | null>(null);
   const zonesAtReq    = useRef(0);
   const planningShown = effectiveToggles(planningToggles);
+  const [planningView, setPlanningView]             = useState<PlanningView | null>(null);
+  const planningPlans = usePlanningPlans(PLANNING && (planningToggles.open || planningShown.zones));
+  const prebuiltPlans = usePrebuiltManifest();
   useEffect(() => { if (PLANNING) savePlanningToggles(planningToggles); }, [planningToggles]);
   const mapRef        = useRef<LeafletMap | null>(null);
+  // 2031 plan navigation: fit a plan, bring it into view only when needed, fly to a sub-area
+  const fitPlanBox = (b: [number, number, number, number]) =>
+    mapRef.current?.fitBounds([[b[1], b[0]], [b[3], b[2]]], { padding: [30, 30] });
+  const showPlanBox = (b: [number, number, number, number]) => {
+    const m = mapRef.current;
+    if (!m) return;
+    const inView = m.getBounds().intersects([[b[1], b[0]], [b[3], b[2]]]);
+    if (m.getZoom() < 10 || !inView) fitPlanBox(b);
+  };
+  const flyToSubArea = (sa: { lat: number; lng: number; zoom: number }) =>
+    mapRef.current?.flyTo([sa.lat, sa.lng], sa.zoom, { duration: 1.2 });
 
   useEffect(() => {
     if (!autoSelect) return;
@@ -458,6 +475,12 @@ export function MapView() {
         autoSelect={autoSelect}
         autoStatus={autoStatus}
         loadedSurveyNos={loadedSurveyNos}
+        extra={PLANNING ? (
+          <PlanningAreaPicker
+            plans={planningPlans} toggles={planningToggles} setToggles={setPlanningToggles}
+            onFit={fitPlanBox} onFly={flyToSubArea}
+          />
+        ) : undefined}
       />
 
       {/* Map fills remaining height */}
@@ -511,8 +534,11 @@ export function MapView() {
 
         {PLANNING && (
           <>
-            <PlanningControls toggles={planningToggles} setToggles={setPlanningToggles} isMobile={isMobile} />
-            <PlanningLegend toggles={planningShown} status={planningStatus} />
+            <PlanningPanel
+              toggles={planningToggles} setToggles={setPlanningToggles} status={planningStatus}
+              view={planningView} plans={planningPlans} isMobile={isMobile}
+              onZoomTo={fitPlanBox} onShow={showPlanBox} onFly={flyToSubArea}
+            />
           </>
         )}
 
@@ -619,10 +645,18 @@ export function MapView() {
               fillOpacity={0.10}
             />
           )}
-          {PLANNING && <PlanningMapLayers toggles={planningShown} onStatus={setPlanningStatus} />}
+          {PLANNING && (
+            <PlanningMapLayers
+              toggles={planningShown} plans={planningPlans} prebuilt={prebuiltPlans}
+              onStatus={setPlanningStatus} onView={setPlanningView}
+            />
+          )}
           {parcelFc && (
             <>
-              <ParcelLayer key={loadKey} fc={parcelFc} mapLayer={mapLayer} />
+              <ParcelLayer
+                key={`${loadKey}-${planningShown.zones ? 1 : 0}`} fc={parcelFc} mapLayer={mapLayer}
+                faint={PLANNING && planningShown.zones && Object.values(planningShown.plans).some(Boolean)}
+              />
               <MapClickHandler parcelFc={parcelFc} onParcelClick={(props, pos, latlng) => {
                 setClickedParcelProps(props); setClickPos(pos); setClickedLatLng(latlng);
                 setRtcData("loading");

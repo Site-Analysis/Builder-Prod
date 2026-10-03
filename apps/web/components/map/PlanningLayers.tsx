@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Qnit. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
-// 2031 plan zone layers (one sub-switch per plan, each with its status badge), RMP 2031
-// map-symbol overlays, legend and the parcel-card section. Rendered only when
-// NEXT_PUBLIC_ENABLE_PLANNING_LAYERS is on. Facts only: no answer or confidence wording.
+// 2031 plan layers: the side panel (plan dropdown, per-plan switch / opacity / legend /
+// overlays / zoom / sources / sheet states, Coverage status layer), the map layers and the
+// parcel-card section. Rendered only when NEXT_PUBLIC_ENABLE_PLANNING_LAYERS is on. Facts
+// only: conditional wording ("The plan shows..."), never an answer or a confidence.
 
 "use client";
 
@@ -11,13 +12,18 @@ import { useEffect, useRef, useState } from "react";
 import { GeoJSON, useMap } from "react-leaflet";
 import type { PathOptions } from "leaflet";
 import {
-  PLAN_ID, WEB_PLANS, fetchOverlays, fetchPlans, fetchZones, simplifyForZoom, splitBbox, statusBadge,
-  type Bbox, type DocStatus, type OverlayKind, type PendingSheet, type PlanInfo, type ZoneHit,
-  type ZonesAtResult, type ZoneProperties,
+  MAX_BBOX_COARSE_DEG, PLAN_ID, PLAN_NAMES, WEB_PLANS, fetchCoverage, fetchOverlays, fetchPlans,
+  fetchVillageAuthority, fetchZones, simplifyForZoom, splitBbox, statusBadge,
+  type AuthorityInfo, type Bbox, type CoverageCollection, type DocStatus, type OverlayKind,
+  type PendingSheet, type PlanCoverage, type PlanInfo, type ZoneHit, type ZonesAtResult,
+  type ZoneProperties,
 } from "@/lib/api/planning";
 import { PLANNING_LEGEND } from "@/lib/planning/legend.generated";
+import { PLAN_SUBAREAS, type SubArea } from "@/lib/planning/subareas";
+import { PrebuiltPlanLayer, type PrebuiltManifest } from "./PrebuiltPlanLayers";
 
-const MAX_TILES = 4; // 4 service boxes of 0.05 deg; beyond that ask the user to zoom in
+const MIN_ZOOM = 10; // L2: plan layers show from zoom 10 (0.25 deg boxes at simplify 25)
+const MAX_TILES = 16; // service boxes per plan per view, after dropping those off the plan
 const COLOUR_BY_LABEL = new Map(PLANNING_LEGEND.map((e) => [e.label, e.colour]));
 // LPA plans: one colour per normalised class (their native labels differ per plan)
 const CLASS_COLOUR: Record<string, { colour: string; label: string }> = {
@@ -36,15 +42,27 @@ const CLASS_COLOUR: Record<string, { colour: string; label: string }> = {
   uncoloured: { colour: "#FFFFFF", label: "Not coloured on the plan" },
 };
 
+// Coverage status layer: one colour and one plain-language line per plan_coverage value
+export const COVERAGE_UI: Record<PlanCoverage, { colour: string; legend: string }> = {
+  plan_loaded: { colour: "#2E7D32", legend: "A 2031 plan's zones are on the map" },
+  plan_registered_not_loaded: { colour: "#1E88E5", legend: "A plan covers it; its zone map isn't on Qnit yet" },
+  lpa_no_zone_map: { colour: "#F9A825", legend: "The plan has no zone map for this village" },
+  authority_no_master_plan: { colour: "#8D6E63", legend: "Planning authority, but no master plan" },
+  no_master_plan_found: { colour: "#E57373", legend: "No authority or plan found" },
+};
+
 export interface PlanningToggles {
-  zones: boolean; // master switch: nothing is drawn while it is off
+  zones: boolean; // derived: any plan switched on (kept for the parcel layer)
   plans: Record<string, boolean>; // one per plan_id
+  opacity: Record<string, number>; // 0.1-1 per plan
   ngt_buffer: boolean;
   forest_symbol: boolean;
   stream_centreline: boolean;
+  coverage: boolean; // Coverage status layer
+  open: boolean; // panel expanded
 }
 
-export const OVERLAY_UI: Record<OverlayKind, { label: string; legend: string; style: PathOptions }> = {
+export const OVERLAY_UI: Record<"ngt_buffer" | "forest_symbol" | "stream_centreline", { label: string; legend: string; style: PathOptions }> = {
   ngt_buffer: {
     label: "NGT buffer",
     legend: "NGT buffer (map symbol)",
@@ -62,27 +80,33 @@ export const OVERLAY_UI: Record<OverlayKind, { label: string; legend: string; st
   },
 };
 
-const OVERLAY_KINDS: OverlayKind[] = ["ngt_buffer", "forest_symbol", "stream_centreline"];
-const STORAGE_KEY = "planning.toggles.v2";
+const OVERLAY_KINDS = ["ngt_buffer", "forest_symbol", "stream_centreline"] as const;
+const STORAGE_KEY = "planning.toggles.v3";
 const NO_PLANS = Object.fromEntries(WEB_PLANS.map((p) => [p.plan_id, false]));
+const FULL = Object.fromEntries(WEB_PLANS.map((p) => [p.plan_id, 1]));
 const ALL_OFF: PlanningToggles = {
-  zones: false, plans: { ...NO_PLANS }, ngt_buffer: false, forest_symbol: false, stream_centreline: false,
+  zones: false, plans: { ...NO_PLANS }, opacity: { ...FULL }, ngt_buffer: false, forest_symbol: false,
+  stream_centreline: false, coverage: false, open: false,
 };
 
-/** Saved switch state; all off when nothing is saved or storage is unavailable. */
+/** Saved switch state (browser storage only); all off when nothing is saved. */
 export function loadPlanningToggles(): PlanningToggles {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return ALL_OFF;
     const saved = JSON.parse(raw) as Partial<PlanningToggles>;
     const plans = { ...NO_PLANS };
-    for (const p of WEB_PLANS) plans[p.plan_id] = saved.plans?.[p.plan_id] === true;
+    const opacity = { ...FULL };
+    for (const p of WEB_PLANS) {
+      plans[p.plan_id] = saved.plans?.[p.plan_id] === true;
+      const o = saved.opacity?.[p.plan_id];
+      if (typeof o === "number" && o >= 0.1 && o <= 1) opacity[p.plan_id] = o;
+    }
     return {
-      zones: saved.zones === true,
-      plans,
-      ngt_buffer: saved.ngt_buffer === true,
-      forest_symbol: saved.forest_symbol === true,
-      stream_centreline: saved.stream_centreline === true,
+      zones: Object.values(plans).some(Boolean), plans, opacity,
+      ngt_buffer: saved.ngt_buffer === true, forest_symbol: saved.forest_symbol === true,
+      stream_centreline: saved.stream_centreline === true, coverage: saved.coverage === true,
+      open: saved.open === true,
     };
   } catch {
     return ALL_OFF;
@@ -97,30 +121,37 @@ export function savePlanningToggles(t: PlanningToggles): void {
   }
 }
 
-/** The master switch gates everything; RMP 2031 overlays need the BDA plan switch too. */
+/** RMP 2031 overlays need the BDA plan on; `zones` is true when any plan is on. */
 export function effectiveToggles(t: PlanningToggles): PlanningToggles {
-  if (!t.zones) return ALL_OFF;
   const bda = t.plans[PLAN_ID] === true;
   return {
     ...t,
+    zones: Object.values(t.plans).some(Boolean),
     ngt_buffer: bda && t.ngt_buffer,
     forest_symbol: bda && t.forest_symbol,
     stream_centreline: bda && t.stream_centreline,
   };
 }
 
-function zoneColour(p: ZoneProperties): string {
+function zoneColour(p: { plan_id: string; zone_label_native: string; class_norm: string | null }): string {
   if (p.plan_id === PLAN_ID) return COLOUR_BY_LABEL.get(p.zone_label_native) ?? "#999999";
   return CLASS_COLOUR[p.class_norm ?? ""]?.colour ?? "#999999";
 }
 
-function zoneStyle(f?: GeoJSON.Feature): PathOptions {
+function zoneStyle(f: GeoJSON.Feature | undefined, opacity: number): PathOptions {
   const p = (f?.properties ?? {}) as ZoneProperties;
   const colour = zoneColour(p);
   const uncoloured = p.class_norm === "uncoloured";
   if (p.class_norm === "road_space") {
     // cartographic class: road corridors drawn as lines over white on the sheet
-    return { color: "#BDBDBD", weight: 0, fillColor: "#E0E0E0", fillOpacity: 0.35 };
+    return { color: "#BDBDBD", weight: 0, fillColor: "#E0E0E0", fillOpacity: 0.35 * opacity };
+  }
+  if (p.qa?.placement_confirmed === false) {
+    // placed without an independent check (may be 100 m or more off): dashed dark outline
+    return {
+      color: "#5D4037", weight: 1.5, dashArray: "6 4", opacity: 0.9,
+      fillColor: uncoloured ? "#FFFFFF" : colour, fillOpacity: (uncoloured ? 0.15 : 0.35) * opacity,
+    };
   }
   return {
     color: p.inferred_note ? "#8E24AA" : uncoloured ? "#9E9E9E" : colour,
@@ -128,13 +159,17 @@ function zoneStyle(f?: GeoJSON.Feature): PathOptions {
     dashArray: p.inferred_note || uncoloured ? "3 3" : undefined,
     opacity: 0.8,
     fillColor: uncoloured ? "#FFFFFF" : colour,
-    fillOpacity: uncoloured ? 0.2 : 0.45,
+    fillOpacity: (uncoloured ? 0.2 : 0.45) * opacity,
   };
 }
 
 function viewBbox(map: ReturnType<typeof useMap>): Bbox {
   const b = map.getBounds();
   return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+}
+
+function meets(a: Bbox, b: Bbox): boolean {
+  return a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
 }
 
 function dedupe(parts: GeoJSON.FeatureCollection[]): GeoJSON.FeatureCollection {
@@ -150,23 +185,63 @@ function dedupe(parts: GeoJSON.FeatureCollection[]): GeoJSON.FeatureCollection {
   return { type: "FeatureCollection", features };
 }
 
-type LayerData = { zones: Record<string, GeoJSON.FeatureCollection> } & Partial<Record<OverlayKind, GeoJSON.FeatureCollection>>;
+/** What the layers in view say, for the panel: legend entries and sheet warnings per plan. */
+export interface PlanningView {
+  zoom: number;
+  legend: Record<string, { label: string; cnorm: string | null; colour: string }[]>;
+  warnings: Record<string, string[]>;
+}
+
+type LayerData = { zones: Record<string, GeoJSON.FeatureCollection>; coverage?: CoverageCollection } &
+  Partial<Record<OverlayKind, GeoJSON.FeatureCollection>>;
+
+function summarise(zones: Record<string, GeoJSON.FeatureCollection>, zoom: number): PlanningView {
+  const legend: PlanningView["legend"] = {};
+  const warnings: PlanningView["warnings"] = {};
+  for (const [id, fc] of Object.entries(zones)) {
+    const seen = new Map<string, { label: string; cnorm: string | null; colour: string }>();
+    const w = new Set<string>();
+    for (const f of fc.features) {
+      const p = f.properties as ZoneProperties;
+      if (!seen.has(p.zone_label_native)) {
+        seen.set(p.zone_label_native, { label: p.zone_label_native, cnorm: p.class_norm, colour: zoneColour(p) });
+      }
+      for (const x of p.qa?.warnings ?? []) w.add(x);
+    }
+    legend[id] = [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
+    warnings[id] = [...w];
+  }
+  return { zoom, legend, warnings };
+}
 
 /** Map layers; mounts inside <MapContainer>. */
 export function PlanningMapLayers({
-  toggles, onStatus,
+  toggles, plans, prebuilt, onStatus, onView,
 }: {
   toggles: PlanningToggles;
+  plans: Record<string, PlanInfo> | null;
+  prebuilt: PrebuiltManifest; // plans drawn from pre-built tiles (no /zones calls)
   onStatus: (s: string) => void;
+  onView: (v: PlanningView) => void;
 }) {
   const map = useMap();
   const [data, setData] = useState<LayerData>({ zones: {} });
   const [version, setVersion] = useState(0);
   const ctrlRef = useRef<AbortController | null>(null);
   const planKey = WEB_PLANS.map((p) => (toggles.plans[p.plan_id] ? "1" : "0")).join("");
+  const extentKey = plans ? Object.keys(plans).length : 0;
+  const preKey = Object.keys(prebuilt).sort().join(",");
 
   useEffect(() => {
-    const plans = toggles.zones ? WEB_PLANS.map((p) => p.plan_id).filter((id) => toggles.plans[id]) : [];
+    const on = WEB_PLANS.map((p) => p.plan_id).filter((id) => toggles.plans[id]);
+    const pre = on.filter((id) => prebuilt[id]);
+    const ids = on.filter((id) => !prebuilt[id]); // the rest load on demand from the service
+    // pre-drawn plans: legend and sheet warnings come from the tile manifest
+    const withPre = (v: PlanningView): PlanningView => ({
+      zoom: v.zoom,
+      legend: { ...v.legend, ...Object.fromEntries(pre.map((id) => [id, prebuilt[id].legend])) },
+      warnings: { ...v.warnings, ...Object.fromEntries(pre.map((id) => [id, prebuilt[id].warnings])) },
+    });
     const overlays = OVERLAY_KINDS.filter((k) => toggles[k]);
     let retry: ReturnType<typeof setTimeout> | null = null;
     let attempt = 0;
@@ -182,39 +257,69 @@ export function PlanningMapLayers({
       ctrlRef.current?.abort();
       if (retry) { clearTimeout(retry); retry = null; }
       if (fresh) attempt = 0;
-      if (!plans.length && !overlays.length) { setData({ zones: {} }); onStatus(""); return; }
-      const tiles = splitBbox(viewBbox(map));
-      if (tiles.length > MAX_TILES) {
+      const zoom = map.getZoom();
+      if (!ids.length && !overlays.length && !toggles.coverage) {
         setData({ zones: {} });
-        onStatus("Zoom in to load the 2031 plan layers");
+        onStatus(pre.length && zoom < MIN_ZOOM ? "Zoom in to level 10 or closer to see the 2031 plan layers" : "");
+        onView(withPre({ zoom, legend: {}, warnings: {} }));
+        return;
+      }
+      if (zoom < MIN_ZOOM) {
+        setData({ zones: {} });
+        onStatus("Zoom in to level 10 or closer to see the 2031 plan layers");
+        onView(withPre({ zoom, legend: {}, warnings: {} }));
         return;
       }
       const ctrl = new AbortController();
       ctrlRef.current = ctrl;
-      const simplify = simplifyForZoom(map.getZoom());
+      const simplify = simplifyForZoom(zoom);
+      const view = viewBbox(map);
+      const tiles = splitBbox(view, simplify === 25 ? MAX_BBOX_COARSE_DEG : undefined);
       if (fresh) onStatus("Loading…");
       try {
         const next: LayerData = { zones: {} };
         const pending: PendingSheet[] = [];
-        for (const id of plans) {
-          const parts = await Promise.all(tiles.map((t) => fetchZones(id, t, simplify, ctrl.signal)));
+        let tooMany = false;
+        for (const id of ids) {
+          const ext = plans?.[id]?.extent;
+          const mine = ext ? tiles.filter((t) => meets(t, ext)) : tiles;
+          if (mine.length > MAX_TILES) { tooMany = true; continue; }
+          const parts = await Promise.all(mine.map((t) => fetchZones(id, t, simplify, ctrl.signal)));
           parts.forEach((p) => pending.push(...(p.pending_sheets ?? [])));
           next.zones[id] = dedupe(parts);
         }
         for (const k of overlays) {
+          if (tiles.length > MAX_TILES) { tooMany = true; continue; }
           const parts = await Promise.all(tiles.map((t) => fetchOverlays(t, k, simplify, ctrl.signal)));
           parts.forEach((p) => pending.push(...(p.pending_sheets ?? [])));
           next[k] = dedupe(parts);
         }
+        let coverageLoading = false;
+        if (toggles.coverage) {
+          const parts = await Promise.all(splitBbox(view, 0.5).slice(0, 9).map((t) => fetchCoverage(t, ctrl.signal)));
+          coverageLoading = parts.some((p) => p.state === "loading");
+          const seen = new Set<string>();
+          const feats = parts.flatMap((p) => p.features).filter((f) => {
+            const k = `${f.properties.dist}/${f.properties.taluk}/${f.properties.hobli}/${f.properties.vlg}`;
+            if (seen.has(k)) return false;
+            seen.add(k); return true;
+          });
+          next.coverage = { type: "FeatureCollection", features: feats, state: coverageLoading ? "loading" : "ready" };
+        }
         if (ctrl.signal.aborted) return;
         setData(next);
         setVersion((v) => v + 1);
+        onView(withPre(summarise(next.zones, zoom)));
         const uniq = [...new Map(pending.map((p) => [`${p.plan_id}|${p.doc_id}|${p.sheet}`, p])).values()];
-        if (uniq.length === 0) { attempt = 0; onStatus(""); return; }
+        const extra = [
+          tooMany ? "Zoom in to load every plan in this view" : "",
+          coverageLoading ? "Village outlines for the coverage layer are loading" : "",
+        ].filter(Boolean);
+        if (uniq.length === 0 && !coverageLoading) { attempt = 0; onStatus(extra.join(" · ")); return; }
         const waiting = uniq.filter((p) => p.state !== "source_changed");
-        const msg = uniq.map((p) => p.message).join(" · ");
-        if (waiting.length === 0) { onStatus(msg); return; }
-        again(Math.max(...waiting.map((p) => p.retry_after_s ?? 5)), msg);
+        const msg = [...uniq.map((p) => p.message), ...extra].join(" · ");
+        if (waiting.length === 0 && !coverageLoading) { onStatus(msg); return; }
+        again(Math.max(5, ...waiting.map((p) => p.retry_after_s ?? 5)), msg);
       } catch {
         // a timeout or a dropped connection while sheets load: never show the raw error
         if (!ctrl.signal.aborted) again(5, "Planning service is busy loading plan sheets");
@@ -229,12 +334,27 @@ export function PlanningMapLayers({
       ctrlRef.current?.abort();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, toggles.zones, planKey, toggles.ngt_buffer, toggles.forest_symbol, toggles.stream_centreline]);
+  }, [map, planKey, extentKey, preKey, toggles.ngt_buffer, toggles.forest_symbol, toggles.stream_centreline, toggles.coverage]);
 
   return (
     <>
+      {data.coverage && toggles.coverage && (
+        <GeoJSON
+          key={`pcov-${version}`} data={data.coverage} interactive={false}
+          style={(f) => {
+            const c = COVERAGE_UI[(f?.properties as { plan_coverage: PlanCoverage }).plan_coverage];
+            return { color: c?.colour ?? "#999", weight: 1, opacity: 0.9, fillColor: c?.colour ?? "#999", fillOpacity: 0.25 };
+          }}
+        />
+      )}
+      {WEB_PLANS.filter((p) => toggles.plans[p.plan_id] && prebuilt[p.plan_id]).map((p) => (
+        <PrebuiltPlanLayer key={`pre-${p.plan_id}`} plan={prebuilt[p.plan_id]} opacity={toggles.opacity[p.plan_id] ?? 1} />
+      ))}
       {Object.entries(data.zones).map(([id, fc]) => (
-        <GeoJSON key={`pz-${id}-${version}`} data={fc} style={zoneStyle} interactive={false} />
+        <GeoJSON
+          key={`pz-${id}-${version}-${toggles.opacity[id] ?? 1}`} data={fc} interactive={false}
+          style={(f) => zoneStyle(f, toggles.opacity[id] ?? 1)}
+        />
       ))}
       {OVERLAY_KINDS.map((k) =>
         toggles[k] && data[k] ? (
@@ -259,20 +379,17 @@ function StatusBadge({ status, condition }: { status: DocStatus; condition?: str
 }
 
 function Switch({
-  on, label, onClick, isMobile, indent = false, disabled = false, badge,
+  on, label, onClick, disabled = false, badge,
 }: {
-  on: boolean; label: string; onClick: () => void; isMobile: boolean; indent?: boolean; disabled?: boolean;
-  badge?: React.ReactNode;
+  on: boolean; label: string; onClick: () => void; disabled?: boolean; badge?: React.ReactNode;
 }) {
   return (
     <button
-      role="switch" aria-checked={on} aria-disabled={disabled} disabled={disabled} onClick={onClick}
+      role="switch" aria-checked={on} aria-label={label} aria-disabled={disabled} disabled={disabled} onClick={onClick}
       style={{
-        display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left",
-        padding: isMobile ? "9px 11px" : "6px 10px", paddingLeft: indent ? (isMobile ? 22 : 20) : undefined,
-        fontSize: isMobile ? 12 : 11, fontWeight: indent ? 500 : 700, fontFamily: "inherit",
-        cursor: disabled ? "not-allowed" : "pointer", border: "none", background: "#FDFCFB",
-        color: disabled ? "#AAB4AC" : on ? "#306223" : "#7B8F83",
+        display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "6px 4px",
+        fontSize: 11, fontWeight: 600, fontFamily: "inherit", cursor: disabled ? "not-allowed" : "pointer",
+        border: "none", background: "transparent", color: disabled ? "#AAB4AC" : on ? "#306223" : "#5B6B60",
       }}
     >
       <span style={{
@@ -290,63 +407,26 @@ function Switch({
   );
 }
 
-/** Plan registry for the switches (status, condition, loaded); null until fetched. */
-function usePlans(): Record<string, PlanInfo> | null {
+/** Plan registry with sheet states; polls every 15 s while a sheet of an indexed plan is
+ * loading. null until fetched. */
+export function usePlanningPlans(active: boolean): Record<string, PlanInfo> | null {
   const [plans, setPlans] = useState<Record<string, PlanInfo> | null>(null);
   useEffect(() => {
     const ctrl = new AbortController();
-    fetchPlans(ctrl.signal)
-      .then((ps) => setPlans(Object.fromEntries(ps.map((p) => [p.plan_id, p]))))
-      .catch(() => setPlans({}));
-    return () => ctrl.abort();
-  }, []);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const load = () => {
+      fetchPlans(ctrl.signal)
+        .then((ps) => {
+          setPlans(Object.fromEntries(ps.map((p) => [p.plan_id, p])));
+          const busy = ps.some((p) => (p.sheets ?? []).some((s) => s.state === "downloading" || s.state === "extracting"));
+          if (active && busy) timer = setTimeout(load, 15000);
+        })
+        .catch(() => setPlans((p) => p ?? {}));
+    };
+    load();
+    return () => { ctrl.abort(); if (timer) clearTimeout(timer); };
+  }, [active]);
   return plans;
-}
-
-/** The WEB_PLANS that /plans reports as loaded (none until /plans answers). */
-function loadedPlans(plans: Record<string, PlanInfo> | null): { plan_id: string; label: string }[] {
-  return plans ? WEB_PLANS.filter((wp) => plans[wp.plan_id]?.loaded === true) : [];
-}
-
-/** Master switch, then one sub-switch per 2031 plan with its status badge (all off by
- * default); the RMP 2031 map-symbol switches sit under the BDA plan. */
-export function PlanningControls({
-  toggles, setToggles, isMobile,
-}: {
-  toggles: PlanningToggles;
-  setToggles: (t: PlanningToggles) => void;
-  isMobile: boolean;
-}) {
-  const plans = usePlans();
-  const flip = (k: "zones" | OverlayKind) => setToggles({ ...toggles, [k]: !toggles[k] });
-  const flipPlan = (id: string) => setToggles({ ...toggles, plans: { ...toggles.plans, [id]: !toggles.plans[id] } });
-  return (
-    <div style={{
-      position: "absolute", top: 112, right: 10, zIndex: 1000, display: "flex", flexDirection: "column",
-      borderRadius: 6, overflow: "hidden", border: "1px solid #CFD6C4", boxShadow: "0 2px 8px rgba(58,63,59,0.14)",
-      background: "#FDFCFB", minWidth: isMobile ? 220 : 240,
-    }}>
-      <Switch on={toggles.zones} label="2031 plan zones" onClick={() => flip("zones")} isMobile={isMobile} />
-      {toggles.zones && loadedPlans(plans).map((wp) => {
-        const info = plans?.[wp.plan_id];
-        return (
-          <div key={wp.plan_id} style={{ borderTop: "1px solid #E8EEE4" }}>
-            <Switch
-              on={toggles.plans[wp.plan_id] === true}
-              label={wp.label}
-              onClick={() => flipPlan(wp.plan_id)} isMobile={isMobile} indent
-              badge={info ? <StatusBadge status={info.status} condition={info.status_condition} /> : undefined}
-            />
-            {wp.plan_id === PLAN_ID && toggles.plans[PLAN_ID] && OVERLAY_KINDS.map((k) => (
-              <div key={k} style={{ borderTop: "1px solid #F1F4EE", paddingLeft: 12 }}>
-                <Switch on={toggles[k]} label={OVERLAY_UI[k].label} onClick={() => flip(k)} isMobile={isMobile} indent />
-              </div>
-            ))}
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 function Swatch({ colour, dashed = false }: { colour: string; dashed?: boolean }) {
@@ -358,90 +438,295 @@ function Swatch({ colour, dashed = false }: { colour: string; dashed?: boolean }
   );
 }
 
-/** Legend per switched-on plan, with its status badge; shown only while the master switch is on. */
-export function PlanningLegend({ toggles, status }: { toggles: PlanningToggles; status: string }) {
-  const plans = usePlans();
-  if (!toggles.zones) return null;
-  const on = WEB_PLANS.filter((p) => toggles.plans[p.plan_id]);
-  const overlays = OVERLAY_KINDS.filter((k) => toggles[k]);
-  const lpaOn = on.some((p) => p.plan_id !== PLAN_ID);
+const SHEET_STATE: Record<string, string> = {
+  ready: "ready", not_loaded: "not loaded yet", downloading: "downloading", extracting: "extracting",
+  source_changed: "Source changed; needs re-indexing", failed: "failed (retrying)",
+};
+
+function PlanSection({
+  plan, info, toggles, setToggles, view, onZoomTo, onShow, onFly,
+}: {
+  plan: { plan_id: string; label: string };
+  info: PlanInfo | undefined;
+  toggles: PlanningToggles;
+  setToggles: (t: PlanningToggles) => void;
+  view: PlanningView | null;
+  onZoomTo: (b: Bbox) => void;
+  onShow: (b: Bbox) => void;
+  onFly: (s: SubArea) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const id = plan.plan_id;
+  const on = toggles.plans[id] === true;
+  const sheets = info?.sheets ?? [];
+  const counts = sheets.reduce<Record<string, number>>((a, s) => { a[s.state] = (a[s.state] ?? 0) + 1; return a; }, {});
+  const unconfirmed = sheets.filter((s) => !s.placement_confirmed);
+  const docs = [...new Map(sheets.map((s) => [s.doc_id, s.source_url])).entries()];
+  const legend = view?.legend[id] ?? [];
+  const warnings = view?.warnings[id] ?? [];
+  const set = (patch: Partial<PlanningToggles>) => setToggles({ ...toggles, ...patch });
   return (
-    <div style={{
-      position: "absolute", left: 10, bottom: 24, zIndex: 1000, maxWidth: 260, maxHeight: "50vh", overflowY: "auto",
-      background: "rgba(253,252,251,0.96)", border: "1px solid #CFD6C4", borderRadius: 8,
-      padding: "8px 10px", fontSize: 11, color: "#3A3F3B", boxShadow: "0 2px 8px rgba(58,63,59,0.14)",
-    }}>
-      {on.length === 0 && <div style={{ color: "#7B8F83" }}>Switch on a plan to show its zones</div>}
-      {on.map((p) => {
-        const info = plans?.[p.plan_id];
-        return (
-          <div key={p.plan_id} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
-            <span style={{ fontWeight: 800, color: "#306223" }}>{p.label}</span>
-            {info && <StatusBadge status={info.status} condition={info.status_condition} />}
-          </div>
-        );
-      })}
-      {toggles.plans[PLAN_ID] && PLANNING_LEGEND.map((e) => (
-        <div key={e.label} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-          <Swatch colour={e.classNorm === "road_space" ? "#E0E0E0" : e.colour} dashed={e.classNorm === "uncoloured"} />
-          <span>{e.label}</span>
+    <div style={{ borderTop: "1px solid #E8EEE4", padding: "4px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <button
+          aria-expanded={expanded} aria-label={`${plan.label} details`} onClick={() => setExpanded(!expanded)}
+          style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 11, width: 18, color: "#5B6B60" }}
+        >{expanded ? "▾" : "▸"}</button>
+        <div style={{ flex: 1 }}>
+          <Switch
+            on={on} label={plan.label}
+            onClick={() => {
+              set({ plans: { ...toggles.plans, [id]: !on } });
+              // switching a plan on brings it into view at a zoom where its zones load
+              if (!on && info?.extent) onShow(info.extent);
+            }}
+            badge={info ? <StatusBadge status={info.status} condition={info.status_condition} /> : undefined}
+          />
         </div>
-      ))}
-      {lpaOn && (
-        <>
-          {toggles.plans[PLAN_ID] && <div style={{ fontWeight: 700, marginTop: 6, color: "#306223" }}>LPA plans</div>}
-          {Object.entries(CLASS_COLOUR).map(([k, v]) => (
-            <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-              <Swatch colour={v.colour} dashed={k === "uncoloured"} />
-              <span>{v.label}</span>
+      </div>
+      {expanded && (
+        <div style={{ paddingLeft: 22, fontSize: 11, color: "#3A3F3B" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, margin: "4px 0" }}>
+            <span>Opacity</span>
+            <input
+              type="range" min={0.1} max={1} step={0.05} aria-label={`${plan.label} opacity`}
+              value={toggles.opacity[id] ?? 1}
+              onChange={(e) => set({ opacity: { ...toggles.opacity, [id]: Number(e.target.value) } })}
+              style={{ flex: 1 }}
+            />
+          </label>
+          {info?.extent && (
+            <button
+              onClick={() => { if (!on) set({ plans: { ...toggles.plans, [id]: true } }); onZoomTo(info.extent!); }}
+              style={{ fontSize: 11, border: "1px solid #CFD6C4", borderRadius: 4, background: "#FDFCFB", padding: "2px 8px", cursor: "pointer", marginBottom: 4 }}
+            >Zoom to plan</button>
+          )}
+          {id === PLAN_ID && OVERLAY_KINDS.map((k) => (
+            <Switch key={k} on={toggles[k]} label={OVERLAY_UI[k].label} disabled={!on} onClick={() => set({ [k]: !toggles[k] })} />
+          ))}
+          {(PLAN_SUBAREAS[id] ?? []).length > 0 && (
+            <>
+              <div style={{ fontWeight: 700, marginTop: 4 }}>Sub-areas</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, margin: "3px 0" }}>
+                {(PLAN_SUBAREAS[id] ?? []).map((sa) => (
+                  <button
+                    key={sa.name}
+                    onClick={() => { if (!on) set({ plans: { ...toggles.plans, [id]: true } }); onFly(sa); }}
+                    style={{ fontSize: 10, border: "1px solid #CFD6C4", borderRadius: 9999, background: "#FDFCFB", padding: "1px 7px", cursor: "pointer", color: "#306223" }}
+                  >{sa.name}</button>
+                ))}
+              </div>
+            </>
+          )}
+          <div style={{ fontWeight: 700, marginTop: 4 }}>Legend (in view)</div>
+          {legend.length === 0 && <div style={{ color: "#7B8F83" }}>{on ? "Nothing of this plan in view" : "Switch the plan on"}</div>}
+          {legend.map((e) => (
+            <div key={e.label} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <Swatch colour={e.colour} dashed={e.cnorm === "uncoloured"} />
+              <span>{e.label}</span>
+              {e.cnorm && <span style={{ color: "#7B8F83" }}>· {CLASS_COLOUR[e.cnorm]?.label ?? e.cnorm}</span>}
             </div>
           ))}
-        </>
-      )}
-      {toggles.plans[PLAN_ID] && (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-          <span style={{ width: 12, height: 10, border: "1px dashed #8E24AA", display: "inline-block" }} />
-          <span>Zone inferred under a map symbol</span>
+          {unconfirmed.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+              <span style={{ width: 12, height: 10, border: "1.5px dashed #5D4037", display: "inline-block" }} />
+              <span>(placement unconfirmed): {unconfirmed.map((s) => s.sheet).join(", ")}</span>
+            </div>
+          )}
+          {warnings.map((w) => <div key={w} style={{ color: "#9A4F00", marginTop: 3 }}>{w}</div>)}
+          <div style={{ fontWeight: 700, marginTop: 4 }}>Status</div>
+          <div>{info?.status_label ?? "—"}{info?.go_ref ? ` · ${info.go_ref}` : ""}{info?.go_date ? ` (${info.go_date})` : ""}</div>
+          {info?.status_condition && <div style={{ color: "#8D6E00" }}>{info.status_condition}</div>}
+          <div style={{ fontWeight: 700, marginTop: 4 }}>Sources</div>
+          {docs.map(([doc, url]) => (
+            <div key={doc}>{url ? <a href={url} target="_blank" rel="noreferrer">{doc}</a> : doc}</div>
+          ))}
+          <div style={{ fontWeight: 700, marginTop: 4 }}>Sheets ({sheets.length})</div>
+          <div style={{ color: "#5B6B60" }}>
+            {Object.entries(counts).map(([k, n]) => `${n} ${SHEET_STATE[k] ?? k}`).join(" · ") || "—"}
+          </div>
+          {sheets.filter((s) => s.state !== "ready" && s.state !== "not_loaded").slice(0, 8).map((s) => (
+            <div key={`${s.doc_id}-${s.sheet}`} style={{ color: s.state === "source_changed" ? "#C62828" : "#5B6B60" }}>
+              {s.sheet}: {SHEET_STATE[s.state] ?? s.state}
+            </div>
+          ))}
         </div>
       )}
-      {overlays.map((k) => (
-        <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-          <span style={{
-            width: 12, height: k === "stream_centreline" ? 2 : 10, display: "inline-block",
-            background: k === "stream_centreline" ? "#0084a8" : "transparent",
-            border: k === "stream_centreline" ? "none" : `1px dashed ${OVERLAY_UI[k].style.color}`,
-          }} />
-          <span>{OVERLAY_UI[k].legend}</span>
-        </div>
-      ))}
-      {status && <div style={{ marginTop: 6, color: "#9A4F00", fontWeight: 600 }}>{status}</div>}
     </div>
   );
 }
 
-function hitColour(z: ZoneHit): string {
-  if (z.plan_id === PLAN_ID) return COLOUR_BY_LABEL.get(z.zone_label_native) ?? "#999999";
-  return CLASS_COLOUR[z.class_norm ?? ""]?.colour ?? "#999999";
+/** Collapsible side panel (right; a bottom sheet on mobile) for every 2031 plan layer and the
+ * Coverage status layer. Everything is off by default; the choice is kept in browser storage. */
+export function PlanningPanel({
+  toggles, setToggles, status, view, plans, isMobile, onZoomTo, onShow, onFly,
+}: {
+  toggles: PlanningToggles;
+  setToggles: (t: PlanningToggles) => void;
+  status: string;
+  view: PlanningView | null;
+  plans: Record<string, PlanInfo> | null;
+  isMobile: boolean;
+  onZoomTo: (b: Bbox) => void;
+  onShow: (b: Bbox) => void; // bring a plan into view only when it is out of view or too far out
+  onFly: (s: SubArea) => void;
+}) {
+  const loaded = plans ? WEB_PLANS.filter((wp) => plans[wp.plan_id]?.loaded === true) : [];
+  const onIds = loaded.filter((p) => toggles.plans[p.plan_id]).map((p) => p.plan_id);
+  const choice = onIds.length === 0 ? "" : onIds.length === loaded.length && loaded.length > 1 ? "__all" : onIds.length === 1 ? onIds[0] : "__some";
+  const pick = (v: string) => {
+    const plansOn = { ...NO_PLANS };
+    if (v === "__all") for (const p of loaded) plansOn[p.plan_id] = true;
+    else if (v && v !== "__some") plansOn[v] = true;
+    setToggles({ ...toggles, plans: plansOn });
+    const exts = Object.keys(plansOn).filter((k) => plansOn[k]).map((k) => plans?.[k]?.extent).filter(Boolean) as Bbox[];
+    if (exts.length) {
+      onShow([
+        Math.min(...exts.map((e) => e[0])), Math.min(...exts.map((e) => e[1])),
+        Math.max(...exts.map((e) => e[2])), Math.max(...exts.map((e) => e[3])),
+      ]);
+    }
+  };
+  const box: React.CSSProperties = isMobile
+    ? { position: "fixed", left: 0, right: 0, bottom: 0, maxHeight: toggles.open ? "55vh" : undefined, borderRadius: "10px 10px 0 0" }
+    : { position: "absolute", top: 112, right: 10, width: 300, maxHeight: "calc(100% - 140px)", borderRadius: 8 };
+  return (
+    <aside aria-label="2031 plan layers" style={{
+      ...box, zIndex: 1000, display: "flex", flexDirection: "column", overflow: "hidden",
+      border: "1px solid #CFD6C4", boxShadow: "0 2px 8px rgba(58,63,59,0.14)", background: "rgba(253,252,251,0.98)",
+    }}>
+      <button
+        aria-expanded={toggles.open} onClick={() => setToggles({ ...toggles, open: !toggles.open })}
+        style={{
+          display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", border: "none", cursor: "pointer",
+          background: "#F3F6F0", fontFamily: "inherit", fontSize: 12, fontWeight: 800, color: "#306223", textAlign: "left",
+        }}
+      >
+        <span>2031 plan layers</span>
+        {onIds.length > 0 && <span style={{ fontWeight: 600, color: "#5B6B60" }}>· {onIds.length} on</span>}
+        <span style={{ marginLeft: "auto" }}>{toggles.open ? "▾" : "▸"}</span>
+      </button>
+      {status && (
+        <div role="status" style={{ padding: "4px 10px", fontSize: 11, fontWeight: 600, color: "#7A4F00", background: "#FFF8E1", borderTop: "1px solid #F1E3B0" }}>
+          {status}
+        </div>
+      )}
+      {toggles.open && (
+        <div style={{ overflowY: "auto", padding: "6px 10px 10px" }}>
+          <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#3A3F3B" }}>
+            Show plan
+            <select
+              aria-label="Show plan" value={choice} onChange={(e) => pick(e.target.value)}
+              style={{ display: "block", width: "100%", marginTop: 3, fontSize: 12, padding: "3px 4px" }}
+            >
+              <option value="">None</option>
+              {loaded.map((p) => {
+                const i = plans?.[p.plan_id];
+                return <option key={p.plan_id} value={p.plan_id}>{p.label}{i ? ` (${statusBadge(i.status, i.status_condition)})` : ""}</option>;
+              })}
+              {loaded.length > 1 && <option value="__all">All plans</option>}
+              {choice === "__some" && <option value="__some">Several plans</option>}
+            </select>
+          </label>
+          {plans === null && <div style={{ color: "#7B8F83", fontSize: 11, marginTop: 6 }}>Loading the plan list…</div>}
+          {plans !== null && loaded.length === 0 && <div style={{ color: "#7B8F83", fontSize: 11, marginTop: 6 }}>No 2031 plan is loaded on the planning service</div>}
+          <div style={{ marginTop: 6 }}>
+            {loaded.map((p) => (
+              <PlanSection
+                key={p.plan_id} plan={p} info={plans?.[p.plan_id]} toggles={toggles} setToggles={setToggles}
+                view={view} onZoomTo={onZoomTo} onShow={onShow} onFly={onFly}
+              />
+            ))}
+          </div>
+          <div style={{ borderTop: "1px solid #E8EEE4", marginTop: 4, paddingTop: 4 }}>
+            <Switch on={toggles.coverage} label="Coverage status (villages)" onClick={() => setToggles({ ...toggles, coverage: !toggles.coverage })} />
+            {toggles.coverage && (Object.keys(COVERAGE_UI) as PlanCoverage[]).map((k) => (
+              <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, marginLeft: 6, marginBottom: 2 }}>
+                <span style={{ width: 12, height: 10, background: COVERAGE_UI[k].colour, opacity: 0.6, display: "inline-block" }} />
+                <span>{COVERAGE_UI[k].legend}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </aside>
+  );
 }
 
-const PLAN_LABEL = new Map(WEB_PLANS.map((p) => [p.plan_id, p.label]));
+function hitColour(z: ZoneHit): string {
+  return zoneColour(z);
+}
 
-/** Parcel-card section: every plan hit with its own status and condition; facts only. */
+function planName(id: string): string {
+  return PLAN_NAMES[id] ?? id;
+}
+
+/** F8: one plain line for what the plans can say about the site (conditional wording). */
+function coverageLine(a: AuthorityInfo): string {
+  const plan = a.operative_plan ?? a.draft_plans[0] ?? null;
+  const name = plan ? planName(plan.plan_id) : null;
+  const st = plan ? statusBadge(plan.status, plan.status_condition) : "";
+  const auth = a.lpa ?? a.authority ?? "The planning authority";
+  switch (a.plan_coverage) {
+    case "plan_loaded":
+      return name ? `The ${name} (${st}) shows the zones below.` : "A 2031 plan shows the zones below.";
+    case "plan_registered_not_loaded":
+      return `${name ?? "A plan"} (${st}) covers this site. Its zone map isn't on Qnit yet.`;
+    case "lpa_no_zone_map":
+      return `${auth} covers this site, but its plan has no zone map here.`;
+    case "authority_no_master_plan":
+      return `${auth} covers this site. No master plan has been found for it.`;
+    default:
+      return `No planning authority or plan was found for this site after checking: ${
+        a.sources_checked.map((s) => s.source).join("; ") || "the registered sources"}.`;
+  }
+}
+
+/** Parcel-card section: the coverage line, then every plan hit grouped per plan with its own
+ * status, condition, warnings and markers; facts only. */
 export function PlanningCardSection({ result }: { result: ZonesAtResult | "loading" | { error: string } }) {
+  const [auth, setAuth] = useState<AuthorityInfo | null>(null);
+  const p = typeof result === "object" && "parcel" in result ? (result.parcel as unknown as Record<string, string>) : null;
+  const key = p ? `${p.dist}/${p.taluk}/${p.hobli}/${p.vlg}` : "";
+  useEffect(() => {
+    if (!p) { setAuth(null); return; }
+    const ctrl = new AbortController();
+    fetchVillageAuthority(p.dist, p.taluk, p.hobli, p.vlg, ctrl.signal).then(setAuth).catch(() => setAuth(null));
+    return () => ctrl.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   const box = { marginTop: 8, borderTop: "1px solid #E8EEE4", paddingTop: 8 } as const;
   if (result === "loading") return <div style={{ ...box, color: "#7B8F83", fontSize: 11 }}>Loading 2031 plan zones…</div>;
   if ("error" in result) return <div style={{ ...box, color: "#9A4F00", fontSize: 11 }}>2031 plan zones unavailable: {result.error}</div>;
   const near = result.overlays_nearby;
   const byPlan = new Map<string, ZoneHit[]>();
   for (const z of result.zones) byPlan.set(z.plan_id, [...(byPlan.get(z.plan_id) ?? []), z]);
+  // the parcel's own geometry answer first: a zone hit means plan_loaded for that plan
+  const line = byPlan.size > 0
+    ? [...byPlan.entries()].map(([id, hits]) => `The ${planName(id)} (${statusBadge(hits[0].status, hits[0].status_condition)}) shows the zones below.`).join(" ")
+    : auth ? coverageLine(auth) : null;
   return (
     <div style={box}>
-      <div style={{ fontWeight: 700, fontSize: 11, color: "#306223", marginBottom: 5 }}>2031 plan zones</div>
+      <div style={{ fontWeight: 800, fontSize: 12, color: "#306223", marginBottom: 4 }}>2031 plan zones</div>
+      {auth && (
+        <div style={{ fontSize: 11, marginBottom: 3 }}>
+          <span style={{ fontWeight: 700 }}>{auth.lpa ?? auth.authority ?? "No planning authority"}</span>
+        </div>
+      )}
+      {line && <div data-testid="coverage-line" style={{ fontSize: 11, marginBottom: 4 }}>{line}</div>}
+      {result.disagreement_note && (
+        <div style={{ color: "#9A4F00", fontSize: 10, marginBottom: 4 }}>{result.disagreement_note}</div>
+      )}
+      {(result.pending_sheets ?? []).length > 0 && (
+        <div style={{ color: "#9A4F00", fontSize: 10, marginBottom: 4 }}>
+          {(result.pending_sheets ?? []).map((ps) => ps.message).join(" · ")}
+        </div>
+      )}
       {result.zones.length === 0 && <div style={{ color: "#7B8F83", fontSize: 11 }}>No 2031 plan zone on this parcel</div>}
       {[...byPlan.entries()].map(([planId, hits]) => (
         <div key={planId} style={{ marginBottom: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap", fontSize: 11 }}>
-            <span style={{ fontWeight: 700 }}>{PLAN_LABEL.get(planId) ?? planId}</span>
+            <span style={{ fontWeight: 700 }}>{planName(planId)}</span>
             <StatusBadge status={hits[0].status} condition={hits[0].status_condition} />
           </div>
           {hits[0].status_condition && (
@@ -456,6 +741,7 @@ export function PlanningCardSection({ result }: { result: ZonesAtResult | "loadi
                 <span style={{ width: 10, height: 10, background: hitColour(z), border: "1px solid rgba(0,0,0,0.2)", flexShrink: 0 }} />
                 <span style={{ fontWeight: 600 }}>
                   {z.zone_label_native}{z.source_layer === "lpa_map" ? " (coarse map)" : ""}
+                  {(z.sheets_qa ?? []).some((q) => q.placement_confirmed === false) ? " (placement unconfirmed)" : ""}
                 </span>
                 <span style={{ color: "#7B8F83", marginLeft: "auto" }}>{z.overlap_pct.toFixed(1)}%</span>
               </div>
@@ -502,6 +788,74 @@ export function PlanningCardSection({ result }: { result: ZonesAtResult | "loadi
         </div>
       )}
       {result.note && <div style={{ color: "#7B8F83", fontSize: 10, marginTop: 5 }}>{result.note}</div>}
+    </div>
+  );
+}
+
+/** Toolbar picker: an area (a plan whose zones are on the map), then a sub-area (a named
+ * place checked in the US-02 layer test). Picking a sub-area flies the map there at street
+ * zoom and switches that plan's zones on, so they load; the switch turns them off again. */
+export function PlanningAreaPicker({
+  plans, toggles, setToggles, onFit, onFly,
+}: {
+  plans: Record<string, PlanInfo> | null;
+  toggles: PlanningToggles;
+  setToggles: (t: PlanningToggles) => void;
+  onFit: (b: Bbox) => void;
+  onFly: (s: SubArea) => void;
+}) {
+  const [area, setArea] = useState("");
+  const [sub, setSub] = useState("");
+  const loaded = plans ? WEB_PLANS.filter((wp) => plans[wp.plan_id]?.loaded === true) : [];
+  const subs = area ? PLAN_SUBAREAS[area] ?? [] : [];
+  const on = area ? toggles.plans[area] === true : false;
+  const sel: React.CSSProperties = {
+    fontSize: 12, padding: "3px 6px", border: "1px solid #CFD6C4", borderRadius: 5, background: "#FDFCFB",
+    color: "#3A3F3B", fontFamily: "inherit", maxWidth: 220,
+  };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      <select
+        aria-label="Plan area" value={area} style={sel}
+        onChange={(e) => {
+          const id = e.target.value;
+          setArea(id); setSub("");
+          const ext = plans?.[id]?.extent;
+          if (ext) onFit(ext);
+        }}
+      >
+        <option value="">2031 plan area…</option>
+        {loaded.map((p) => <option key={p.plan_id} value={p.plan_id}>{p.label}</option>)}
+      </select>
+      {area && (
+        <select
+          aria-label="Plan sub-area" value={sub} style={sel}
+          onChange={(e) => {
+            setSub(e.target.value);
+            const sa = subs.find((x) => x.name === e.target.value);
+            if (!sa) return;
+            setToggles({ ...toggles, plans: { ...toggles.plans, [area]: true } });
+            onFly(sa);
+          }}
+        >
+          <option value="">Sub-area…</option>
+          {subs.map((sa) => <option key={sa.name} value={sa.name}>{sa.name}</option>)}
+        </select>
+      )}
+      {area && (
+        <button
+          role="switch" aria-checked={on} aria-label="Show zones of this plan"
+          onClick={() => {
+            setToggles({ ...toggles, plans: { ...toggles.plans, [area]: !on } });
+            if (!on && !sub && plans?.[area]?.extent) onFit(plans[area].extent!);
+          }}
+          style={{
+            display: "flex", alignItems: "center", gap: 6, padding: "3px 9px", border: "1px solid #CFD6C4",
+            borderRadius: 9999, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+            background: on ? "#306223" : "#FDFCFB", color: on ? "#FDFCFB" : "#7B8F83", whiteSpace: "nowrap",
+          }}
+        >{on ? "Zones on" : "Show zones"}</button>
+      )}
     </div>
   );
 }
