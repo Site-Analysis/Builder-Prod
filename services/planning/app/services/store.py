@@ -1,16 +1,16 @@
 # Copyright (c) 2026 Qnit. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
-"""In-memory planning data: source register, plan registry, zone and overlay layers.
+"""In-memory planning data: source register, plan registry, and the on-demand zone layers.
 
 Data sources (env):
-  PLANNING_REGISTER_DIR  plans.csv + plan_docs.csv (repo: infra/planning)
-  PLANNING_DATA_DIR      <plan_id>.parquet (zones) and <plan_id>_overlays.parquet
-                         (GeoParquet, EPSG:32643), e.g. <data-root>/planning/zones
+  PLANNING_REGISTER_DIR  plans.csv, plan_docs.csv, authority_villages.csv, authorities.csv,
+                         sources_checked.csv and layer_index.json (repo: infra/planning)
 
-Layers are stored in EPSG:32643 with an STRtree each (geopandas sindex) and served as
-WGS84. Status and status_label on every zone/overlay come from the register row of its
-doc_id, never from the layer file.
+Zones, overlays and LPA outlines are not read from disk: the layer index names each sheet's
+source, and app.services.ondemand downloads, extracts and caches them in RAM when a query
+needs them (contract 1.18). Status and status_label on every zone/overlay come from the
+register row of its doc_id, never from the extraction.
 """
 
 from __future__ import annotations
@@ -58,17 +58,77 @@ class PlanLayers:
 class Store:
     plans: dict[str, dict] = field(default_factory=dict)
     docs: dict[str, dict] = field(default_factory=dict)
-    layers: dict[str, PlanLayers] = field(default_factory=dict)
     # village key (dist, taluk, hobli, vlg) -> authority_villages.csv row
     authority: dict[tuple[str, str, str, str], dict] = field(default_factory=dict)
     authority_dists: set[str] = field(default_factory=set)
-    # LPA boundary per authority (EPSG:32643), e.g. {"BDA": polygon}
-    lpa: dict[str, shapely.Geometry] = field(default_factory=dict)
-    # current LPA extents from BMRDA's LPA map, for authorities without a loaded plan
-    lpa_map: dict[str, shapely.Geometry] = field(default_factory=dict)
     # authorities.csv rows (authority -> lpa_label, plan_ids, note); sources_checked.csv
     authorities: dict[str, dict] = field(default_factory=dict)
     sources_checked: list[dict] = field(default_factory=list)
+    od: object | None = None  # app.services.ondemand.OnDemand
+
+    def lpas(self, *a, **kw):
+        from app.services.ondemand import COMPUTE
+
+        with COMPUTE:
+            return self._lpas(*a, **kw)
+
+    def _lpas(
+        self,
+    ) -> tuple[dict[str, shapely.Geometry], dict[str, shapely.Geometry]] | None:
+        """(plan LPAs by authority, BMRDA LPA-map current extents by authority), or None while
+        an outline is still loading."""
+        od = self.od
+        if od is None:
+            return {}, {}
+        lpa, lpa_map = {}, {}
+        for plan_id in list(od.outline_rows):
+            outs = od.outlines(plan_id)
+            if outs is None:
+                return None
+            for m, g in outs:
+                a = m.get("authority")
+                if m.get("extent") == "plan":
+                    a = a or (self.plans.get(plan_id) or {}).get("authority")
+                    if a and a not in lpa:
+                        lpa[a] = g
+                elif m.get("extent") == "current" and a and a not in lpa_map:
+                    lpa_map[a] = shapely.make_valid(g)
+        return lpa, lpa_map
+
+    def layers_for(self, plan_id: str, box: shapely.Geometry):
+        from app.services.ondemand import COMPUTE
+
+        self.od.premerge(plan_id, box)  # merge work runs in the worker, outside COMPUTE
+        with COMPUTE:
+            return self._layers_for(plan_id, box)
+
+    def _layers_for(self, plan_id: str, box: shapely.Geometry):
+        """PlanLayers of one plan for a query window (merged zones + overlays), and the pending
+        sheets. layers is None while a needed sheet is not ready."""
+        from app.services.ondemand import memtrace
+
+        with memtrace(f"merged_zones {plan_id}"):
+            zones, pend = self.od.merged_zones(plan_id, box)
+        if zones is None:
+            return None, pend
+        ov, pend_o = self.od.overlays(plan_id, box)
+        if ov is None:
+            return None, pend_o
+        lpa = self.od.plan_lpa(plan_id)
+        zones = zones.set_geometry("geometry")
+        _ = zones.sindex
+        if len(ov):
+            _ = ov.sindex
+        lay = PlanLayers(
+            plan_id,
+            zones,
+            ov if len(ov) else None,
+            simplify_levels(zones) if len(zones) else {},
+            simplify_levels(ov, "class_norm") if len(ov) else {},
+        )
+        if lpa is not None:
+            lay.outer_boundary = lpa.boundary
+        return lay, []
 
 
 def _read_csv(path: str) -> list[dict]:
@@ -77,42 +137,6 @@ def _read_csv(path: str) -> list[dict]:
         return []
     with open(path, encoding="utf-8") as f:
         return list(csv.DictReader(f))
-
-
-def _apply_register_status(
-    gdf: gpd.GeoDataFrame, docs: dict[str, dict]
-) -> gpd.GeoDataFrame:
-    """Status comes from the source register row of each feature's doc_id."""
-    gdf = gdf.copy()
-    gdf["status"] = [
-        docs.get(d, {}).get("status", s)
-        for d, s in zip(gdf["doc_id"], gdf["status"], strict=True)
-    ]
-    gdf["status_label"] = [
-        docs.get(d, {}).get("status_label", s)
-        for d, s in zip(gdf["doc_id"], gdf["status_label"], strict=True)
-    ]
-    gdf["status_condition"] = [
-        docs.get(d, {}).get("status_condition") or None for d in gdf["doc_id"]
-    ]
-    return gdf
-
-
-def _load_layer(path: str, docs: dict[str, dict]) -> gpd.GeoDataFrame | None:
-    if not os.path.exists(path):
-        return None
-    gdf = gpd.read_parquet(path)
-    if gdf.crs is None or gdf.crs.to_epsg() != CRS_METRIC:
-        gdf = gdf.to_crs(CRS_METRIC)
-    gdf = _apply_register_status(gdf, docs)
-    # contract 1.16: every zone names its source layer and sheet; layers written before
-    # 1.16 (BDA RMP 2031, from the PLUCOMP composite) have neither column
-    if "source_layer" not in gdf.columns:
-        gdf["source_layer"] = "composite"
-    if "sheet" not in gdf.columns:
-        gdf["sheet"] = None
-    _ = gdf.sindex  # build the STRtree now, not on the first request
-    return gdf
 
 
 def _simplify_one(geoms: np.ndarray, groups: list[np.ndarray], tol: int) -> np.ndarray:
@@ -154,58 +178,28 @@ def simplify_levels(gdf: gpd.GeoDataFrame, group: str | None = None) -> Simplify
 
 
 def load_store() -> Store:
+    from app.services.ondemand import OnDemand
+
     reg = os.getenv("PLANNING_REGISTER_DIR", "infra/planning")
-    data = os.getenv("PLANNING_DATA_DIR", "data/planning/zones")
     st = Store()
     st.plans = {r["plan_id"]: r for r in _read_csv(os.path.join(reg, "plans.csv"))}
     st.docs = {r["doc_id"]: r for r in _read_csv(os.path.join(reg, "plan_docs.csv"))}
-    for plan_id in st.plans:
-        zones = _load_layer(os.path.join(data, f"{plan_id}.parquet"), st.docs)
-        overlays = _load_layer(
-            os.path.join(data, f"{plan_id}_overlays.parquet"), st.docs
-        )
-        if zones is not None or overlays is not None:
-            st.layers[plan_id] = PlanLayers(
-                plan_id,
-                zones,
-                overlays,
-                simplify_levels(zones) if zones is not None else {},
-                simplify_levels(overlays, "class_norm") if overlays is not None else {},
-            )
-            log.info(
-                "loaded %s: %s zones, %s overlays",
-                plan_id,
-                0 if zones is None else len(zones),
-                0 if overlays is None else len(overlays),
-            )
     auth_csv = os.getenv(
         "PLANNING_AUTHORITY_CSV", os.path.join(reg, "authority_villages.csv")
     )
     for r in _read_csv(auth_csv):
         st.authority[(r["dist"], r["taluk"], r["hobli"], r["vlg"])] = r
         st.authority_dists.add(r["dist"])
-    # LPA boundary per authority, from <plan_id>_lpa.parquet of each registered plan
-    for plan_id, plan in st.plans.items():
-        lpa_path = os.path.join(data, f"{plan_id}_lpa.parquet")
-        if not os.path.exists(lpa_path):
-            continue
-        lpa = gpd.read_parquet(lpa_path).to_crs(CRS_METRIC)
-        geom = shapely.union_all(list(lpa.geometry))
-        shapely.prepare(geom)
-        st.lpa[plan["authority"]] = geom
-        if plan_id in st.layers:
-            st.layers[plan_id].outer_boundary = geom.boundary
     st.authorities = {
         r["authority"]: r for r in _read_csv(os.path.join(reg, "authorities.csv"))
     }
     st.sources_checked = _read_csv(os.path.join(reg, "sources_checked.csv"))
-    map_path = os.path.join(data, "BMRDA-LPA-MAP_lpas.parquet")
-    if os.path.exists(map_path):
-        m = gpd.read_parquet(map_path).to_crs(CRS_METRIC)
-        for r in m[m["extent"] == "current"].itertuples():
-            g = shapely.make_valid(r.geometry)
-            shapely.prepare(g)
-            st.lpa_map[r.authority] = g
+    index = os.getenv("PLANNING_LAYER_INDEX", os.path.join(reg, "layer_index.json"))
+    if os.path.exists(index):
+        st.od = OnDemand(index, st.docs, st.plans)
+        st.od.ensure_outlines()  # LPA outlines load in the background at start
+    else:
+        log.warning("layer index missing: %s (no zone layers)", index)
     return st
 
 

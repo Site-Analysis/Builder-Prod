@@ -189,3 +189,62 @@ plan's LPA; 209 full, 18 partial.
   because the check uses the unrefined road mask.
 - Footprint of a merged sheet: coverage union of the per-class unions (a snapped union of every
   piece crashed GEOS), with a snapped fallback on a topology error.
+
+## 7. Round of 2-3 Oct 2026: served from the official Map No. 39 (vector)
+
+The 22-sheet atlas above can no longer be re-fetched: its Drive folder now needs a Google
+sign-in (open-decisions #39), so no sheet is indexed from it and the round-4 layer is not
+served. Anekal is served instead from `BMRDA-ANK-MP2031-MAP39`, the TPA's own
+`39 Proposed Landuse Consolidated.pdf` (anekal.tpa.gov.in, 45.6 MB, sha256 5d7df17a…), a GIS
+export where each land-use area is a vector fill (#44).
+
+Method (`vector_fill_sheet`, index row `BMRDA-ANK-MP2031-MAP39#map39`):
+- every fill inside the neatline (page box 154, 71, 2746, 2302) whose colour is a legend class
+  is one zone; later fills cover earlier ones (paint order); callout / symbol / text-box fills
+  are skipped, and so is `#e6e600` (drawn on the map, not in the legend);
+- page points to EPSG:32643 by the sheet's own grid-label fit (E = 15.8772 x + 769,760.8,
+  N = -15.8759 y + 1,434,916.1; residual 1.1-1.5 m);
+- clipped to BMRDA's pre-STRR Anekal extent + 100 m (row `STRR-LPA-MAP#ank`, 404.64 km²,
+  from the BMRDA LPA map). The frame strip and grid labels of #32 / L4 are outside the
+  neatline, so they are never zones; 1.8 ha of fills fell outside the clip;
+- one sheet, so there is no sheet seam (L3);
+- LPA area with no fill is "Not coloured on the plan" (mostly roads, which Map 39 draws as
+  lines, not fills).
+
+Legend labels are read from the sheet: 7 of 9 found next to their swatch (RESIDENTIAL,
+COMMERCIAL, INDUSTRIAL, PUBLIC & SEMI PUBLIC, PARK & OPEN SPACE, AGRICULTURE, WATER BODIES).
+Transport and forest have no plain swatch on the legend, so their labels ("Transportation",
+"Forest") are ours, and the legend check is `warn`.
+
+Class check against the plan's table, on the clip extent (ha):
+
+| Class | Map No. 39 (vector) | Plan table | Diff | Round 4 (raster, plan extent) |
+|---|---:|---:|---:|---:|
+| Residential | 11,186.6 | 11,230.69 | -0.4 % | 11,596.3 |
+| Commercial | 779.1 | 768.32 | +1.4 % | 705.8 |
+| Industrial | 5,159.9 | 5,099.95 | +1.2 % | 5,004.4 |
+| Public & semi-public | 845.1 | 840.27 | +0.6 % | 810.3 |
+| Park & open space | 2,314.5 | 2,003.78 | +15.5 % | 2,181.7 |
+| Agriculture | 9,903.3 | 10,891.44 | -9.1 % | 11,542.2 |
+| Water bodies | 2,903.6 | 3,000.99 | -3.2 % | 2,576.1 |
+| Forest | 2,096.4 | 2,126.92 | -1.4 % | 2,304.7 |
+| Transportation | 2,540.1 | 3,943.22 | -35.6 % | 2,755.3 |
+
+- **#19 re-checked:** the table lists water twice (2,147.11 + 853.88 = 3,000.99 ha). Round 4's
+  "+20 %" was measured against 2,147.11 alone; against 3,000.99 round 4 is -14.2 % and the
+  vector map is -3.2 %.
+- Transport is low because roads are drawn as lines (the gap is in "Not coloured on the plan").
+  Park is high, agriculture low, by about the same area (~300-990 ha): the plan's table and its
+  own map disagree; not an extraction effect, since every fill is taken as drawn.
+- Step B's bar "every class within 0.5 % of round 4" does not apply: the source changed (#44).
+- Fit with BMRDA's pre-STRR outline: IoU 0.924 (fills 37,730 ha, outline 40,464 ha). About
+  half of the 2,734 ha gap is roads drawn as lines (transport is 1,403 ha under the table).
+
+Placement: the grid-label fit has not had an independent check yet (Overpass was down, #43), so
+the sheet is `placement_confirmed: false`, carries the warning "Placement not confirmed by an
+independent check; zones may be 100 m or more off. Verify on site." and uses a position
+uncertainty of 100 m (#45) until the `--osm-only` pass confirms it.
+
+Build (3 Oct, `build_layer_index.py --plans BMRDA-ANK-MP2031 --no-osm`): 345 s, worker peak
+1,098 MB, temp peak 224 MB, 0 bytes left; fetched anekal.tpa.gov.in 45.63 MB and
+strrpa.karnataka.gov.in 3.23 MB.

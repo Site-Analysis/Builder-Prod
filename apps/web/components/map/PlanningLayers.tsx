@@ -12,8 +12,8 @@ import { GeoJSON, useMap } from "react-leaflet";
 import type { PathOptions } from "leaflet";
 import {
   PLAN_ID, WEB_PLANS, fetchOverlays, fetchPlans, fetchZones, simplifyForZoom, splitBbox, statusBadge,
-  type Bbox, type DocStatus, type OverlayKind, type PlanInfo, type ZoneHit, type ZonesAtResult,
-  type ZoneProperties,
+  type Bbox, type DocStatus, type OverlayKind, type PendingSheet, type PlanInfo, type ZoneHit,
+  type ZonesAtResult, type ZoneProperties,
 } from "@/lib/api/planning";
 import { PLANNING_LEGEND } from "@/lib/planning/legend.generated";
 
@@ -168,8 +168,20 @@ export function PlanningMapLayers({
   useEffect(() => {
     const plans = toggles.zones ? WEB_PLANS.map((p) => p.plan_id).filter((id) => toggles.plans[id]) : [];
     const overlays = OVERLAY_KINDS.filter((k) => toggles[k]);
-    async function load() {
+    let retry: ReturnType<typeof setTimeout> | null = null;
+    let attempt = 0;
+    // sheets load on demand: draw what is ready, say which sheets are still coming, and ask
+    // again with backoff (5 s doubling to 60 s) until nothing is pending
+    function again(seconds: number, status: string) {
+      const wait = Math.min(60, Math.max(5, seconds) * 2 ** Math.min(attempt, 4));
+      attempt += 1;
+      onStatus(`${status} (checking again in ${Math.round(wait)} s)`);
+      retry = setTimeout(() => load(false), wait * 1000);
+    }
+    async function load(fresh = true) {
       ctrlRef.current?.abort();
+      if (retry) { clearTimeout(retry); retry = null; }
+      if (fresh) attempt = 0;
       if (!plans.length && !overlays.length) { setData({ zones: {} }); onStatus(""); return; }
       const tiles = splitBbox(viewBbox(map));
       if (tiles.length > MAX_TILES) {
@@ -180,26 +192,42 @@ export function PlanningMapLayers({
       const ctrl = new AbortController();
       ctrlRef.current = ctrl;
       const simplify = simplifyForZoom(map.getZoom());
-      onStatus("Loading…");
+      if (fresh) onStatus("Loading…");
       try {
         const next: LayerData = { zones: {} };
+        const pending: PendingSheet[] = [];
         for (const id of plans) {
-          next.zones[id] = dedupe(await Promise.all(tiles.map((t) => fetchZones(id, t, simplify, ctrl.signal))));
+          const parts = await Promise.all(tiles.map((t) => fetchZones(id, t, simplify, ctrl.signal)));
+          parts.forEach((p) => pending.push(...(p.pending_sheets ?? [])));
+          next.zones[id] = dedupe(parts);
         }
         for (const k of overlays) {
-          next[k] = dedupe(await Promise.all(tiles.map((t) => fetchOverlays(t, k, simplify, ctrl.signal))));
+          const parts = await Promise.all(tiles.map((t) => fetchOverlays(t, k, simplify, ctrl.signal)));
+          parts.forEach((p) => pending.push(...(p.pending_sheets ?? [])));
+          next[k] = dedupe(parts);
         }
         if (ctrl.signal.aborted) return;
         setData(next);
         setVersion((v) => v + 1);
-        onStatus("");
-      } catch (err) {
-        if (!ctrl.signal.aborted) onStatus(`Planning layers unavailable: ${(err as Error).message}`);
+        const uniq = [...new Map(pending.map((p) => [`${p.plan_id}|${p.doc_id}|${p.sheet}`, p])).values()];
+        if (uniq.length === 0) { attempt = 0; onStatus(""); return; }
+        const waiting = uniq.filter((p) => p.state !== "source_changed");
+        const msg = uniq.map((p) => p.message).join(" · ");
+        if (waiting.length === 0) { onStatus(msg); return; }
+        again(Math.max(...waiting.map((p) => p.retry_after_s ?? 5)), msg);
+      } catch {
+        // a timeout or a dropped connection while sheets load: never show the raw error
+        if (!ctrl.signal.aborted) again(5, "Planning service is busy loading plan sheets");
       }
     }
+    const onMove = () => load(true);
     load();
-    map.on("moveend", load);
-    return () => { map.off("moveend", load); ctrlRef.current?.abort(); };
+    map.on("moveend", onMove);
+    return () => {
+      map.off("moveend", onMove);
+      if (retry) clearTimeout(retry);
+      ctrlRef.current?.abort();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, toggles.zones, planKey, toggles.ngt_buffer, toggles.forest_symbol, toggles.stream_centreline]);
 

@@ -132,28 +132,6 @@ def _cartographic(row) -> bool:
     return False if v is None or pd.isna(v) else bool(v)
 
 
-def zones_in_bbox(
-    layers: PlanLayers, plan: dict, bbox: str, simplify_m: int | None = None
-) -> dict:
-    tol = check_simplify(simplify_m)
-    box = parse_bbox(bbox)
-    z = layers.zones
-    idx = z.sindex.query(box, predicate="intersects")
-    sub = z.iloc[idx].copy()
-    sub["inferred_note"] = sub["note"]
-    sub["cartographic"] = (
-        sub["cartographic"].fillna(False).astype(bool)
-        if "cartographic" in sub.columns
-        else False
-    )
-    return feature_collection(
-        sub,
-        layers.zones_simplified[tol][idx],
-        ZONE_PROPS,
-        {"plan": plan_ref(plan), "simplify_m": tol},
-    )
-
-
 def overlays_in_bbox(
     layers: PlanLayers,
     plan: dict,

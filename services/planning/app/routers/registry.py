@@ -7,11 +7,13 @@ from __future__ import annotations
 
 import json
 import os
+import time
 
 import shapely
 from fastapi import APIRouter, HTTPException, Query
 from pyproj import Transformer
 
+from app.services.ondemand import COMPUTE
 from app.services.store import CRS_METRIC, CRS_WGS84, get_store
 
 _TO_METRIC = Transformer.from_crs(CRS_WGS84, CRS_METRIC, always_xy=True)
@@ -40,6 +42,7 @@ def _none(v: str | None) -> str | None:
 def list_plans() -> list[dict]:
     _require_flag()
     enabled = _flags()
+    od = get_store().od
     out = []
     for p in get_store().plans.values():
         out.append(
@@ -58,6 +61,8 @@ def list_plans() -> list[dict]:
                 "notes": _none(p.get("notes")),
                 "enabled": f"feature.planning.plan.{p['plan_id']}" in enabled,
                 "loaded": _loaded(p["plan_id"]),
+                "extent": od.plan_extent(p["plan_id"]) if od is not None else None,
+                "sheets": od.sheet_states(p["plan_id"]) if od is not None else [],
             }
         )
     return out
@@ -105,9 +110,29 @@ NO_SHEET_NOTES = (
 )
 
 
+AUTHORITY_WAIT_S = float(os.getenv("PLANNING_AUTHORITY_WAIT_S", "180"))
+
+
 def _loaded(plan_id: str) -> bool:
-    lay = get_store().layers.get(plan_id)
-    return lay is not None and lay.zones is not None
+    od = get_store().od
+    return od is not None and plan_id in od.indexed_plans()
+
+
+def _wait(fn, what: str):
+    """Call fn until it returns something other than None (a needed sheet or outline is
+    loading). /authority has no pending field, so a point query waits (open-decisions #42)."""
+    t0 = time.time()
+    while True:
+        v = fn()
+        if v is not None:
+            return v
+        if time.time() - t0 > AUTHORITY_WAIT_S:
+            raise HTTPException(
+                status_code=503,
+                detail=f"{what} still loading; try again shortly",
+                headers={"Retry-After": "10"},
+            )
+        time.sleep(1.0)
 
 
 def _doc_ids(plan_id: str) -> list[str]:
@@ -224,6 +249,8 @@ def _result(
     out["plan_coverage"] = pc
     out["authorities"] = entries
     out["sources_checked"] = sources or []
+    od = get_store().od
+    out["build_id"] = od.build_id if od is not None else None
     return out
 
 
@@ -271,11 +298,18 @@ def _point_plan_coverage(authority: str, plan_ids: list[str], pt) -> str:
     st = get_store()
     no_sheet = False
     for p in plan_ids:
-        lay = st.layers.get(p)
-        if lay is None or lay.zones is None:
+        if not _loaded(p):
             continue
-        z = lay.zones
-        hit = z.iloc[z.sindex.query(pt, predicate="intersects")]
+
+        def layers(p=p):
+            lay, _pend = st.layers_for(p, pt.buffer(1.0).envelope)
+            return lay
+
+        z = _wait(layers, f"{p} zone sheets").zones
+        if z is None or not len(z):
+            continue
+        with COMPUTE:
+            hit = z.iloc[z.sindex.query(pt, predicate="intersects")]
         notes = hit["note"].fillna("").tolist() if len(hit) else []
         if notes and all(n in NO_SHEET_NOTES for n in notes):
             no_sheet = True
@@ -316,10 +350,16 @@ def get_authority(
         x, y = _TO_METRIC.transform(lng, lat)
         pt = shapely.Point(x, y)
         entries, seen = [], set()
+        st_lpa, st_lpa_map = _wait(st.lpas, "LPA outlines")
+        both = list(st_lpa.items()) + list(st_lpa_map.items())
+        # geometry tests under the compute lock; zone lookups below take it themselves
+        with COMPUTE:
+            inside = [a for a, lpa in both if lpa.contains(pt)]
+            near = {a: lpa.distance(pt) for a, lpa in both}
         # plan LPAs first (a loaded plan's own extent, e.g. Anekal before STRR), then
         # BMRDA's LPA map for authorities without a loaded plan
-        for authority, lpa in list(st.lpa.items()) + list(st.lpa_map.items()):
-            if authority in seen or not lpa.contains(pt):
+        for authority in inside:
+            if authority in seen:
                 continue
             seen.add(authority)
             pids = _auth_plans(authority)
@@ -336,8 +376,8 @@ def get_authority(
             # a point between two LPAs whose boundaries come from different sources (a plan's
             # own LPA vs BMRDA's LPA map, ~15 m apart at the median): the LPAs within
             # EDGE_TOLERANCE_M, partial, with a note (step E: no gap along shared edges)
-            for authority, lpa in list(st.lpa.items()) + list(st.lpa_map.items()):
-                if authority in seen or lpa.distance(pt) > EDGE_TOLERANCE_M:
+            for authority, _lpa in both:
+                if authority in seen or near[authority] > EDGE_TOLERANCE_M:
                     continue
                 seen.add(authority)
                 pids = _auth_plans(authority)
@@ -347,7 +387,7 @@ def get_authority(
                         "partial",
                         pids,
                         _point_plan_coverage(authority, pids, pt),
-                        NOTE_NEAR_EDGE.format(d=round(lpa.distance(pt))),
+                        NOTE_NEAR_EDGE.format(d=round(near[authority])),
                         source="point",
                     )
                 )

@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Qnit. All rights reserved.
 // SPDX-License-Identifier: LicenseRef-Proprietary
 //
-// Planning service client (contracts/planning.yaml 1.16.0): 2031 plan zone layers (one per
-// loaded plan), RMP 2031 map-symbol overlays, and zones touching a parcel. Every record
-// carries its document status.
+// Planning service client (contracts/planning.yaml 1.18.0): 2031 plan zone layers (one per
+// indexed plan), RMP 2031 map-symbol overlays, and zones touching a parcel. Every record
+// carries its document status. Sheets load on demand: answers list `pending_sheets` until
+// every sheet they need is downloaded and extracted.
 
 import { getSession } from "next-auth/react";
 import { useAuthStore } from "@/lib/stores/auth";
@@ -81,6 +82,23 @@ export interface ZoneProperties {
 
 export type SourceLayer = "detail" | "hobli" | "lpa_map" | "composite";
 
+/** A sheet an answer needs that is not ready yet (1.18). */
+export interface PendingSheet {
+  sheet: string;
+  plan_id: string;
+  doc_id: string;
+  state: "downloading" | "extracting" | "source_changed" | "failed";
+  source?: string | null;
+  message: string;
+  retry_after_s?: number | null;
+}
+
+/** Zone / overlay FeatureCollection as served (1.18 adds build_id and pending_sheets). */
+export type LayerCollection<P> = GeoJSON.FeatureCollection<GeoJSON.Geometry, P> & {
+  build_id?: string;
+  pending_sheets?: PendingSheet[];
+};
+
 export interface PlanInfo {
   plan_id: string;
   name: string;
@@ -153,6 +171,8 @@ export interface ZonesAtResult {
     nearest_stream_centreline: StreamNearby | null;
   };
   note: string | null;
+  build_id?: string;
+  pending_sheets?: PendingSheet[];
 }
 
 // ─── Calls ───────────────────────────────────────────────────────────────────
@@ -168,14 +188,14 @@ export function fetchPlans(signal?: AbortSignal) {
 }
 
 export function fetchZones(planId: string, bbox: Bbox, simplify: SimplifyM, signal?: AbortSignal) {
-  return get<GeoJSON.FeatureCollection<GeoJSON.Geometry, ZoneProperties>>(
+  return get<LayerCollection<ZoneProperties>>(
     `/zones?plan_id=${encodeURIComponent(planId)}&bbox=${bboxParam(bbox)}&simplify_m=${simplify}`,
     signal,
   );
 }
 
 export function fetchOverlays(bbox: Bbox, kind: OverlayKind, simplify: SimplifyM, signal?: AbortSignal) {
-  return get<GeoJSON.FeatureCollection<GeoJSON.Geometry, OverlayProperties>>(
+  return get<LayerCollection<OverlayProperties>>(
     `/overlays?plan_id=${PLAN_ID}&bbox=${bboxParam(bbox)}&kind=${kind}&simplify_m=${simplify}`,
     signal,
   );

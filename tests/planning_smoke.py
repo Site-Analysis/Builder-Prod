@@ -1,10 +1,12 @@
 # Copyright (c) 2026 Qnit. All rights reserved.
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
-"""Planning service smoke tests — build step 1.3.
+"""Planning service smoke tests — build step 1.3 (on-demand layers from 1.18).
 
 Uses the repo's source register (infra/planning) and the synthetic fixture layers in
-tests/fixtures/planning (no real plan data). The cadastral call in /zones/at is stubbed.
+tests/fixtures/planning (no real plan data), served through a temporary layer index
+(file:// sources, test-only) so every test runs the on-demand download / worker / cache
+path. The cadastral call in /zones/at is stubbed.
 
 Covers:
   (a) /health
@@ -23,7 +25,12 @@ Requires: cd services/planning && pip install -r requirements.txt
 
 from __future__ import annotations
 
+import hashlib
+import json
+import os
+import shutil
 import sys
+import time
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -77,23 +84,81 @@ def _parcel_fc(x0, y0, x1, y1):
     }
 
 
+_FIX = _ROOT / "tests" / "fixtures" / "planning"
+# the tests' own temp root: the service's start/stop wipe never reaches a live service's files
+_TMP = Path(os.environ.get("TEMP") or os.environ.get("TMP") or "/tmp") / "qnit_planning_tests"
+os.environ["PLANNING_TEMP_ROOT"] = str(_TMP / "root")
+
+
+def _fixture_index() -> Path:
+    """A layer index whose rows serve the fixture GeoParquets (file:// sources, sha256 checked,
+    extraction method fixture_parquet), so the tests run the on-demand path end to end."""
+    import pyarrow.parquet as pq
+
+    _TMP.mkdir(parents=True, exist_ok=True)
+    (_TMP / ".lock").write_text(str(os.getpid()))
+    qa = dict(pq.read_table(_FIX / "BDA-RMP2031.parquet").column("qa")[0].as_py())
+    qa.setdefault("source_layer", "composite")
+    qa.setdefault("sheet", None)
+    qa.setdefault("warnings", [])
+
+    def row(row_id, kind, name, what, **extra):
+        p = _FIX / name
+        return {
+            "row_id": row_id, "kind": kind, "plan_id": "BDA-RMP2031", "authority": "BDA",
+            "doc_id": "BDA-RMP2031-PLUCOMP", "page": 1, "sheet": "fixture",
+            "sheet_key": what, "source_layer": "composite",
+            "source_url": p.as_uri(), "sha256": hashlib.sha256(p.read_bytes()).hexdigest(),
+            "priority": {"rank": 3, "order": [0]},
+            "extent": {"epsg32643": [_E - 1000, _N - 1000, _E + 7000, _N + 7000], "wgs84": [77.0, 12.0, 78.0, 13.5]},
+            "extraction": {"method": "fixture_parquet", "fixture": what, **extra},
+            "sheet_qa": qa, "position_uncertainty_m": None, "placement_confirmed": True,
+            "warnings": [], "status": "indexed",
+        }
+
+    ix = {
+        "build_id": "idx-fixture",
+        "plans": {"BDA-RMP2031": {"outline_row": "fix#lpa", "uncovered": None}},
+        "rows": [
+            row("fix#zones", "zones", "BDA-RMP2031.parquet", "zones"),
+            row("fix#overlays", "zones", "BDA-RMP2031_overlays.parquet", "overlays", overlays=True),
+            row("fix#lpa", "lpa_outline", "BDA-RMP2031_lpa.parquet", "outline"),
+        ],
+    }
+    path = _TMP / "layer_index.json"
+    path.write_text(json.dumps(ix))
+    return path
+
+
 def _make_client(monkeypatch, flags: str):
     monkeypatch.setenv("FLAGS", flags)
     monkeypatch.setenv("PLANNING_REGISTER_DIR", str(_ROOT / "infra" / "planning"))
-    monkeypatch.setenv(
-        "PLANNING_DATA_DIR", str(_ROOT / "tests" / "fixtures" / "planning")
-    )
+    monkeypatch.setenv("PLANNING_LAYER_INDEX", str(_fixture_index()))
+    monkeypatch.setenv("PLANNING_ALLOW_FILE_SOURCES", "1")
+    monkeypatch.setenv("PLANNING_WORKER_PYTHON", sys.executable)
     monkeypatch.setenv(
         "PLANNING_AUTHORITY_CSV",
-        str(_ROOT / "tests" / "fixtures" / "planning" / "authority_villages.csv"),
+        str(_FIX / "authority_villages.csv"),
     )
     for m in [k for k in sys.modules if k == "app" or k.startswith("app.")]:
         sys.modules.pop(m, None)
     from app.auth import verify_token
     from app.main import app
+    from app.services.store import get_store
 
     app.dependency_overrides[verify_token] = lambda: _DUMMY_PAYLOAD
+    st = get_store()
+    t0 = time.time()
+    while st.od.ensure(list(st.od.rows.values())):
+        assert time.time() - t0 < 120, "fixture sheets did not load"
+        time.sleep(0.2)
     return TestClient(app), app
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _cleanup_tmp():
+    yield
+    shutil.rmtree(_TMP, ignore_errors=True)
 
 
 @pytest.fixture
@@ -434,3 +499,22 @@ def test_q_unregistered_lpa_is_no_plan_found(client):
     assert _plan_coverage("STRR", []) == "lpa_no_zone_map"
     assert _plan_coverage("MAGADI", []) == "no_master_plan_found"
     assert _plan_coverage("BIAAPA", ["BIAAPA-MP2021"]) == "plan_registered_not_loaded"
+
+
+def test_r_merges_run_in_the_worker(client, monkeypatch):
+    # #46: the priority merge runs in the capped worker; the service only keeps the results,
+    # and the answer matches the in-service merge
+    from app.services.store import get_store
+
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 400, _N + 400, _E + 460, _N + 460))
+    od = get_store().od
+    jobs0 = od.stats.get("merge_jobs", 0)
+    a = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()
+    assert od.stats.get("merge_jobs", 0) > jobs0
+    for k in [k for k in od.derived.keys() if k[0] in ("m", "u")]:
+        od.derived.pop(k)
+    for k in list(od.merged.keys()):
+        od.merged.pop(k)
+    monkeypatch.setenv("PLANNING_MERGE_IN_WORKER", "0")
+    b = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()
+    assert a["zones"] == b["zones"] and a["trace_hits"] == b["trace_hits"]

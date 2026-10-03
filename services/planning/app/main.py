@@ -5,6 +5,20 @@ from __future__ import annotations
 
 import json
 import os
+
+# numpy's OpenBLAS reserves a buffer per thread (~800 MB committed on 32 CPUs); nothing here
+# needs threaded BLAS, so one thread keeps the 2 GB worker / 1 GB service caps honest
+for _v in (
+    "OPENBLAS_NUM_THREADS",
+    "OMP_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+):
+    os.environ.setdefault(_v, "1")
+# Arrow's default pool (mimalloc) keeps freed pages: decoding cached chunks then grows the
+# service's memory without bound; the system allocator returns them
+os.environ.setdefault("ARROW_DEFAULT_MEMORY_POOL", "system")
+
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
@@ -14,13 +28,21 @@ from fastapi.middleware.gzip import GZipMiddleware
 from app.auth import verify_token
 from app.routers.registry import router as registry_router
 from app.routers.zones import router as zones_router
+from app.services.ondemand import wipe_temp
 from app.services.store import get_store
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    get_store()  # load register + GeoParquet layers and build STRtrees at startup
+    # the temp folder holds only in-flight downloads; wipe it at start and stop (folders of
+    # a running index build or detached job are locked and kept)
+    wipe_temp()
+    get_store()  # register + layer index; LPA outlines start loading in the background
     yield
+    st = get_store()
+    if st.od is not None:
+        st.od.stop()
+    wipe_temp()
 
 
 app = FastAPI(

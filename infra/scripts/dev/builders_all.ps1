@@ -1,20 +1,40 @@
 # Start everything for local testing: cadastral (8011), planning (8012), web (3000).
 # Each one is started only if its port is not already answering. Prints the links when ready.
+#   -Stop   stops the three services and deletes their logs (logs are temporary).
+# Planning layers are not read from disk: the service downloads and extracts each plan sheet
+# on first view (layer index, infra/planning/layer_index.json) and keeps it in RAM only.
 # Data paths default to this machine's layout (CLAUDE.md); override with the env vars below.
 # Local dev only: DEV_BYPASS_AUTH=1 disables JWT checks. Never use this for a deployment.
+param([switch]$Stop)
 
 $ErrorActionPreference = "Stop"
 $repo = (Resolve-Path "$PSScriptRoot\..\..\..").Path
-$logs = if ($env:BUILDERS_LOG_DIR) { $env:BUILDERS_LOG_DIR } else { "$env:TEMP\builders_logs" }
-New-Item -ItemType Directory -Force $logs | Out-Null
-$cadData = if ($env:CADASTRAL_DATA_DIR) { $env:CADASTRAL_DATA_DIR } else { "C:\Users\tanny\Downloads\cadastral_lake_v2\cadastral_lake_v2" }
-$surveyDb = if ($env:SURVEY_INDEX_DB) { $env:SURVEY_INDEX_DB } else { "C:\Users\tanny\Downloads\survey_index\survey_index.db" }
-$planData = if ($env:PLANNING_DATA_DIR) { $env:PLANNING_DATA_DIR } else { "C:\Users\tanny\Downloads\planning\planning\zones" }
-$planFlags = "feature.planning.layers feature.planning.plan.BDA-RMP2031 feature.planning.plan.BMRDA-HSK-MP2031 feature.planning.plan.BMRDA-ANK-MP2031"
+$logs = Join-Path $env:TEMP "qnit_planning\logs\services"
 
 function Up($url) {
   try { Invoke-WebRequest $url -UseBasicParsing -TimeoutSec 3 | Out-Null; return $true } catch { return $false }
 }
+
+function Stop-Port($port) {
+  $c = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+  foreach ($p in ($c | Select-Object -ExpandProperty OwningProcess -Unique)) {
+    Stop-Process -Id $p -Force -ErrorAction SilentlyContinue
+  }
+}
+
+if ($Stop) {
+  foreach ($port in 3000, 8012, 8011) { Stop-Port $port }
+  Start-Sleep 2
+  Remove-Item -Recurse -Force $logs -ErrorAction SilentlyContinue
+  Write-Host "stopped; logs deleted"
+  exit 0
+}
+
+New-Item -ItemType Directory -Force $logs | Out-Null
+$cadData = if ($env:CADASTRAL_DATA_DIR) { $env:CADASTRAL_DATA_DIR } else { "C:\Users\tanny\Downloads\cadastral_lake_v2\cadastral_lake_v2" }
+$surveyDb = if ($env:SURVEY_INDEX_DB) { $env:SURVEY_INDEX_DB } else { "C:\Users\tanny\Downloads\survey_index\survey_index.db" }
+$plans = @(Get-Content "$repo\infra\planning\layer_index.json" -Raw | ConvertFrom-Json).rows | Where-Object { $_.status -eq "indexed" -and $_.kind -eq "zones" } | Select-Object -ExpandProperty plan_id -Unique
+$planFlags = "feature.planning.layers " + (($plans | ForEach-Object { "feature.planning.plan.$_" }) -join " ")
 
 $common = @{
   DEV_BYPASS_AUTH = "1"; KEYCLOAK_URL = "https://auth.builder.qnit.site"; KEYCLOAK_REALM = "sat"
@@ -32,13 +52,14 @@ if (-not (Up "http://localhost:8011/health")) {
 } else { Write-Host "cadastral already running on :8011" }
 
 if (-not (Up "http://localhost:8012/health")) {
-  Write-Host "Starting planning on :8012"
+  Write-Host "Starting planning on :8012 ($($plans -join ', '))"
   $env:FLAGS = $planFlags
-  $env:PLANNING_DATA_DIR = $planData
   $env:PLANNING_REGISTER_DIR = "$repo\infra\planning"
+  $env:PLANNING_WORKER_PYTHON = "$repo\infra\scripts\planning\.venv\Scripts\python.exe"
   $env:CADASTRAL_URL = "http://localhost:8011"
-  Start-Process -FilePath "$repo\services\planning\.venv\Scripts\uvicorn.exe" -ArgumentList "app.main:app", "--port", "8012" `
-    -WorkingDirectory "$repo\services\planning" -RedirectStandardOutput "$logs\planning.log" -RedirectStandardError "$logs\planning.err" -WindowStyle Hidden
+  $pp = Start-Process -FilePath "$repo\services\planning\.venv\Scripts\uvicorn.exe" -ArgumentList "app.main:app", "--port", "8012" `
+    -WorkingDirectory "$repo\services\planning" -RedirectStandardOutput "$logs\planning.log" -RedirectStandardError "$logs\planning.err" -WindowStyle Hidden -PassThru
+  Set-Content -Encoding ascii "$logs\.lock" $pp.Id  # the service's temp wipe skips its own log folder
 } else { Write-Host "planning already running on :8012" }
 
 if (-not (Up "http://localhost:3000")) {
@@ -56,14 +77,10 @@ foreach ($u in "http://localhost:8011/health", "http://localhost:8012/health", "
     Start-Sleep 2
   }
 }
-Write-Host "Warming the planning layers (first load about 2-3 min)..."
-foreach ($q in "plan_id=BDA-RMP2031&bbox=77.58,12.96,77.60,12.98", "plan_id=BMRDA-HSK-MP2031&bbox=77.79,13.07,77.81,13.09", "plan_id=BMRDA-ANK-MP2031&bbox=77.69,12.78,77.71,12.80") {
-  try { Invoke-WebRequest "http://localhost:8012/zones?$q" -UseBasicParsing -TimeoutSec 600 | Out-Null } catch { Write-Host "warm-up failed for $q (see $logs\planning.err)" }
-}
 
 Write-Host ""
-Write-Host "Ready:"
+Write-Host "Ready (plan sheets load on first view: the map shows 'Downloading / extracting ...'):"
 Write-Host "  Map (dashboard):  http://localhost:3000/dashboard"
 Write-Host "  Planning API:     http://localhost:8012/docs"
 Write-Host "  Cadastral API:    http://localhost:8011/docs"
-Write-Host "  Logs:             $logs"
+Write-Host "  Logs (temporary): $logs   (stop + delete: builders_all.ps1 -Stop)"
