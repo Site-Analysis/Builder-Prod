@@ -29,6 +29,7 @@ import ssl
 import struct
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.parse
@@ -52,6 +53,8 @@ CRS_METRIC = 32643
 COMPUTE = threading.RLock()
 _SSL_CONTEXT = ssl.create_default_context()
 CHUNK_M = 2000.0
+# /zones display: smaller pieces are not drawn at this simplify tolerance (contract 1.19)
+DISPLAY_MIN_AREA_M2 = {2: 0.0, 8: 100.0, 25: 2500.0}
 UNCOVERED_TILE_M = 2000.0
 USER_AGENT = (
     "qnit-builders-planning/1.18 (+https://builder.qnit.site; master-plan layer index; "
@@ -80,6 +83,10 @@ CACHE_CAP = _env_mb(
     "PLANNING_CACHE_MB", 700
 )  # <= 800 MB (brief); headroom for requests
 WORKER_CAP = _env_mb("PLANNING_WORKER_CAP_MB", 2048)
+FETCH_THREADS = 3  # at most this many source hosts download at once
+# sheet extractions running at once (each worker capped at WORKER_CAP): 2, so one slow sheet
+# (BDA's composite, ~16 min) does not hold up every other plan's first view (#57)
+EXTRACT_SLOTS = int(os.getenv("PLANNING_EXTRACT_SLOTS", "2"))
 
 
 # ---------------------------------------------------------------- temp folder
@@ -339,10 +346,17 @@ class OnDemand:
         import atexit
 
         atexit.register(lambda: shutil.rmtree(SVC_TEMP, ignore_errors=True))
-        self._thread = threading.Thread(
-            target=self._loop, name="planning-fetch", daemon=True
-        )
-        self._thread.start()
+        # one fetch thread per source host at a time (polite: one download per host), so a
+        # slow atlas on one host does not hold up sheets from another; at most EXTRACT_SLOTS
+        # sheet workers run at once (_extract_lock)
+        self._busy_hosts: set[str] = set()
+        self._extract_lock = threading.Semaphore(EXTRACT_SLOTS)
+        self._threads = [
+            threading.Thread(target=self._loop, name=f"planning-fetch-{i}", daemon=True)
+            for i in range(FETCH_THREADS)
+        ]
+        for t in self._threads:
+            t.start()
         threading.Thread(target=self._meter, name="planning-meter", daemon=True).start()
 
     # ------------------------------------------------------------ public helpers
@@ -448,30 +462,34 @@ class OnDemand:
             self._cv.notify_all()
 
     def _next_doc(self):
-        """The oldest wanted row's source; every wanted row of that source comes along."""
+        """The oldest wanted row whose host is not busy, with every wanted row of its source;
+        marks the host busy."""
         with self._lock:
-            while not self._want and not self._stop:
+            while not self._stop:
+                for rid in self._want:
+                    r = self.rows[rid]
+                    host = _url_host(r["source_url"])
+                    if host in self._busy_hosts:
+                        continue
+                    key = (r["source_url"], r["sha256"])
+                    group = [
+                        k
+                        for k in self._want
+                        if (self.rows[k]["source_url"], self.rows[k]["sha256"]) == key
+                    ]
+                    for k in group:
+                        self._want.pop(k, None)
+                    self._busy_hosts.add(host)
+                    return key, [self.rows[k] for k in group], host
                 self._cv.wait(timeout=5)
-            if self._stop:
-                return None
-            rid = next(iter(self._want))
-            r = self.rows[rid]
-            key = (r["source_url"], r["sha256"])
-            group = [
-                k
-                for k in self._want
-                if (self.rows[k]["source_url"], self.rows[k]["sha256"]) == key
-            ]
-            for k in group:
-                self._want.pop(k, None)
-            return key, [self.rows[k] for k in group]
+            return None
 
     def _loop(self) -> None:
         while True:
             nxt = self._next_doc()
             if nxt is None:
                 return
-            (url, sha), rows = nxt
+            (url, sha), rows, host = nxt
             try:
                 self._process(url, sha, rows)
             except Exception as ex:
@@ -482,6 +500,10 @@ class OnDemand:
                         if s.state != "source_changed":
                             s.state, s.error = "failed", str(ex)[:500]
                             s.retry_at = time.time() + 30
+            finally:
+                with self._lock:
+                    self._busy_hosts.discard(host)
+                    self._cv.notify_all()
 
     def _download(self, url: str, sha: str, dest: str) -> str:
         if url.startswith("file://"):
@@ -550,8 +572,8 @@ class OnDemand:
 
     def _process(self, url: str, sha: str, rows: list[dict]) -> None:
         t0 = time.time()
-        work = os.path.join(SVC_TEMP, f"job_{int(t0 * 1000)}")
-        os.makedirs(work, exist_ok=True)
+        # unique per job: fetch threads for different hosts can start in the same millisecond
+        work = tempfile.mkdtemp(prefix="job_", dir=SVC_TEMP)
         ext = os.path.splitext(urllib.parse.urlsplit(url).path)[1] or ".pdf"
         src = os.path.join(work, "source" + ext)
         try:
@@ -712,7 +734,6 @@ class OnDemand:
             raise RuntimeError(f"worker exit {rc} for {label}: " + " | ".join(err_tail))
 
     def _extract(self, row: dict, src: str, work: str) -> SheetData:
-        t0 = time.time()
         job = {
             **row,
             "source_path": src,
@@ -737,8 +758,10 @@ class OnDemand:
             elif tag == b"OUTL":
                 out["outlines"].append(shapely.from_wkb(payload))
 
-        self._run_worker(job, on_frame, row["row_id"])
-        self.stats["extract_s"][row["row_id"]] = round(time.time() - t0, 1)
+        with self._extract_lock:
+            t1 = time.time()  # worker time only; the wait for a slot is in first_view_s
+            self._run_worker(job, on_frame, row["row_id"])
+        self.stats["extract_s"][row["row_id"]] = round(time.time() - t1, 1)
         meta = out["meta"]
         sd = SheetData(
             row["row_id"],
@@ -1002,6 +1025,11 @@ class OnDemand:
         without it, so other requests are served meanwhile. One merge job runs at a time."""
         if os.getenv("PLANNING_MERGE_IN_WORKER", "1") != "1":
             return
+        # lock order is merge lock -> COMPUTE: a caller already holding COMPUTE must not wait
+        # for the merge lock (the job holding it waits for COMPUTE: deadlock, seen 3 Oct);
+        # it skips the premerge and merges what it still needs itself
+        if blocking and COMPUTE._is_owned():
+            blocking = False
         if not self._merge_lock.acquire(blocking=blocking):
             return
         try:
@@ -1129,8 +1157,7 @@ class OnDemand:
                     )
         if not tasks and not tiles:
             return None
-        work = os.path.join(SVC_TEMP, f"merge_{int(time.time() * 1000)}")
-        os.makedirs(work, exist_ok=True)
+        work = tempfile.mkdtemp(prefix="merge_", dir=SVC_TEMP)
         try:
             spec = {}
             for k, (rid, cis) in enumerate(used.items()):
@@ -1223,6 +1250,17 @@ class OnDemand:
         from app.services.zones_service import COORD_DECIMALS, ZONE_PROPS, plain
 
         geoms = np.asarray(m.geometry.values)
+        # display only (1.19): pieces below a pixel or two at the zoom a tolerance serves are
+        # not drawn (Hoskote: 95 % of the pieces in a town box are base-map specks under
+        # 100 m2); answers (/zones/at) always use every piece
+        min_a = DISPLAY_MIN_AREA_M2.get(tol, 0.0)
+        if min_a:
+            keep = shapely.area(geoms) >= min_a
+            m, geoms = m[keep], geoms[keep]
+        if not len(geoms):
+            d = (np.zeros((0, 4)), [], [])
+            self.merged.put(dkey, d, 64)
+            return d
         if np.isin(shapely.get_type_id(geoms), (3, 6)).all():
             try:
                 simp = shapely.coverage_simplify(geoms, tol)
@@ -1401,8 +1439,14 @@ class OnDemand:
         n = len(g)
         codes = [str(int(c)) for c in g["code"]] if n else []
         lab = [sd.labels.get(c, {}) for c in codes]
-        qa = row["sheet_qa"]
         pos = row.get("position_uncertainty_m")
+        # SheetQA 1.18: placement_confirmed (false: dashed "(placement unconfirmed)") and the
+        # sheet's position uncertainty travel with every zone of the sheet
+        qa = {
+            **row["sheet_qa"],
+            "placement_confirmed": bool(row.get("placement_confirmed", True)),
+            "position_uncertainty_m": pos,
+        }
         df = {
             "zone_uid": [
                 f"{row['row_id']}-{int(c):02d}{int(p):06d}"
@@ -1672,6 +1716,10 @@ def _unpack(b: bytes) -> tuple[np.ndarray, dict]:
     t = pa.ipc.open_stream(b).read_all()
     g = shapely.from_wkb(t.column("geometry").to_numpy(zero_copy_only=False))
     return g, {c: t.column(c).to_pylist() for c in t.column_names if c != "geometry"}
+
+
+def _url_host(url: str) -> str:
+    return urllib.parse.urlsplit(url).hostname or "?"
 
 
 def _boxes_meet(a, b) -> bool:

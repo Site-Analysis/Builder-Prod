@@ -30,12 +30,12 @@ changes and is returned by `/authority`, `/zones`, `/overlays` and `/zones/at`.
 
 1. A query (`/zones`, `/overlays`, `/zones/at`, a point `/authority`) finds the rows whose `extent`
    meets its window, plus the plan's LPA outline row.
-2. Rows not in memory are queued. One source is downloaded at a time per host (honest
-   User-Agent, backoff) to `%TEMP%\qnit_planning\svc\`, and its sha256 is checked against the
-   row. A mismatch marks the rows `source_changed`: they are never served, and the map shows
+2. Rows not in memory are queued. Up to three sources download at once, never two from the
+   same host (honest User-Agent, backoff; open-decisions #47), to a unique folder under
+   `%TEMP%\qnit_planning\svc\`, and each sha256 is checked against the row. A mismatch marks the rows `source_changed`: they are never served, and the map shows
    "Source changed; needs re-indexing".
 3. `infra/scripts/planning/sheet_worker.py` extracts the sheet in a subprocess capped at 2 GB
-   (Windows Job Object), with the row's stored calibration, and streams the zones back as
+   (Windows Job Object; one extraction at a time), with the row's stored calibration, and streams the zones back as
    zstd-compressed Arrow chunks (2 km). The download and scratch files are deleted.
 4. The service caches chunks in RAM (LRU, 800 MB in all: compressed sheets, decoded chunks,
    merged chunks). Evicted sheets are fetched again on the next view. Nothing survives a restart.
@@ -58,6 +58,17 @@ infra\scripts\dev\run_detached.ps1 -Name build_index `
   -Python infra\scripts\planning\.venv\Scripts\python.exe `
   -ScriptArgs "infra/scripts/planning/build_layer_index.py --plans BDA-RMP2031,BMRDA-HSK-MP2031,BMRDA-LPA-MAP"
 ```
+
+Plans the build knows: `BDA-RMP2031`, `BMRDA-HSK-MP2031`, `BMRDA-LPA-MAP`, `BMRDA-ANK-MP2031`,
+`BMRDA-NLM-MP2031` (Nelamangala grid sheets: MAP002 fitted to the LPA, grid priors from the
+plan's own maps, OSM refine within 300 m; A3 / B1 / C3 / D1 may be indexed unconfirmed, other
+grids that fail the checks get `status: rejected` with a reason; open-decisions #48, #49).
+
+`--osm-only` re-runs the OSM-dependent checks of plans already indexed (Overpass outages,
+open-decisions #43): BDA's ICP-on-roads affine, RMSE and null check; Hoskote's per-sheet
+junction RMSE, floor and null checks; Anekal Map No. 39's junction check (#45, #50). The
+previous values are read from the index and kept when the re-run agrees within the #40
+tolerance; otherwise the new value is used and listed under `changed` in the REPORT line.
 
 The build downloads each source to `%TEMP%\qnit_planning\build\`, re-runs its calibration (OSM
 is fetched into memory or the build's temp area, never kept), runs the worker for QA (the zones
