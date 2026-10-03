@@ -336,7 +336,7 @@ export function PlanningMapLayers({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, planKey, extentKey, preKey, toggles.ngt_buffer, toggles.forest_symbol, toggles.stream_centreline, toggles.coverage]);
 
-  const unconfirmed = WEB_PLANS.filter((p) => toggles.plans[p.plan_id]).flatMap((p) =>
+  const unconfirmed = WEB_PLANS.filter((p) => toggles.plans[p.plan_id] && !NO_BOX_PLANS.has(p.plan_id)).flatMap((p) =>
     (plans?.[p.plan_id]?.sheets ?? []).filter((sh) => !sh.placement_confirmed && sh.extent),
   );
   return (
@@ -871,6 +871,10 @@ export function PlanningAreaPicker({
   );
 }
 
+// Plans whose unconfirmed sheet gets no dashed box on the map (Tanmay, 3 Oct: Anekal's one sheet
+// covers the whole LPA, so the box only framed the plan); the legend card says it instead (#69)
+const NO_BOX_PLANS = new Set(["BMRDA-ANK-MP2031"]);
+
 // Plain-language meaning of each normalised class (what the plan shows, not what may be built)
 export const CLASS_MEANING: Record<string, string> = {
   residential: "Housing and residential areas",
@@ -904,7 +908,8 @@ export function PlanningLegendCard({
   const [open, setOpen] = useState(true);
   const on = WEB_PLANS.filter((p) => toggles.plans[p.plan_id]);
   if (!on.length) return null;
-  const anyUnconfirmed = on.some((p) => (plans?.[p.plan_id]?.sheets ?? []).some((sh) => !sh.placement_confirmed));
+  const unconf = (id: string) => (plans?.[id]?.sheets ?? []).filter((sh) => !sh.placement_confirmed);
+  const anyBox = on.some((p) => !NO_BOX_PLANS.has(p.plan_id) && unconf(p.plan_id).length > 0);
   return (
     <div role="region" aria-label="Zone legend" style={{
       position: "absolute", left: 10, bottom: 24, zIndex: 1000, width: 290, maxHeight: "55vh", overflowY: "auto",
@@ -932,6 +937,12 @@ export function PlanningLegendCard({
                   <span style={{ fontWeight: 800 }}>{p.label}</span>
                   {info && <StatusBadge status={info.status} condition={info.status_condition} />}
                 </div>
+                {unconf(p.plan_id).length > 0 && (
+                  <div style={{ color: "#9A4F00", marginBottom: 3 }}>
+                    Placement unconfirmed{NO_BOX_PLANS.has(p.plan_id) ? "" : ` (${unconf(p.plan_id).map((sh) => sh.sheet).join(", ")})`}:
+                    zones may be 100 m or more off. Verify on site.
+                  </div>
+                )}
                 {entries.length === 0 && <div style={{ color: "#7B8F83" }}>No zones of this plan in view</div>}
                 {entries.map((e) => (
                   <div key={e.label} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 3 }}>
@@ -950,7 +961,7 @@ export function PlanningLegendCard({
               <span style={{ width: 14, height: 11, background: "#FFFFFF", border: "1px dashed #9E9E9E", flexShrink: 0 }} />
               <span>Not coloured on the plan: the sheet leaves it blank</span>
             </div>
-            {anyUnconfirmed && (
+            {anyBox && (
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ width: 14, height: 11, border: "2px dashed #5D4037", flexShrink: 0 }} />
                 <span>Dashed box: placement unconfirmed; zones inside may be 100 m or more off. Verify on site.</span>

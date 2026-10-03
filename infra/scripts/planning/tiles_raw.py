@@ -75,7 +75,18 @@ def load_plan(plan_id: str, area: str, log):
         4
     ) as ex:  # four capped workers (2 GB cap each; 32 GB here)
         for k, (r, res) in enumerate(zip(zrows, ex.map(run, zrows), strict=True)):
-            g, cols = bli.table_geoms(res["zones"])
+            # chunk by chunk: chunks can differ in schema (e.g. an all-null 'note'), which a
+            # table concat rejects
+            g_list, codes = [], []
+            for t in res["zones"]:
+                g_list.extend(
+                    shapely.from_wkb(
+                        t.column("geometry").to_numpy(zero_copy_only=False)
+                    )
+                )
+                codes.extend(t.column("code").to_pylist())
+            g = np.array(g_list, dtype=object)
+            cols = {"code": codes}
             labels = res["meta"].get("labels") or {}
             props = []
             for code in cols.get("code", []):

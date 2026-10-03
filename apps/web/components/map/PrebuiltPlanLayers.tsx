@@ -34,7 +34,8 @@ export function usePrebuiltManifest(): PrebuiltManifest {
   useEffect(() => {
     if (!PREBUILT_ON) return;
     const ctrl = new AbortController();
-    fetch(MANIFEST_URL, { signal: ctrl.signal })
+    // a minute-resolution cache-buster: a re-built plan shows within a minute
+    fetch(`${MANIFEST_URL}?v=${Math.floor(Date.now() / 60000)}`, { signal: ctrl.signal, cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { plans: {} }))
       .then((j) => setM(j.plans ?? {}))
       .catch(() => setM({}));
