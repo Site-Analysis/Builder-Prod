@@ -27,6 +27,7 @@ from app.services.store import (
 )
 
 MAX_BBOX_DEG = 0.05
+MAX_BBOX_COARSE_DEG = 0.25  # with simplify_m 25 (1.19)
 DEFAULT_SIMPLIFY_M = 8
 TRACE_SHARE = 0.01  # hits below 1 % of the parcel ...
 TRACE_AREA_M2 = 20.0  # ... or below 20 m2 are trace hits
@@ -50,7 +51,12 @@ def plain(v):
     return v
 
 
-def parse_bbox(bbox: str) -> shapely.Polygon:
+def max_bbox_deg(tol: int) -> float:
+    """bbox cap per side: 0.25 degrees at simplify 25 (zoom 10-12, 1.19), else 0.05."""
+    return MAX_BBOX_COARSE_DEG if tol == 25 else MAX_BBOX_DEG
+
+
+def parse_bbox(bbox: str, max_deg: float = MAX_BBOX_DEG) -> shapely.Polygon:
     try:
         x0, y0, x1, y1 = (float(v) for v in bbox.split(","))
     except ValueError as exc:
@@ -59,9 +65,9 @@ def parse_bbox(bbox: str) -> shapely.Polygon:
         ) from exc
     if x1 <= x0 or y1 <= y0:
         raise HTTPException(status_code=400, detail="bbox min must be below max")
-    if x1 - x0 > MAX_BBOX_DEG + 1e-9 or y1 - y0 > MAX_BBOX_DEG + 1e-9:
+    if x1 - x0 > max_deg + 1e-9 or y1 - y0 > max_deg + 1e-9:
         raise HTTPException(
-            status_code=400, detail=f"bbox larger than {MAX_BBOX_DEG} degrees per side"
+            status_code=400, detail=f"bbox larger than {max_deg} degrees per side"
         )
     return shapely.transform(
         shapely.box(x0, y0, x1, y1),
@@ -305,7 +311,12 @@ def zone_hits(
         else:
             # zone pieces lie wholly inside the parcel
             edge = float(rim.distance(local_u))
-        layers_r = [plain(x) or "composite" for x in grp["source_layer"]]
+        # F6: "Not coloured on the plan" (LPA area on no sheet) has no source layer: null for
+        # every plan (was "composite" for some, "none" for others)
+        layers_r = [
+            None if plain(x) == "none" else (plain(x) or "composite")
+            for x in grp["source_layer"]
+        ]
         sheets_r = [plain(x) for x in grp["sheet"]]
         qas = []
         for q, lay, sh in zip(grp["qa"], layers_r, sheets_r, strict=True):

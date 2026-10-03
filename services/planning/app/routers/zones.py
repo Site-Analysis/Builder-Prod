@@ -72,7 +72,7 @@ def get_zones(
     plan = _plan(plan_id)
     st = get_store()
     tol = zs.check_simplify(simplify_m)
-    box = zs.parse_bbox(bbox)
+    box = zs.parse_bbox(bbox, zs.max_bbox_deg(tol))
     st.od.premerge(plan_id, box)  # merge work runs in the worker, outside COMPUTE
     with COMPUTE, memtrace(f"/zones {plan_id} {bbox}"):
         feats, pend = st.od.zone_features_json(plan_id, box, tol)
@@ -103,7 +103,7 @@ def get_overlays(
             status_code=400, detail=f"kind must be one of {sorted(zs.OVERLAY_KINDS)}"
         )
     tol = zs.check_simplify(simplify_m)
-    box = zs.parse_bbox(bbox)
+    box = zs.parse_bbox(bbox, zs.max_bbox_deg(tol))
     with COMPUTE:
         return _overlays(st, plan, plan_id, bbox, box, kind, tol)
 
@@ -177,6 +177,16 @@ def _zones_at_locked(fc: dict, q: dict) -> dict:
                 hits, trace = zs.zone_hits(layers, parcel)
             zones.extend(hits)
             traces.extend(trace)
+    # 1.18: the village table's view next to the parcel's geometry answer
+    from app.routers.registry import disagreement, village_summary
+
+    vs = village_summary((q["dist"], q["taluk"], q["hobli"], q["vlg"]))
+    share: dict[str, float] = {}
+    for z in zones:
+        a = (st.plans.get(z["plan_id"]) or {}).get("authority")
+        if a:
+            share[a] = share.get(a, 0.0) + z["overlap_pct"]
+    here = sorted(share, key=lambda a: -share[a])
     statuses = {z["status"] for z in zones}
     note = None
     if pending:
@@ -198,4 +208,6 @@ def _zones_at_locked(fc: dict, q: dict) -> dict:
         "note": note,
         "build_id": st.od.build_id if st.od is not None else None,
         "pending_sheets": _dedupe(pending),
+        "village_summary": vs,
+        "disagreement_note": disagreement(vs, here, "parcel") if here else None,
     }

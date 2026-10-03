@@ -65,6 +65,9 @@ class Store:
     authorities: dict[str, dict] = field(default_factory=dict)
     sources_checked: list[dict] = field(default_factory=list)
     od: object | None = None  # app.services.ondemand.OnDemand
+    villages: object | None = (
+        None  # app.services.villages.VillageIndex (point -> village)
+    )
 
     def lpas(self, *a, **kw):
         from app.services.ondemand import COMPUTE
@@ -194,6 +197,12 @@ def load_store() -> Store:
         r["authority"]: r for r in _read_csv(os.path.join(reg, "authorities.csv"))
     }
     st.sources_checked = _read_csv(os.path.join(reg, "sources_checked.csv"))
+    from app.services.villages import VillageIndex
+
+    st.villages = VillageIndex(
+        [k[:3] for k in st.authority],
+        os.getenv("CADASTRAL_URL", "http://localhost:8011"),
+    )
     index = os.getenv("PLANNING_LAYER_INDEX", os.path.join(reg, "layer_index.json"))
     if os.path.exists(index):
         st.od = OnDemand(index, st.docs, st.plans)

@@ -80,8 +80,8 @@ def _env_mb(name: str, default: int) -> int:
 
 
 CACHE_CAP = _env_mb(
-    "PLANNING_CACHE_MB", 700
-)  # <= 800 MB (brief); headroom for requests
+    "PLANNING_CACHE_MB", 520
+)  # <= 800 MB (brief); 520 leaves headroom for zoom 10-12 views under the 1 GB bar (#64)
 WORKER_CAP = _env_mb("PLANNING_WORKER_CAP_MB", 2048)
 FETCH_THREADS = 3  # at most this many source hosts download at once
 # sheet extractions running at once (each worker capped at WORKER_CAP): 2, so one slow sheet
@@ -303,7 +303,7 @@ class OnDemand:
         if alter and alter in self.rows:
             self.rows[alter] = {**self.rows[alter], "sha256": "0" * 64}
         self.state: dict[str, RowState] = {k: RowState() for k in self.rows}
-        # one budget (PLANNING_CACHE_MB, 700 MB): 50 % compressed sheets, 25 % compressed
+        # one budget (PLANNING_CACHE_MB, 520 MB): 50 % compressed sheets, 25 % compressed
         # derived results, 15 % decoded chunks, 10 % hot merged frames; the rest of the
         # 1 GB is headroom for request work
         self.cache = LRU(CACHE_CAP // 2)  # row_id -> SheetData (compressed)

@@ -60,7 +60,10 @@ from pyproj import Transformer  # noqa: E402
 from shapely.geometry import box, mapping  # noqa: E402
 from shapely.ops import transform  # noqa: E402
 
-_FLAGS = "feature.planning.layers feature.planning.plan.BDA-RMP2031"
+_FLAGS = (
+    "feature.planning.layers feature.planning.coverage-layer "
+    "feature.planning.plan.BDA-RMP2031"
+)
 _DUMMY_PAYLOAD = {"sub": "test-user", "preferred_username": "smoke-test"}
 _E, _N = 780000, 1435000
 _TO_WGS = Transformer.from_crs(32643, 4326, always_xy=True).transform
@@ -86,7 +89,10 @@ def _parcel_fc(x0, y0, x1, y1):
 
 _FIX = _ROOT / "tests" / "fixtures" / "planning"
 # the tests' own temp root: the service's start/stop wipe never reaches a live service's files
-_TMP = Path(os.environ.get("TEMP") or os.environ.get("TMP") or "/tmp") / "qnit_planning_tests"
+_TMP = (
+    Path(os.environ.get("TEMP") or os.environ.get("TMP") or "/tmp")
+    / "qnit_planning_tests"
+)
 os.environ["PLANNING_TEMP_ROOT"] = str(_TMP / "root")
 
 
@@ -105,15 +111,28 @@ def _fixture_index() -> Path:
     def row(row_id, kind, name, what, **extra):
         p = _FIX / name
         return {
-            "row_id": row_id, "kind": kind, "plan_id": "BDA-RMP2031", "authority": "BDA",
-            "doc_id": "BDA-RMP2031-PLUCOMP", "page": 1, "sheet": "fixture",
-            "sheet_key": what, "source_layer": "composite",
-            "source_url": p.as_uri(), "sha256": hashlib.sha256(p.read_bytes()).hexdigest(),
+            "row_id": row_id,
+            "kind": kind,
+            "plan_id": "BDA-RMP2031",
+            "authority": "BDA",
+            "doc_id": "BDA-RMP2031-PLUCOMP",
+            "page": 1,
+            "sheet": "fixture",
+            "sheet_key": what,
+            "source_layer": "composite",
+            "source_url": p.as_uri(),
+            "sha256": hashlib.sha256(p.read_bytes()).hexdigest(),
             "priority": {"rank": 3, "order": [0]},
-            "extent": {"epsg32643": [_E - 1000, _N - 1000, _E + 7000, _N + 7000], "wgs84": [77.0, 12.0, 78.0, 13.5]},
+            "extent": {
+                "epsg32643": [_E - 1000, _N - 1000, _E + 7000, _N + 7000],
+                "wgs84": [77.0, 12.0, 78.0, 13.5],
+            },
             "extraction": {"method": "fixture_parquet", "fixture": what, **extra},
-            "sheet_qa": qa, "position_uncertainty_m": None, "placement_confirmed": True,
-            "warnings": [], "status": "indexed",
+            "sheet_qa": qa,
+            "position_uncertainty_m": None,
+            "placement_confirmed": True,
+            "warnings": [],
+            "status": "indexed",
         }
 
     ix = {
@@ -121,7 +140,13 @@ def _fixture_index() -> Path:
         "plans": {"BDA-RMP2031": {"outline_row": "fix#lpa", "uncovered": None}},
         "rows": [
             row("fix#zones", "zones", "BDA-RMP2031.parquet", "zones"),
-            row("fix#overlays", "zones", "BDA-RMP2031_overlays.parquet", "overlays", overlays=True),
+            row(
+                "fix#overlays",
+                "zones",
+                "BDA-RMP2031_overlays.parquet",
+                "overlays",
+                overlays=True,
+            ),
             row("fix#lpa", "lpa_outline", "BDA-RMP2031_lpa.parquet", "outline"),
         ],
     }
@@ -135,6 +160,7 @@ def _make_client(monkeypatch, flags: str):
     monkeypatch.setenv("PLANNING_REGISTER_DIR", str(_ROOT / "infra" / "planning"))
     monkeypatch.setenv("PLANNING_LAYER_INDEX", str(_fixture_index()))
     monkeypatch.setenv("PLANNING_ALLOW_FILE_SOURCES", "1")
+    monkeypatch.setenv("PLANNING_VILLAGE_INDEX", "0")  # no cadastral service in tests
     monkeypatch.setenv("PLANNING_WORKER_PYTHON", sys.executable)
     monkeypatch.setenv(
         "PLANNING_AUTHORITY_CSV",
@@ -491,13 +517,15 @@ def test_p_contract_1_16(client, monkeypatch):
 
 
 def test_q_unregistered_lpa_is_no_plan_found(client):
-    # 1.17: an LPA registered as having no master plan (STRR) has no zone map; an LPA with
-    # no register row at all (Magadi) gets no_master_plan_found
+    # 1.18: an LPA registered as having no master plan (STRR) is authority_no_master_plan;
+    # an LPA with no register row at all gets no_master_plan_found
     client.get("/plans")  # store loaded
     from app.routers.registry import _plan_coverage
 
-    assert _plan_coverage("STRR", []) == "lpa_no_zone_map"
-    assert _plan_coverage("MAGADI", []) == "no_master_plan_found"
+    assert _plan_coverage("STRR", []) == "authority_no_master_plan"
+    assert _plan_coverage("RAMANAGARA", []) == "no_master_plan_found"
+    # 1.18: Magadi's plan is registered (not loaded: its maps print no coordinates)
+    assert _plan_coverage("MAGADI", ["MAGADI-MP2031"]) == "plan_registered_not_loaded"
     assert _plan_coverage("BIAAPA", ["BIAAPA-MP2021"]) == "plan_registered_not_loaded"
 
 
@@ -518,3 +546,58 @@ def test_r_merges_run_in_the_worker(client, monkeypatch):
     monkeypatch.setenv("PLANNING_MERGE_IN_WORKER", "0")
     b = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1").json()
     assert a["zones"] == b["zones"] and a["trace_hits"] == b["trace_hits"]
+
+
+def test_s_contract_1_18_answers(client, monkeypatch):
+    # village summary / disagreement note (F1-F5), placement fields on SheetQA, F9 rule
+    from app.routers import registry as rg
+
+    vs = rg.village_summary(("20", "1", "1", "14"))
+    assert vs["authority"] == "BDA" and vs["plan_coverage"] in rg.PLAN_COVERAGE
+    assert rg.disagreement(vs, ["BDA"], "location") is None
+    note = rg.disagreement(vs, ["BMRDA-ANK"], "parcel")
+    assert note.startswith("Most of village") and note.endswith(
+        "this parcel is in BMRDA-ANK."
+    )
+    assert rg.village_summary(("99", "9", "9", "9")) is None
+    # /zones/at carries the village view and every hit's SheetQA the placement fields
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 400, _N + 400, _E + 460, _N + 460))
+    res = client.get("/zones/at?dist=20&taluk=1&hobli=1&vlg=14&survey=1").json()
+    assert (
+        res["village_summary"]["authority"] == "BDA"
+        and res["disagreement_note"] is None
+    )
+    q = res["zones"][0]["sheets_qa"][0]
+    assert q["placement_confirmed"] is True and "position_uncertainty_m" in q
+    # a lat/lng answer always has the 1.18 keys (null while village outlines are off)
+    pt = client.get(f"/authority?{_wgs_point(_E + 100, _N + 100)}").json()
+    assert pt["village_summary"] is None and pt["disagreement_note"] is None
+    # F9: a near-edge point outside every LPA, with no loaded zone at it, is not plan_loaded
+    far = client.get(f"/authority?{_wgs_point(_E - 1000 - 60, _N + 100)}").json()
+    assert far["plan_coverage"] != "plan_loaded" or any(
+        a["plan_coverage"] == "plan_loaded" for a in far["authorities"]
+    )
+
+
+def test_t_contract_1_19(client):
+    # zoom 10-12: 0.25 degree boxes at simplify 25, still 0.05 otherwise
+    big = "77.40,12.80,77.62,13.00"
+    assert (
+        client.get(f"/zones?plan_id=BDA-RMP2031&bbox={big}&simplify_m=25").status_code
+        == 200
+    )
+    assert (
+        client.get(f"/zones?plan_id=BDA-RMP2031&bbox={big}&simplify_m=8").status_code
+        == 400
+    )
+    # coverage layer: own flag; outlines off in tests -> state unavailable, no features
+    cov = client.get(f"/coverage?bbox={big}")
+    assert cov.status_code == 200 and cov.json()["state"] == "unavailable"
+    assert cov.json()["features"] == []
+    assert client.get("/coverage?bbox=77,12,78,13").status_code == 400
+
+
+def test_t2_coverage_flag(client_layers_only):
+    r = client_layers_only.get("/coverage?bbox=77.40,12.80,77.62,13.00")
+    assert r.status_code == 403
+
