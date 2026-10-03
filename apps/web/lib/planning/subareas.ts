@@ -65,7 +65,12 @@ export const PLAN_SUBAREAS: Record<string, SubArea[]> = {
     { name: "Sarjapura", lat: 12.86, lng: 77.785, zoom: 16 },
     { name: "Sarjapura town", lat: 12.86, lng: 77.788, zoom: 16 },
   ],
+  // the indexed grid sheets (others were rejected: no checked placement)
   "BMRDA-NLM-MP2031": [
-    { name: "Nelamangala town", lat: 13.0976, lng: 77.4041, zoom: 15 },
+    { name: "Nelamangala grid A3 (unconfirmed)", lat: 13.1296, lng: 77.4389, zoom: 15 },
+    { name: "Nelamangala grid B1 (unconfirmed)", lat: 13.1007, lng: 77.3743, zoom: 15 },
+    { name: "Nelamangala grid D1 (unconfirmed)", lat: 13.1528, lng: 77.3355, zoom: 15 },
+    { name: "Sompura grid S2", lat: 13.216, lng: 77.2474, zoom: 15 },
+    { name: "Thyamagondlu grid T1", lat: 13.2162, lng: 77.3058, zoom: 15 },
   ],
 };

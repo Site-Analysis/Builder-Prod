@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Proprietary
 
 // 2031 plan layers: the side panel (plan dropdown, per-plan switch / opacity / legend /
-// overlays / zoom / sources / sheet states, Coverage status layer), the map layers and the
+// overlays / zoom / sources / sheet states), the map layers and the
 // parcel-card section. Rendered only when NEXT_PUBLIC_ENABLE_PLANNING_LAYERS is on. Facts
 // only: conditional wording ("The plan shows..."), never an answer or a confidence.
 
@@ -105,7 +105,7 @@ export function loadPlanningToggles(): PlanningToggles {
     return {
       zones: Object.values(plans).some(Boolean), plans, opacity,
       ngt_buffer: saved.ngt_buffer === true, forest_symbol: saved.forest_symbol === true,
-      stream_centreline: saved.stream_centreline === true, coverage: saved.coverage === true,
+      stream_centreline: saved.stream_centreline === true, coverage: false, // layer removed from the panel (Tanmay, 3 Oct)
       open: saved.open === true,
     };
   } catch {
@@ -568,7 +568,7 @@ function PlanSection({
 }
 
 /** Collapsible side panel (right; a bottom sheet on mobile) for every 2031 plan layer and the
- * Coverage status layer. Everything is off by default; the choice is kept in browser storage. */
+ * Everything is off by default; the choice is kept in browser storage. */
 export function PlanningPanel({
   toggles, setToggles, status, view, plans, isMobile, onZoomTo, onShow, onFly,
 }: {
@@ -647,15 +647,6 @@ export function PlanningPanel({
                 key={p.plan_id} plan={p} info={plans?.[p.plan_id]} toggles={toggles} setToggles={setToggles}
                 view={view} onZoomTo={onZoomTo} onShow={onShow} onFly={onFly}
               />
-            ))}
-          </div>
-          <div style={{ borderTop: "1px solid #E8EEE4", marginTop: 4, paddingTop: 4 }}>
-            <Switch on={toggles.coverage} label="Coverage status (villages)" onClick={() => setToggles({ ...toggles, coverage: !toggles.coverage })} />
-            {toggles.coverage && (Object.keys(COVERAGE_UI) as PlanCoverage[]).map((k) => (
-              <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, marginLeft: 6, marginBottom: 2 }}>
-                <span style={{ width: 12, height: 10, background: COVERAGE_UI[k].colour, opacity: 0.6, display: "inline-block" }} />
-                <span>{COVERAGE_UI[k].legend}</span>
-              </div>
             ))}
           </div>
         </div>
