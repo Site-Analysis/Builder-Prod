@@ -58,9 +58,18 @@ export function PrebuiltPlanLayer({ plan, opacity }: { plan: PrebuiltPlan; opaci
         minNativeZoom: f.minzoom,
         opacity,
         zIndex: 350,
+        className: "qnit-prebuilt-zones",
         attribution: "2031 plan zones (pre-drawn)",
       }) as Layer;
     });
+    // pale classes (agriculture covers most LPAs) drawn at 45 % nearly vanish on the base
+    // map: boost saturation / contrast of the pre-drawn tiles in the browser
+    if (!document.getElementById("qnit-prebuilt-style")) {
+      const st = document.createElement("style");
+      st.id = "qnit-prebuilt-style";
+      st.textContent = ".qnit-prebuilt-zones img { filter: saturate(2.2) contrast(1.25); }";
+      document.head.appendChild(st);
+    }
     layers.forEach((l) => l.addTo(map));
     return () => layers.forEach((l) => map.removeLayer(l));
   }, [map, plan, opacity]);

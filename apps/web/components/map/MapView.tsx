@@ -325,12 +325,8 @@ export function MapView() {
   // 2031 plan navigation: fit a plan, bring it into view only when needed, fly to a sub-area
   const fitPlanBox = (b: [number, number, number, number]) =>
     mapRef.current?.fitBounds([[b[1], b[0]], [b[3], b[2]]], { padding: [30, 30] });
-  const showPlanBox = (b: [number, number, number, number]) => {
-    const m = mapRef.current;
-    if (!m) return;
-    const inView = m.getBounds().intersects([[b[1], b[0]], [b[3], b[2]]]);
-    if (m.getZoom() < 10 || !inView) fitPlanBox(b);
-  };
+  // switching a plan on always brings the whole plan into view (Tanmay, 3 Oct)
+  const showPlanBox = (b: [number, number, number, number]) => fitPlanBox(b);
   const flyToSubArea = (sa: { lat: number; lng: number; zoom: number }) =>
     mapRef.current?.flyTo([sa.lat, sa.lng], sa.zoom, { duration: 1.2 });
 
