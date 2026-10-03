@@ -18,7 +18,7 @@ import { useIsMobile } from "@/lib/useIsMobile";
 import { isEnabled } from "@/lib/flags";
 import { fetchZonesAt, type ZonesAtResult } from "@/lib/api/planning";
 import {
-  PlanningAreaPicker, PlanningCardSection, PlanningMapLayers, PlanningPanel, type PlanningToggles, type PlanningView,
+  PlanningAreaPicker, PlanningCardSection, PlanningLegendCard, PlanningMapLayers, PlanningPanel, type PlanningToggles, type PlanningView,
   effectiveToggles, loadPlanningToggles, savePlanningToggles, usePlanningPlans,
 } from "./PlanningLayers";
 import { usePrebuiltManifest } from "./PrebuiltPlanLayers";
@@ -534,6 +534,7 @@ export function MapView() {
 
         {PLANNING && (
           <>
+            <PlanningLegendCard toggles={planningShown} view={planningView} plans={planningPlans} />
             <PlanningPanel
               toggles={planningToggles} setToggles={setPlanningToggles} status={planningStatus}
               view={planningView} plans={planningPlans} isMobile={isMobile}

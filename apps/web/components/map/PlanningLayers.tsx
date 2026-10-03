@@ -9,7 +9,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { GeoJSON, useMap } from "react-leaflet";
+import { GeoJSON, Rectangle, useMap } from "react-leaflet";
 import type { PathOptions } from "leaflet";
 import {
   MAX_BBOX_COARSE_DEG, PLAN_ID, PLAN_NAMES, WEB_PLANS, fetchCoverage, fetchOverlays, fetchPlans,
@@ -336,8 +336,19 @@ export function PlanningMapLayers({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, planKey, extentKey, preKey, toggles.ngt_buffer, toggles.forest_symbol, toggles.stream_centreline, toggles.coverage]);
 
+  const unconfirmed = WEB_PLANS.filter((p) => toggles.plans[p.plan_id]).flatMap((p) =>
+    (plans?.[p.plan_id]?.sheets ?? []).filter((sh) => !sh.placement_confirmed && sh.extent),
+  );
   return (
     <>
+      {unconfirmed.map((sh) => (
+        <Rectangle
+          key={`unconf-${sh.plan_id}-${sh.sheet}`}
+          bounds={[[sh.extent![1], sh.extent![0]], [sh.extent![3], sh.extent![2]]]}
+          interactive={false}
+          pathOptions={{ color: "#5D4037", weight: 2, dashArray: "8 6", fill: false, opacity: 0.85 }}
+        />
+      ))}
       {data.coverage && toggles.coverage && (
         <GeoJSON
           key={`pcov-${version}`} data={data.coverage} interactive={false}
@@ -855,6 +866,99 @@ export function PlanningAreaPicker({
             background: on ? "#306223" : "#FDFCFB", color: on ? "#FDFCFB" : "#7B8F83", whiteSpace: "nowrap",
           }}
         >{on ? "Zones on" : "Show zones"}</button>
+      )}
+    </div>
+  );
+}
+
+// Plain-language meaning of each normalised class (what the plan shows, not what may be built)
+export const CLASS_MEANING: Record<string, string> = {
+  residential: "Housing and residential areas",
+  commercial: "Shops, offices, markets",
+  industrial: "Factories and industrial estates",
+  public_semi_public: "Government offices, schools, hospitals, institutions",
+  open_space: "Parks, playgrounds, open spaces",
+  public_utility: "Water, power, sewage and other utility works",
+  transport: "Roads, railways, bus and truck terminals",
+  unclassified: "No use assigned on the plan",
+  agriculture: "Farmland: agricultural zone",
+  water: "Lakes, tanks and other water bodies",
+  forest: "Forest",
+  hillock: "Hillocks and quarries",
+  uncoloured: "The plan sheet leaves this area blank",
+  road_space: "Road space drawn on the sheet (not a zone)",
+  ngt_buffer: "NGT buffer around lakes and drains (map symbol)",
+  special_development_zone: "Special development zone",
+  stream: "Streams and valleys",
+};
+
+/** Floating legend (bottom-left): every colour of the plans switched on, with the plan's own
+ * label and what it means, plus the keys for unconfirmed placement and uncoloured areas. */
+export function PlanningLegendCard({
+  toggles, view, plans,
+}: {
+  toggles: PlanningToggles;
+  view: PlanningView | null;
+  plans: Record<string, PlanInfo> | null;
+}) {
+  const [open, setOpen] = useState(true);
+  const on = WEB_PLANS.filter((p) => toggles.plans[p.plan_id]);
+  if (!on.length) return null;
+  const anyUnconfirmed = on.some((p) => (plans?.[p.plan_id]?.sheets ?? []).some((sh) => !sh.placement_confirmed));
+  return (
+    <div role="region" aria-label="Zone legend" style={{
+      position: "absolute", left: 10, bottom: 24, zIndex: 1000, width: 290, maxHeight: "55vh", overflowY: "auto",
+      background: "rgba(253,252,251,0.97)", border: "1px solid #CFD6C4", borderRadius: 8,
+      boxShadow: "0 2px 8px rgba(58,63,59,0.14)", fontSize: 11, color: "#3A3F3B",
+    }}>
+      <button
+        aria-expanded={open} onClick={() => setOpen(!open)}
+        style={{
+          display: "flex", width: "100%", alignItems: "center", gap: 6, padding: "6px 10px", border: "none",
+          background: "#F3F6F0", cursor: "pointer", fontFamily: "inherit", fontSize: 12, fontWeight: 800, color: "#306223",
+        }}
+      >
+        <span>Zone legend</span>
+        <span style={{ marginLeft: "auto" }}>{open ? "▾" : "▸"}</span>
+      </button>
+      {open && (
+        <div style={{ padding: "6px 10px 8px" }}>
+          {on.map((p) => {
+            const info = plans?.[p.plan_id];
+            const entries = (view?.legend[p.plan_id] ?? []).filter((e) => e.cnorm !== "uncoloured");
+            return (
+              <div key={p.plan_id} style={{ marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 800 }}>{p.label}</span>
+                  {info && <StatusBadge status={info.status} condition={info.status_condition} />}
+                </div>
+                {entries.length === 0 && <div style={{ color: "#7B8F83" }}>No zones of this plan in view</div>}
+                {entries.map((e) => (
+                  <div key={e.label} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 3 }}>
+                    <span style={{ width: 14, height: 11, marginTop: 1, background: e.colour, opacity: 0.75, border: "1px solid rgba(0,0,0,0.2)", flexShrink: 0 }} />
+                    <span>
+                      <span style={{ fontWeight: 600 }}>{e.label}</span>
+                      {e.cnorm && CLASS_MEANING[e.cnorm] && <span style={{ color: "#5B6B60" }}>: {CLASS_MEANING[e.cnorm]}</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+          <div style={{ borderTop: "1px solid #E8EEE4", paddingTop: 5, color: "#5B6B60" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+              <span style={{ width: 14, height: 11, background: "#FFFFFF", border: "1px dashed #9E9E9E", flexShrink: 0 }} />
+              <span>Not coloured on the plan: the sheet leaves it blank</span>
+            </div>
+            {anyUnconfirmed && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 14, height: 11, border: "2px dashed #5D4037", flexShrink: 0 }} />
+                <span>Dashed box: placement unconfirmed; zones inside may be 100 m or more off. Verify on site.</span>
+              </div>
+            )}
+            <div style={{ marginTop: 4, fontSize: 10 }}>Colours show what each plan draws; drafts are shown for context only.</div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -114,13 +114,11 @@ def style(plan_id: str, p: dict, bda: dict) -> tuple:
         if plan_id == "BDA-RMP2031"
         else CLASS_COLOUR.get(cn, "#999999")
     )
-    unconf = (p.get("qa") or {}).get("placement_confirmed") is False
+    # no per-zone outlines (a dashed line round every zone of an unconfirmed sheet buried the
+    # map, 3 Oct): the web draws one dashed rectangle per unconfirmed sheet and the legend
+    # card explains it
     if cn == "uncoloured":
-        return (rgb("#FFFFFF"), 0.2, rgb("#9E9E9E"), True)
-    if unconf:
-        return (rgb(col), 0.35, rgb("#5D4037"), True)
-    if p.get("inferred_note"):
-        return (rgb(col), 0.45, rgb("#8E24AA"), True)
+        return (rgb("#FFFFFF"), 0.2, None, False)
     return (rgb(col), 0.45, None, False)
 
 
@@ -336,6 +334,11 @@ def main() -> None:
     ap.add_argument("--zmin", type=int, default=10)
     ap.add_argument("--zmax", type=int, default=15)
     ap.add_argument(
+        "--raw-plans",
+        default="BMRDA-HSK-MP2031",
+        help="plans drawn from the sheet worker output by priority, without service merges",
+    )
+    ap.add_argument(
         "--simplify",
         type=int,
         default=8,
@@ -346,6 +349,7 @@ def main() -> None:
     if job:
         with open(os.path.join(job, ".lock"), "w") as f:
             f.write(str(os.getpid()))
+    raw_plans = {p for p in args.raw_plans.split(",") if p}
     st = Storage()
     st.ensure_bucket()
     plans = {p["plan_id"]: p for p in get_json(f"{args.service}/plans", timeout=60)}
@@ -362,25 +366,65 @@ def main() -> None:
     bda = bda_colours()
     t_all = time.time()
     rep = {}
-    with qf.PeakMeter() as pm, qf.TempArea("tiles") as area:
+    done: set[str] = set()
+    with qf.PeakMeter() as pm, qf.TempArea(f"tiles_{os.getpid()}") as area:
         for plan_id in [p for p in args.plans.split(",") if p]:
             t0 = time.time()
             info = plans[plan_id]
             ext = info["extent"]
-            zones = fetch_plan(args.service, plan_id, ext, args.simplify)
-            geoms = [g for g, _p in zones]
-            props = [p for _g, p in zones]
-            styles = [style(plan_id, p, bda) for p in props]
-            tree = shapely.STRtree(np.array(geoms, dtype=object))
             e3857 = (
                 *TO_3857.transform(ext[0], ext[1]),
                 *TO_3857.transform(ext[2], ext[3]),
             )
+            raw = plan_id in raw_plans
+            if raw:
+                # many overlapping sheets: paint the worker output by priority (#68)
+                import tiles_raw as tr
+
+                sheets, lpa3857, ucfg = tr.load_plan(plan_id, area, log)
+                ids: dict[tuple, int] = {}
+                palette = np.zeros((256, 4), np.uint8)
+
+                def sid(st, ids=ids, palette=palette):
+                    if st not in ids:
+                        ids[st] = len(ids) + 1
+                        palette[ids[st]] = (*st[0], int(255 * st[1]))
+                    return ids[st]
+
+                sheets_idx, props = [], []
+                for k, gs, ps in sheets:
+                    if not gs:
+                        continue
+                    sids = [sid(style(plan_id, pp, bda)) for pp in ps]
+                    sheets_idx.append(
+                        (k, shapely.STRtree(np.array(gs, dtype=object)), gs, sids)
+                    )
+                    props.extend(ps)
+                uid = 0
+                if ucfg:
+                    up = {
+                        "zone_label_native": ucfg["zone_label_native"],
+                        "class_norm": "uncoloured",
+                    }
+                    uid = sid(style(plan_id, up, bda))
+                    props.append(up)
+                zones = props
+            else:
+                zones = fetch_plan(args.service, plan_id, ext, args.simplify)
+                geoms = [g for g, _p in zones]
+                props = [p for _g, p in zones]
+                styles = [style(plan_id, p, bda) for p in props]
+                tree = shapely.STRtree(np.array(geoms, dtype=object))
             by_zoom: dict[int, dict[int, bytes]] = {}
             for z in range(args.zmin, args.zmax + 1):
                 tiles = {}
                 for x, y in tiles_for(e3857, z):
-                    png = render(z, x, y, geoms, props, styles, tree)
+                    if raw:
+                        png = tr.render_tile(
+                            z, x, y, sheets_idx, lpa3857, ids, palette, tile_bounds, uid
+                        )
+                    else:
+                        png = render(z, x, y, geoms, props, styles, tree)
                     if png:
                         tiles[zxy_to_tileid(z, x, y)] = png
                 by_zoom[z] = tiles
@@ -398,6 +442,8 @@ def main() -> None:
                 size += zs
             groups.append(cur)
             legend = {}
+            if raw:
+                styles = [style(plan_id, pp, bda) for pp in props]
             for p, s_ in zip(props, styles, strict=True):
                 legend.setdefault(
                     p["zone_label_native"],
@@ -454,6 +500,7 @@ def main() -> None:
                     }
                 ),
             }
+            done.add(plan_id)
             rep[plan_id] = {
                 "zones": len(zones),
                 "tiles": sum(len(t) for t in by_zoom.values()),
@@ -461,8 +508,20 @@ def main() -> None:
                 "objects": len(files),
                 "seconds": round(time.time() - t0),
             }
-            del zones, geoms, props, styles, tree, by_zoom
-            # publish after every plan, so a plan shows on the map as soon as it is built
+            del zones, props, styles, by_zoom
+            # publish after every plan, so a plan shows on the map as soon as it is built;
+            # re-read first so a parallel build's plans are kept (merge, not overwrite)
+            try:
+                with urllib.request.urlopen(
+                    st.public("manifest.json"), timeout=60
+                ) as r:
+                    cur = json.load(r)
+                cur.setdefault("plans", {}).update(
+                    {k: v for k, v in manifest["plans"].items() if k in done}
+                )
+                manifest = cur
+            except Exception as ex:  # noqa: BLE001 - first manifest
+                log(f"  no manifest to merge yet ({str(ex)[:80]})")
             st.put(
                 "manifest.json",
                 json.dumps(manifest, indent=1).encode(),
@@ -482,14 +541,18 @@ def main() -> None:
                 "plans": rep,
                 "uploaded_mb": round(st.sent / 1e6, 1),
                 "peak_temp_mb": round(pm.peak / 1e6, 1),
-                "temp_left_bytes": qf.dir_bytes(os.path.join(qf.TEMP_ROOT, "tiles")),
+                "temp_left_bytes": qf.dir_bytes(
+                    os.path.join(qf.TEMP_ROOT, f"tiles_{os.getpid()}")
+                ),
                 "manifest": st.public("manifest.json"),
                 "seconds": round(time.time() - t_all),
             }
         ),
         flush=True,
     )
-    shutil.rmtree(os.path.join(qf.TEMP_ROOT, "tiles"), ignore_errors=True)
+    shutil.rmtree(
+        os.path.join(qf.TEMP_ROOT, f"tiles_{os.getpid()}"), ignore_errors=True
+    )
 
 
 if __name__ == "__main__":
