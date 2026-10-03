@@ -491,7 +491,6 @@ function PlanSection({
               // switching a plan on brings it into view at a zoom where its zones load
               if (!on && info?.extent) onShow(info.extent);
             }}
-            badge={info ? <StatusBadge status={info.status} condition={info.status_condition} /> : undefined}
           />
         </div>
       </div>
@@ -633,7 +632,7 @@ export function PlanningPanel({
               <option value="">None</option>
               {loaded.map((p) => {
                 const i = plans?.[p.plan_id];
-                return <option key={p.plan_id} value={p.plan_id}>{p.label}{i ? ` (${statusBadge(i.status, i.status_condition)})` : ""}</option>;
+                return <option key={p.plan_id} value={p.plan_id}>{p.label}</option>;
               })}
               {loaded.length > 1 && <option value="__all">All plans</option>}
               {choice === "__some" && <option value="__some">Several plans</option>}
@@ -920,20 +919,12 @@ export function PlanningLegendCard({
       {open && (
         <div style={{ padding: "6px 10px 8px" }}>
           {on.map((p) => {
-            const info = plans?.[p.plan_id];
             const entries = (view?.legend[p.plan_id] ?? []).filter((e) => e.cnorm !== "uncoloured");
             return (
               <div key={p.plan_id} style={{ marginBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 800 }}>{p.label}</span>
-                  {info && <StatusBadge status={info.status} condition={info.status_condition} />}
                 </div>
-                {unconf(p.plan_id).length > 0 && (
-                  <div style={{ color: "#9A4F00", marginBottom: 3 }}>
-                    Placement unconfirmed{NO_BOX_PLANS.has(p.plan_id) ? "" : ` (${unconf(p.plan_id).map((sh) => sh.sheet).join(", ")})`}:
-                    zones may be 100 m or more off. Verify on site.
-                  </div>
-                )}
                 {entries.length === 0 && <div style={{ color: "#7B8F83" }}>No zones of this plan in view</div>}
                 {entries.map((e) => (
                   <div key={e.label} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 3 }}>
@@ -958,7 +949,6 @@ export function PlanningLegendCard({
                 <span>Dashed box: placement unconfirmed; zones inside may be 100 m or more off. Verify on site.</span>
               </div>
             )}
-            <div style={{ marginTop: 4, fontSize: 10 }}>Colours show what each plan draws; drafts are shown for context only.</div>
           </div>
         </div>
       )}
