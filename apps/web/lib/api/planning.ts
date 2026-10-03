@@ -19,7 +19,6 @@ export const PLAN_ID = "BDA-RMP2031"; // map-symbol overlays exist for this plan
 export const WEB_PLANS: { plan_id: string; label: string }[] = [
   { plan_id: "BDA-RMP2031", label: "BDA RMP 2031" },
   { plan_id: "BMRDA-HSK-MP2031", label: "Hoskote MP 2031" },
-  { plan_id: "BMRDA-NLM-MP2031", label: "Nelamangala MP 2031" },
   { plan_id: "BMRDA-ANK-MP2031", label: "Anekal MP 2031" },
 ];
 
