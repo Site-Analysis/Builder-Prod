@@ -6,9 +6,9 @@ BMRDA-NLM,LPA of Nelamangala,BMRDA-NLM-MP2031,
 BIAAPA,LPA of BIAAPA,BIAAPA-MP2021,No 2031 plan published; Master Plan 2021 exists (not loaded)
 STRR,LPA of the Satellite Town Ring Road,,"STRR Planning Authority (GO NAI 89 BMR 2021, 20-07-2021); no master plan published, Zoning Regulations only"
 BMICAPA,LPA of the Bangalore-Mysore Infrastructure Corridor,BMICAPA-ODP2004,Outline Development Plan of 12-04-2004 registered (not loaded); approval GO not found
-DPA,LPA of Doddaballapura,,Doddaballapura Planning Authority (constituted 2020); no master plan published
-KANAKAPURA,LPA of Kanakapura,,Outside Bengaluru Urban and Rural; plan not registered
-MAGADI,LPA of Magadi,,Outside Bengaluru Urban and Rural; plan not registered
+DPA,LPA of Doddaballapura,,"Doddaballapura Planning Authority (constituted 2017-2020); no master plan of its own published; its site links the BIAAPA Master Plan 2021 file"
+KANAKAPURA,LPA of Kanakapura,KPA-MP2031,Kanakapura Master Plan 2031 (final) registered; its town maps print no coordinates so its zones are not loaded
+MAGADI,LPA of Magadi,MAGADI-MP2031,Magadi Master Plan 2031 registered (approval GO not published); its maps print no coordinates so its zones are not loaded
 RAMANAGARA,LPA of Ramanagara,,Outside Bengaluru Urban and Rural; plan not registered
 CHANNAPATNA,LPA of Channapatna,,Outside Bengaluru Urban and Rural; plan not registered
 GBBSC,Greater Bengaluru-Bidadi Smart City,,Outside Bengaluru Urban and Rural; plan not registered
