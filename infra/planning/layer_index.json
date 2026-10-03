@@ -64,6 +64,10 @@
     "source_layer": "none"
    },
    "overlay_kinds": []
+  },
+  "BMRDA-NLM-MP2031": {
+   "outline_row": "STRR-LPA-MAP#nlm",
+   "overlay_kinds": []
   }
  },
  "rows": [
@@ -10120,8 +10124,1742 @@
     }
    },
    "status": "indexed"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "STRR-LPA-MAP",
+   "source_url": "https://strrpa.karnataka.gov.in/uploads/media_to_upload1756733506.pdf",
+   "sha256": "a444cc99de2791df41f8d98952200b4b05395fa773b37589b8b0c443148efba7",
+   "row_id": "STRR-LPA-MAP#nlm",
+   "kind": "lpa_outline",
+   "page": 1,
+   "sheet": "Local Planning Areas in Bengaluru Metropolitan Region (1:125,000)",
+   "sheet_key": "nlm",
+   "extent_kind": "plan",
+   "label": "Nelamangala LPA, pre-STRR extent (BMRDA LPA map)",
+   "extent": {
+    "epsg32643": [
+     736571.3,
+     1435250.5,
+     769180.2,
+     1474920.5
+    ],
+    "wgs84": [
+     77.180854,
+     12.971116,
+     77.484884,
+     13.332267
+    ]
+   },
+   "georef": {
+    "method": "affine_icp_on_lpa_outlines (BDA, Hoskote)",
+    "affine_page_to_32643": [
+     44.128550909320296,
+     0.017543154242275705,
+     -0.02331324042829833,
+     -44.13339130489476,
+     720493.5775938168,
+     1499303.2673862975
+    ]
+   },
+   "extraction": {
+    "method": "bmrda_lpa_outline",
+    "authority": "BMRDA-NLM",
+    "extent": "pre_strr"
+   },
+   "qa": {
+    "area_km2": 835.65,
+    "legend_km2": 681.67
+   },
+   "status": "indexed"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP005",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_005.pdf",
+   "sha256": "6fc8577ffc78d90cadf07d2650eedb07d777befc7e9740ba86f3a88e85ebe670",
+   "row_id": "BMRDA-NLM-MP2031-MAP005#a1",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid A1 (Nelamangala)",
+   "sheet_key": "a1",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "A1",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.41,
+     "fine_peak": 1.04,
+     "shift_m": 311,
+     "matches": 22,
+     "held_out": 11,
+     "held_rmse_m": 6.3,
+     "null_mean": 17.6,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP006",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_006.pdf",
+   "sha256": "af943dfe7e697b835f46274b87f3edb7e0e0e18f3b6009fa747e2311ad249bce",
+   "row_id": "BMRDA-NLM-MP2031-MAP006#a2",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid A2 (Nelamangala)",
+   "sheet_key": "a2",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "A2",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.47,
+     "fine_peak": 1.08,
+     "shift_m": 320,
+     "matches": 24,
+     "held_out": 12,
+     "held_rmse_m": 6.9,
+     "null_mean": 19.9,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP007",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_007.pdf",
+   "sha256": "3f0066ee0162a7a22baad9fedbeecc1f4b1d349952eef8bb25cedc9756cf2852",
+   "row_id": "BMRDA-NLM-MP2031-MAP007#a3",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid A3 (Nelamangala)",
+   "sheet_key": "a3",
+   "source_layer": "detail",
+   "priority": {
+    "rank": 0,
+    "order": [
+     0,
+     5000,
+     7
+    ]
+   },
+   "extent": {
+    "epsg32643": [
+     762656.4,
+     1451284.8,
+     766172.5,
+     1454216.6
+    ],
+    "wgs84": [
+     77.422589,
+     13.116239,
+     77.455262,
+     13.143033
+    ]
+   },
+   "georef": {
+    "method": "nlm_prior_osm_junction_affine",
+    "affine_px_to_32643": [
+     1.3125084628897894,
+     -0.0011285984543292216,
+     0.0014204364522383323,
+     -1.3066282566173868,
+     762454.2518967938,
+     1454305.546266651
+    ],
+    "residual_m": 6.153798183397812,
+    "basis": "grid prior from MAP004 / MAP002 (the plan's own maps), refined on OSM roads within 300 m (2026-10-03, same sha256)"
+   },
+   "legend": {
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ]
+   },
+   "extraction": {
+    "method": "raster_affine_sheet",
+    "image_size": [
+     3456,
+     2384
+    ],
+    "map_rect": [
+     155,
+     71,
+     2833,
+     2312
+    ],
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ],
+    "max_rgb_dist": 60.0,
+    "scale": 5000
+   },
+   "clip": {
+    "to": "STRR-LPA-MAP#nlm",
+    "buffer_m": 100.0,
+    "min_area_m2": 1.0
+   },
+   "merge": {
+    "cut_grid": null,
+    "dissolve_grid": 0.01
+   },
+   "qa": {
+    "georef": {
+     "grid": "A3",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.38,
+     "fine_peak": 1.11,
+     "shift_m": 247,
+     "matches": 15,
+     "held_out": 7,
+     "held_rmse_m": 6.2,
+     "null_mean": 16.6,
+     "brief_bars": true,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "indexed",
+     "placement_confirmed": false
+    },
+    "null_check": {
+     "matches": 15,
+     "null_mean": 16.6,
+     "pass_3x": false
+    },
+    "class_area_ha": {
+     "residential": 16.62,
+     "commercial": 0.12,
+     "industrial": 19.18,
+     "public_semi_public": 2.4,
+     "open_space": 2.11,
+     "public_utility": 0.13,
+     "transport": 52.66,
+     "water": 68.94
+    },
+    "unknown_px_pct": 6.00241810324861,
+    "zones_unclipped": 13362,
+    "worker_seconds": 22.2
+   },
+   "sheet_qa": {
+    "doc_id": "BMRDA-NLM-MP2031-MAP007",
+    "status": "final",
+    "extraction": "raster",
+    "georef_rmse_m": 6.2,
+    "m_per_px": 1.31,
+    "georef_method": "nlm_prior_osm_junction_affine",
+    "legend_check": "pass",
+    "qa_failures": [
+     "null_check"
+    ],
+    "sheet_scale": "1:5,000",
+    "source_layer": "detail",
+    "sheet": "Grid A3 (Nelamangala)",
+    "warnings": [
+     "Placement not confirmed by an independent check; zones may be 100 m or more off. Verify on site."
+    ]
+   },
+   "position_uncertainty_m": 100.0,
+   "placement_confirmed": false,
+   "warnings": [
+    "Placement not confirmed by an independent check; zones may be 100 m or more off. Verify on site."
+   ],
+   "status": "indexed"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP008",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_008.pdf",
+   "sha256": "6700541cb4d18193db68c0916b88ba3b1b71f6b01c7453d89b86d75bd422bc28",
+   "row_id": "BMRDA-NLM-MP2031-MAP008#b1",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid B1 (Nelamangala)",
+   "sheet_key": "b1",
+   "source_layer": "detail",
+   "priority": {
+    "rank": 0,
+    "order": [
+     0,
+     5000,
+     8
+    ]
+   },
+   "extent": {
+    "epsg32643": [
+     755677.1,
+     1448008.5,
+     759182.8,
+     1450943.8
+    ],
+    "wgs84": [
+     77.357973,
+     13.087244,
+     77.390541,
+     13.114062
+    ]
+   },
+   "georef": {
+    "method": "nlm_prior_osm_junction_affine",
+    "affine_px_to_32643": [
+     1.3060545076761476,
+     0.006562091576256535,
+     -0.0055135139817926535,
+     -1.3067580345373244,
+     755467.6452410109,
+     1451037.4804719829
+    ],
+    "residual_m": 6.35309133292761,
+    "basis": "grid prior from MAP004 / MAP002 (the plan's own maps), refined on OSM roads within 300 m (2026-10-03, same sha256)"
+   },
+   "legend": {
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ]
+   },
+   "extraction": {
+    "method": "raster_affine_sheet",
+    "image_size": [
+     3456,
+     2378
+    ],
+    "map_rect": [
+     155,
+     71,
+     2833,
+     2306
+    ],
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ],
+    "max_rgb_dist": 60.0,
+    "scale": 5000
+   },
+   "clip": {
+    "to": "STRR-LPA-MAP#nlm",
+    "buffer_m": 100.0,
+    "min_area_m2": 1.0
+   },
+   "merge": {
+    "cut_grid": null,
+    "dissolve_grid": 0.01
+   },
+   "qa": {
+    "georef": {
+     "grid": "B1",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.96,
+     "fine_peak": 1.34,
+     "shift_m": 169,
+     "matches": 51,
+     "held_out": 25,
+     "held_rmse_m": 6.4,
+     "null_mean": 38.9,
+     "brief_bars": true,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "indexed",
+     "placement_confirmed": false
+    },
+    "null_check": {
+     "matches": 51,
+     "null_mean": 38.9,
+     "pass_3x": false
+    },
+    "class_area_ha": {
+     "residential": 404.22,
+     "commercial": 47.49,
+     "industrial": 109.03,
+     "public_semi_public": 50.05,
+     "open_space": 61.08,
+     "public_utility": 4.52,
+     "transport": 61.9,
+     "water": 25.53
+    },
+    "unknown_px_pct": 17.487640614636117,
+    "zones_unclipped": 22179,
+    "worker_seconds": 37.2
+   },
+   "sheet_qa": {
+    "doc_id": "BMRDA-NLM-MP2031-MAP008",
+    "status": "final",
+    "extraction": "raster",
+    "georef_rmse_m": 6.4,
+    "m_per_px": 1.31,
+    "georef_method": "nlm_prior_osm_junction_affine",
+    "legend_check": "pass",
+    "qa_failures": [
+     "null_check"
+    ],
+    "sheet_scale": "1:5,000",
+    "source_layer": "detail",
+    "sheet": "Grid B1 (Nelamangala)",
+    "warnings": [
+     "Placement not confirmed by an independent check; zones may be 100 m or more off. Verify on site."
+    ]
+   },
+   "position_uncertainty_m": 100.0,
+   "placement_confirmed": false,
+   "warnings": [
+    "Placement not confirmed by an independent check; zones may be 100 m or more off. Verify on site."
+   ],
+   "status": "indexed"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP009",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_009.pdf",
+   "sha256": "f53ab98116b54449e6b5b0c1e3ed742dd5a4e92e0e63decaeb5dfefa376a5197",
+   "row_id": "BMRDA-NLM-MP2031-MAP009#b2",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid B2 (Nelamangala)",
+   "sheet_key": "b2",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "B2",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 2.05,
+     "fine_peak": 1.04,
+     "shift_m": 376,
+     "matches": 94,
+     "held_out": 47,
+     "held_rmse_m": 6.7,
+     "null_mean": 54.8,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP010",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_010.pdf",
+   "sha256": "25ce14b3f1281e9c6f87e7c298e3812e5a6a3256a6a2d3cb27c549b7700c637f",
+   "row_id": "BMRDA-NLM-MP2031-MAP010#c1",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid C1 (Nelamangala)",
+   "sheet_key": "c1",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "C1",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.64,
+     "fine_peak": 1.03,
+     "shift_m": 333,
+     "matches": 25,
+     "held_out": 12,
+     "held_rmse_m": 7.3,
+     "null_mean": 26.0,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP011",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_011.pdf",
+   "sha256": "1772f91d5d993cd6e11c3b07a8e60c1d612cffaa4ca96d5af251320edbe0dc8d",
+   "row_id": "BMRDA-NLM-MP2031-MAP011#c2",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid C2 (Nelamangala)",
+   "sheet_key": "c2",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "C2",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.56,
+     "fine_peak": 1.07,
+     "shift_m": 364,
+     "matches": 11,
+     "held_out": 5,
+     "held_rmse_m": 7.4,
+     "null_mean": 13.6,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP012",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_012.jpg",
+   "sha256": "d440274c5e06bbeb468b960f0239650ecbb89a6496c11200bf9327d151b99c24",
+   "row_id": "BMRDA-NLM-MP2031-MAP012#b3",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid B3 (Nelamangala)",
+   "sheet_key": "b3",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "B3",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 2.05,
+     "fine_peak": 1.03,
+     "shift_m": 232,
+     "matches": 2,
+     "held_out": 1,
+     "held_rmse_m": 4.4,
+     "null_mean": 1.5,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP013",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_013.pdf",
+   "sha256": "47290bda862ea4a87513a426da2a3d6d961ae520e0af0b527a23df276e914051",
+   "row_id": "BMRDA-NLM-MP2031-MAP013#c3",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid C3 (Nelamangala)",
+   "sheet_key": "c3",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "C3",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.34,
+     "fine_peak": 1.01,
+     "shift_m": 406,
+     "matches": 21,
+     "held_out": 10,
+     "held_rmse_m": 6.3,
+     "null_mean": 15.4,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP014",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_014.pdf",
+   "sha256": "22eb2eabd4978ce0c82bfa56be1acb706de0d695e4e8a5f8d041d25b1e950af1",
+   "row_id": "BMRDA-NLM-MP2031-MAP014#d1",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid D1 (Nelamangala)",
+   "sheet_key": "d1",
+   "source_layer": "detail",
+   "priority": {
+    "rank": 0,
+    "order": [
+     0,
+     5000,
+     14
+    ]
+   },
+   "extent": {
+    "epsg32643": [
+     751428.1,
+     1453749.2,
+     754923.6,
+     1456662.2
+    ],
+    "wgs84": [
+     77.319296,
+     13.139472,
+     77.351772,
+     13.166085
+    ]
+   },
+   "georef": {
+    "method": "nlm_prior_osm_junction_affine",
+    "affine_px_to_32643": [
+     1.2928698862765948,
+     0.025553362048071904,
+     -0.0036402864611441016,
+     -1.2940966956373359,
+     751202.551068111,
+     1456754.8495471552
+    ],
+    "residual_m": 7.971163508664347,
+    "basis": "grid prior from MAP004 / MAP002 (the plan's own maps), refined on OSM roads within 300 m (2026-10-03, same sha256)"
+   },
+   "legend": {
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ]
+   },
+   "extraction": {
+    "method": "raster_affine_sheet",
+    "image_size": [
+     3457,
+     2387
+    ],
+    "map_rect": [
+     155,
+     71,
+     2834,
+     2315
+    ],
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ],
+    "max_rgb_dist": 60.0,
+    "scale": 5000
+   },
+   "clip": {
+    "to": "STRR-LPA-MAP#nlm",
+    "buffer_m": 100.0,
+    "min_area_m2": 1.0
+   },
+   "merge": {
+    "cut_grid": null,
+    "dissolve_grid": 0.01
+   },
+   "qa": {
+    "georef": {
+     "grid": "D1",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.42,
+     "fine_peak": 1.01,
+     "shift_m": 135,
+     "matches": 8,
+     "held_out": 4,
+     "held_rmse_m": 8.0,
+     "null_mean": 4.5,
+     "brief_bars": true,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "indexed",
+     "placement_confirmed": false
+    },
+    "null_check": {
+     "matches": 8,
+     "null_mean": 4.5,
+     "pass_3x": false
+    },
+    "class_area_ha": {
+     "residential": 67.49,
+     "commercial": 1.25,
+     "industrial": 240.84,
+     "public_semi_public": 0.06,
+     "open_space": 11.7,
+     "public_utility": 4.01,
+     "transport": 49.86,
+     "water": 83.4
+    },
+    "unknown_px_pct": 8.812284627448319,
+    "zones_unclipped": 11584,
+    "worker_seconds": 17.5
+   },
+   "sheet_qa": {
+    "doc_id": "BMRDA-NLM-MP2031-MAP014",
+    "status": "final",
+    "extraction": "raster",
+    "georef_rmse_m": 8.0,
+    "m_per_px": 1.29,
+    "georef_method": "nlm_prior_osm_junction_affine",
+    "legend_check": "pass",
+    "qa_failures": [
+     "null_check"
+    ],
+    "sheet_scale": "1:5,000",
+    "source_layer": "detail",
+    "sheet": "Grid D1 (Nelamangala)",
+    "warnings": [
+     "Placement not confirmed by an independent check; zones may be 100 m or more off. Verify on site."
+    ]
+   },
+   "position_uncertainty_m": 100.0,
+   "placement_confirmed": false,
+   "warnings": [
+    "Placement not confirmed by an independent check; zones may be 100 m or more off. Verify on site."
+   ],
+   "status": "indexed"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP015",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_015.pdf",
+   "sha256": "baaa1413dd5ea4ce920d2029be1e18edb038ecd691f0f8eaaee20bec24ba9161",
+   "row_id": "BMRDA-NLM-MP2031-MAP015#d2",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid D2 (Nelamangala)",
+   "sheet_key": "d2",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "D2",
+     "town": "Nelamangala",
+     "prior_via": "MAP004",
+     "prior_peak": 1.37,
+     "fine_peak": 1.02,
+     "shift_m": 372,
+     "matches": 1,
+     "held_out": 0,
+     "held_rmse_m": null,
+     "null_mean": 1.9,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP017",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_017.pdf",
+   "sha256": "b4bf7a03c7931ec2783b1934dafbc28fa2f7ab71a519e7b42ed56adeaa732920",
+   "row_id": "BMRDA-NLM-MP2031-MAP017#s1",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid S1 (Sompura)",
+   "sheet_key": "s1",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "S1",
+     "town": "Sompura",
+     "prior_via": "MAP002",
+     "prior_peak": 1.18,
+     "fine_peak": 1.02,
+     "shift_m": 235,
+     "matches": 11,
+     "held_out": 5,
+     "held_rmse_m": 6.3,
+     "null_mean": 6.0,
+     "brief_bars": true,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: passes the brief's bars but not the null check, and is not one of the four sheets approved unconfirmed (A3, B1, C3, D1)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP018",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_018.pdf",
+   "sha256": "d68fdbd630c2246a1b1934d6afce4f2083a7e4321f84871045f3b0478cc1d132",
+   "row_id": "BMRDA-NLM-MP2031-MAP018#s2",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid S2 (Sompura)",
+   "sheet_key": "s2",
+   "source_layer": "detail",
+   "priority": {
+    "rank": 0,
+    "order": [
+     0,
+     5000,
+     18
+    ]
+   },
+   "extent": {
+    "epsg32643": [
+     741788.7,
+     1460616.9,
+     745319.2,
+     1463618.3
+    ],
+    "wgs84": [
+     77.230988,
+     13.20232,
+     77.263796,
+     13.229726
+    ]
+   },
+   "georef": {
+    "method": "nlm_prior_osm_junction_affine",
+    "affine_px_to_32643": [
+     1.315304721646235,
+     0.014750336635529493,
+     -0.0013889255991748454,
+     -1.3229692933073238,
+     741557.1624932474,
+     1463713.9183601378
+    ],
+    "residual_m": 5.606947172495531,
+    "basis": "grid prior from MAP004 / MAP002 (the plan's own maps), refined on OSM roads within 300 m (2026-10-03, same sha256)"
+   },
+   "legend": {
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ]
+   },
+   "extraction": {
+    "method": "raster_affine_sheet",
+    "image_size": [
+     3457,
+     2411
+    ],
+    "map_rect": [
+     155,
+     72,
+     2834,
+     2338
+    ],
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ],
+    "max_rgb_dist": 60.0,
+    "scale": 5000
+   },
+   "clip": {
+    "to": "STRR-LPA-MAP#nlm",
+    "buffer_m": 100.0,
+    "min_area_m2": 1.0
+   },
+   "merge": {
+    "cut_grid": null,
+    "dissolve_grid": 0.01
+   },
+   "qa": {
+    "georef": {
+     "grid": "S2",
+     "town": "Sompura",
+     "prior_via": "MAP002",
+     "prior_peak": 1.04,
+     "fine_peak": 1.03,
+     "shift_m": 293,
+     "matches": 19,
+     "held_out": 9,
+     "held_rmse_m": 5.6,
+     "null_mean": 5.0,
+     "brief_bars": true,
+     "null_pass": true,
+     "georef_status": "accepted",
+     "row_status": "indexed",
+     "placement_confirmed": true
+    },
+    "null_check": {
+     "matches": 19,
+     "null_mean": 5.0,
+     "pass_3x": true
+    },
+    "class_area_ha": {
+     "residential": 188.9,
+     "commercial": 23.32,
+     "industrial": 335.37,
+     "public_semi_public": 4.86,
+     "open_space": 35.72,
+     "public_utility": 41.06,
+     "transport": 27.38,
+     "water": 32.97
+    },
+    "unknown_px_pct": 11.36328219847284,
+    "zones_unclipped": 11027,
+    "worker_seconds": 18.6
+   },
+   "sheet_qa": {
+    "doc_id": "BMRDA-NLM-MP2031-MAP018",
+    "status": "final",
+    "extraction": "raster",
+    "georef_rmse_m": 5.6,
+    "m_per_px": 1.32,
+    "georef_method": "nlm_prior_osm_junction_affine",
+    "legend_check": "pass",
+    "qa_failures": [],
+    "sheet_scale": "1:5,000",
+    "source_layer": "detail",
+    "sheet": "Grid S2 (Sompura)",
+    "warnings": []
+   },
+   "position_uncertainty_m": 5.6,
+   "placement_confirmed": true,
+   "warnings": [],
+   "status": "indexed"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP019",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_019.pdf",
+   "sha256": "2572c173f082c8884ea27cb3c3cb01c77704a6b3ff42d19b05156f0aaed53c2c",
+   "row_id": "BMRDA-NLM-MP2031-MAP019#s3",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid S3 (Sompura)",
+   "sheet_key": "s3",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "S3",
+     "town": "Sompura",
+     "prior_via": "MAP002",
+     "prior_peak": 1.37,
+     "fine_peak": 1.12,
+     "shift_m": 377,
+     "matches": 3,
+     "held_out": 1,
+     "held_rmse_m": 9.4,
+     "null_mean": 3.9,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP020",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_020.pdf",
+   "sha256": "85bddd6fb968cf9803d93f8ee993894079af378734c1054ec0003c07551ef910",
+   "row_id": "BMRDA-NLM-MP2031-MAP020#s4",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid S4 (Sompura)",
+   "sheet_key": "s4",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "S4",
+     "town": "Sompura",
+     "prior_via": "MAP002",
+     "prior_peak": 1.04,
+     "fine_peak": 1.2,
+     "shift_m": 295,
+     "matches": 5,
+     "held_out": 2,
+     "held_rmse_m": 9.1,
+     "null_mean": 2.1,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP021",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_021.pdf",
+   "sha256": "b1fc700ed49e9248ad40fbd39aa31ac116fadfe6a3754b9b8e231cb96402d6d6",
+   "row_id": "BMRDA-NLM-MP2031-MAP021#s5",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid S5 (Sompura)",
+   "sheet_key": "s5",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "S5",
+     "town": "Sompura",
+     "prior_via": "MAP002",
+     "prior_peak": 1.31,
+     "fine_peak": 1.21,
+     "shift_m": 270,
+     "matches": 8,
+     "held_out": 4,
+     "held_rmse_m": 5.6,
+     "null_mean": 7.9,
+     "brief_bars": true,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: passes the brief's bars but not the null check, and is not one of the four sheets approved unconfirmed (A3, B1, C3, D1)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP022",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_022.pdf",
+   "sha256": "201190cb06030fa6cc21baa990777967a3890174d95211fbcf88a4941476cf05",
+   "row_id": "BMRDA-NLM-MP2031-MAP022#s6",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid S6 (Sompura)",
+   "sheet_key": "s6",
+   "source_layer": "detail",
+   "status": "rejected",
+   "qa": {
+    "georef": {
+     "grid": "S6",
+     "town": "Sompura",
+     "prior_via": "MAP002",
+     "prior_peak": 1.16,
+     "fine_peak": 1.0,
+     "shift_m": 187,
+     "matches": 5,
+     "held_out": 2,
+     "held_rmse_m": 7.0,
+     "null_mean": 7.1,
+     "brief_bars": false,
+     "null_pass": false,
+     "georef_status": "rejected",
+     "row_status": "rejected",
+     "placement_confirmed": false
+    }
+   },
+   "reason": "placement not confirmed: fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+  },
+  {
+   "plan_id": "BMRDA-NLM-MP2031",
+   "authority": "BMRDA-NLM",
+   "doc_id": "BMRDA-NLM-MP2031-MAP023",
+   "source_url": "http://nelamangala.tpa.gov.in/sites/nelamangala.tpa.gov.in/files/2.%20NPA_MASTER_PLAN_FINAL-2031_MAPS(Autosaved)_023.pdf",
+   "sha256": "423c54eaf279554211612717ac52a3a3f30b574ed8d2d5cf918eaf212ed3e5bb",
+   "row_id": "BMRDA-NLM-MP2031-MAP023#t1",
+   "kind": "zones",
+   "page": 1,
+   "sheet": "Grid T1 (Thyamagondlu)",
+   "sheet_key": "t1",
+   "source_layer": "detail",
+   "priority": {
+    "rank": 0,
+    "order": [
+     0,
+     5000,
+     23
+    ]
+   },
+   "extent": {
+    "epsg32643": [
+     748129.7,
+     1460710.9,
+     751650.0,
+     1463668.8
+    ],
+    "wgs84": [
+     77.289472,
+     13.202647,
+     77.322187,
+     13.229665
+    ]
+   },
+   "georef": {
+    "method": "nlm_prior_osm_junction_affine",
+    "affine_px_to_32643": [
+     1.3135354769357235,
+     0.00785132587532189,
+     -0.007827145814944238,
+     -1.3157341240494134,
+     747913.7347676601,
+     1463763.5740465426
+    ],
+    "residual_m": 6.032246504527067,
+    "basis": "grid prior from MAP004 / MAP002 (the plan's own maps), refined on OSM roads within 300 m (2026-10-03, same sha256)"
+   },
+   "legend": {
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ]
+   },
+   "extraction": {
+    "method": "raster_affine_sheet",
+    "image_size": [
+     3456,
+     2376
+    ],
+    "map_rect": [
+     155,
+     71,
+     2833,
+     2304
+    ],
+    "classes": [
+     {
+      "label": "Residential",
+      "cnorm": "residential",
+      "colours": [
+       "#fdf769"
+      ]
+     },
+     {
+      "label": "Commercial",
+      "cnorm": "commercial",
+      "colours": [
+       "#27a2ec"
+      ]
+     },
+     {
+      "label": "Industrial",
+      "cnorm": "industrial",
+      "colours": [
+       "#a217a6"
+      ]
+     },
+     {
+      "label": "Public & Semi-Public",
+      "cnorm": "public_semi_public",
+      "colours": [
+       "#f10401"
+      ]
+     },
+     {
+      "label": "Park & Open Space",
+      "cnorm": "open_space",
+      "colours": [
+       "#a3e458"
+      ]
+     },
+     {
+      "label": "Public Utility",
+      "cnorm": "public_utility",
+      "colours": [
+       "#fd8300"
+      ]
+     },
+     {
+      "label": "Transportation",
+      "cnorm": "transport",
+      "colours": [
+       "#a3a29b"
+      ]
+     },
+     {
+      "label": "Water Bodies",
+      "cnorm": "water",
+      "colours": [
+       "#9bf0f9"
+      ]
+     }
+    ],
+    "max_rgb_dist": 60.0,
+    "scale": 5000
+   },
+   "clip": {
+    "to": "STRR-LPA-MAP#nlm",
+    "buffer_m": 100.0,
+    "min_area_m2": 1.0
+   },
+   "merge": {
+    "cut_grid": null,
+    "dissolve_grid": 0.01
+   },
+   "qa": {
+    "georef": {
+     "grid": "T1",
+     "town": "Thyamagondlu",
+     "prior_via": "MAP002",
+     "prior_peak": 1.14,
+     "fine_peak": 1.01,
+     "shift_m": 290,
+     "matches": 22,
+     "held_out": 11,
+     "held_rmse_m": 6.0,
+     "null_mean": 4.8,
+     "brief_bars": true,
+     "null_pass": true,
+     "georef_status": "accepted",
+     "row_status": "indexed",
+     "placement_confirmed": true
+    },
+    "null_check": {
+     "matches": 22,
+     "null_mean": 4.8,
+     "pass_3x": true
+    },
+    "class_area_ha": {
+     "residential": 72.46,
+     "commercial": 3.43,
+     "industrial": 1.6,
+     "public_semi_public": 3.67,
+     "open_space": 5.15,
+     "public_utility": 0.79,
+     "transport": 63.25,
+     "water": 114.51
+    },
+    "unknown_px_pct": 9.65522592573145,
+    "zones_unclipped": 17544,
+    "worker_seconds": 27.0
+   },
+   "sheet_qa": {
+    "doc_id": "BMRDA-NLM-MP2031-MAP023",
+    "status": "final",
+    "extraction": "raster",
+    "georef_rmse_m": 6.0,
+    "m_per_px": 1.31,
+    "georef_method": "nlm_prior_osm_junction_affine",
+    "legend_check": "pass",
+    "qa_failures": [],
+    "sheet_scale": "1:5,000",
+    "source_layer": "detail",
+    "sheet": "Grid T1 (Thyamagondlu)",
+    "warnings": []
+   },
+   "position_uncertainty_m": 6.0,
+   "placement_confirmed": true,
+   "warnings": [],
+   "status": "indexed"
   }
  ],
- "build_id": "idx-2026-10-03-89922a2",
- "built_at": "2026-10-03T01:33:42+00:00"
+ "build_id": "idx-2026-10-03-22e80c9",
+ "built_at": "2026-10-03T10:54:20+00:00"
 }

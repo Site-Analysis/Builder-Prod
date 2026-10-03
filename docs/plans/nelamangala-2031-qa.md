@@ -144,3 +144,49 @@ while looking checked. Default applied: rejected (open-decisions #31).
 No sheet accepted: no zones written; Nelamangala villages unchanged (327 `plan_registered_not_loaded`,
 40 Madhure `lpa_no_zone_map` in Nelamangala taluk). The plan flag `feature.planning.plan.BMRDA-NLM-MP2031`
 is in `run_services.ps1`; `/plans` reports it `loaded: false`, so the web shows no switch for it.
+
+## 6. Round of 3 Oct 2026: on-demand index (layer_index.json)
+
+`build_layer_index.py --plans BMRDA-NLM-MP2031` re-ran B1 and B2 from the source URLs, in temp
+(peak 193 MB, 0 bytes left; 65 min, mostly Overpass retries). It kept the calibration in the index and
+deleted the downloads. The MAP002 major-road refine was skipped (#63), so the grid priors use the outline fit:
+- IoU 0.982 vs pre-STRR less Madhure (42 Madhure village outlines from the cadastral service);
+- 18.25 m/px; uncertainty 43.5 m.
+
+Town roads came from OSM in 0.04 deg tiles. Refine bars: held-out RMSE <= 10 m, shift from the prior <= 300 m,
+>= 6 matches, matches >= 3x the null baseline.
+
+| Grid | Doc | Shift (m) | Matches | Held-out RMSE (m) | Null mean | Brief bars | Null 3x | Row | Placement |
+|---|---|---:|---:|---:|---:|---|---|---|---|
+| A1 | MAP005 | 311 | 22 | 6.3 | 17.6 | no | no | rejected | — |
+| A2 | MAP006 | 320 | 24 | 6.9 | 19.9 | no | no | rejected | — |
+| A3 | MAP007 | 247 | 15 | 6.2 | 16.6 | yes | no | indexed | unconfirmed (Tanmay) |
+| B1 | MAP008 | 169 | 51 | 6.4 | 38.9 | yes | no | indexed | unconfirmed (Tanmay) |
+| B2 | MAP009 | 376 | 94 | 6.7 | 54.8 | no | no | rejected | — |
+| C1 | MAP010 | 333 | 25 | 7.3 | 26.0 | no | no | rejected | — |
+| C2 | MAP011 | 364 | 11 | 7.4 | 13.6 | no | no | rejected | — |
+| B3 | MAP012 (1,024 px JPG) | 232 | 2 | 4.4 | 1.5 | no | no | rejected | — |
+| C3 | MAP013 | 406 | 21 | 6.3 | 15.4 | no (shift) | no | rejected (#66) | — |
+| D1 | MAP014 | 135 | 8 | 8.0 | 4.5 | yes | no | indexed | unconfirmed (Tanmay) |
+| D2 | MAP015 | 372 | 1 | — | 1.9 | no | no | rejected | — |
+| S1 | MAP017 | 235 | 11 | 6.3 | 6.0 | yes | no | rejected (#48) | — |
+| S2 | MAP018 | 293 | 19 | 5.6 | 5.0 | yes | yes | **indexed** | **confirmed** |
+| S3 | MAP019 | 377 | 3 | 9.4 | 3.9 | no | no | rejected | — |
+| S4 | MAP020 | 295 | 5 | 9.1 | 2.1 | no | no | rejected | — |
+| S5 | MAP021 | 270 | 8 | 5.6 | 7.9 | yes | no | rejected (#48) | — |
+| S6 | MAP022 | 187 | 5 | 7.0 | 7.1 | no | no | rejected | — |
+| T1 | MAP023 (Thyamagondlu) | 290 | 22 | 6.0 | 4.8 | yes | yes | **indexed** | **confirmed** |
+
+Result: 5 of 18 sheets indexed.
+- **Confirmed (2):** S2 and T1, uncertainty = held-out RMSE (5.6 m, 6.0 m). Their priors came from the MAP002 tank match
+  only (peaks 1.04 and 1.14), and the shifts are close to the 300 m cap. Field verification is advised before relying on them.
+- **Unconfirmed (3):** A3, B1 and D1, indexed on Tanmay's decision with the safeguards:
+  - SheetQA warning "Placement not confirmed by an independent check; zones may be 100 m or more off. Verify on site.";
+  - position uncertainty 100 m;
+  - dashed outline and "(placement unconfirmed)" on the map;
+  - capped at LOW in a future /classify (#59).
+- **C3:** no longer passes the shift bar (406 m), so it is rejected (#66).
+
+Zones are clipped to BMRDA's pre-STRR Nelamangala extent + 100 m (`STRR-LPA-MAP#nlm`). Outside the sheets the plan has
+no zone map (`lpa_no_zone_map`, #49). Extraction: `raster_affine_sheet` (legend from MAP005, colour distance 60).
+Worker peaks were 331 MB; the A3 test gave 13,362 zones.

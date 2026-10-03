@@ -1404,8 +1404,18 @@ class OnDemand:
                                     grid_size=grid,
                                 )
                         else:
-                            cut = [shapely.intersection(c, bx) for c in hits]
-                            q = shapely.difference(q, shapely.union_all(cut))
+                            # valid inputs, 1 cm snapping (as the merge worker; #67)
+                            cut = [
+                                _poly(
+                                    shapely.intersection(_poly(c), bx, grid_size=0.01)
+                                )
+                                for c in hits
+                            ]
+                            q = shapely.difference(
+                                _poly(q),
+                                shapely.union_all(cut, grid_size=0.01),
+                                grid_size=0.01,
+                            )
                     for p in shapely.get_parts(q):
                         if (
                             p.geom_type == "Polygon"
@@ -1716,6 +1726,18 @@ def _unpack(b: bytes) -> tuple[np.ndarray, dict]:
     t = pa.ipc.open_stream(b).read_all()
     g = shapely.from_wkb(t.column("geometry").to_numpy(zero_copy_only=False))
     return g, {c: t.column(c).to_pylist() for c in t.column_names if c != "geometry"}
+
+
+def _poly(g):
+    """Polygonal part of a geometry made valid (make_valid can add stray lines / points,
+    which snapped overlays reject as mixed-dimension input)."""
+    g = shapely.make_valid(g)
+    parts = [
+        q for q in shapely.get_parts(g) if q.geom_type in ("Polygon", "MultiPolygon")
+    ]
+    if not parts:
+        return shapely.Polygon()
+    return parts[0] if len(parts) == 1 else shapely.union_all(parts)
 
 
 def _url_host(url: str) -> str:

@@ -289,12 +289,113 @@ def register(src, dst, scales, excl=15):
     return best
 
 
-def stage_lpa(args, out_dir):
-    zdir = os.path.join(args.data_root, "planning", "zones")
-    a = render(os.path.join(args.data_root, "raw", PLAN_ID, f"{PLAN_ID}-MAP002.pdf"))
+def lpa_targets(cur, pre, mad):
+    """The three extents MAP002 is fitted to (EPSG:32643): BMRDA's current Nelamangala LPA,
+    its pre-STRR extent, and pre-STRR less the Madhure villages (the LPA the plan was made
+    for)."""
+    return {
+        "current": cur,
+        "pre_strr": pre,
+        "pre_strr_less_madhure": shapely.difference(pre, mad.buffer(30)),
+    }
+
+
+def fit_map002(a, targets, major_elements, log=print):
+    """B1: MAP002's coloured extent fitted to the targets (ICP), then the junction refine on
+    OSM major roads (`major_elements`, Overpass `out geom` ways). Returns the georef dict."""
     H, W = a.shape[:2]
     frame = (int(0.045 * W), int(0.03 * H), int(0.82 * W), int(0.97 * H))
     ext_px = coloured_extent(a, frame)
+    log(
+        f"MAP002 extent {ext_px.area:.0f} px2; targets "
+        + ", ".join(f"{k} {v.area / 1e6:.1f} km2" for k, v in targets.items())
+    )
+    fits = {}
+    for name, T in targets.items():
+        # initial: scale from the areas, y flipped, centroids aligned
+        s = float(np.sqrt(T.area / ext_px.area))
+        p, q = np.array(ext_px.centroid.coords[0]), np.array(T.centroid.coords[0])
+        A0 = [s, 0.0, 0.0, -s, q[0] - s * p[0], q[1] + s * p[1]]
+        A = fit_icp([(ext_px, T)], A0, iters=80)
+        g = shapely.make_valid(affine_transform(ext_px, A))
+        st = outline_stats(g, T)
+        st["km2"] = round(g.area / 1e6, 1)
+        st["m_per_px"] = float(np.sqrt(abs(A[0] * A[3] - A[1] * A[2])))
+        fits[name] = {"A": list(map(float, A)), **st}
+        log(f"  fit to {name}: {st}")
+    best = max(fits, key=lambda k: fits[k]["iou"])
+    A = np.array(fits[best]["A"])
+
+    # junction refine on major roads (skipped when Overpass gave none: outline fit only)
+    if not major_elements:
+        g1 = shapely.make_valid(affine_transform(ext_px, A))
+        return {
+            "sheet": f"{PLAN_ID}-MAP002",
+            "scale": "1:70,000",
+            "image_px": [W, H],
+            "frame_px": frame,
+            "outline_fits": fits,
+            "outline_target": best,
+            "iou_bar": IOU_MIN,
+            "iou_pass": fits[best]["iou"] >= IOU_MIN,
+            "junction_refine": {"skipped": "Overpass unavailable; outline fit only"},
+            "after_refine_vs_target": outline_stats(g1, targets[best]),
+            "held_pass": False,
+            "A_px_to_32643": list(map(float, A)),
+            "A_outline_only": list(map(float, A)),
+            "m_per_px": fits[best]["m_per_px"],
+            "uncertainty_m": max(FLOOR_M, fits[best].get("outline_median_m", FLOOR_M)),
+            "classes": "not extracted: MAP002 is coloured by taluk, not land use",
+        }
+    tr = Transformer.from_crs(4326, 32643, always_xy=True)
+    oxy, odeg = osm_junctions(major_elements, tr)
+    x0, y0, x1, y1 = shapely.make_valid(affine_transform(ext_px, A)).buffer(2000).bounds
+    k = (oxy[:, 0] > x0) & (oxy[:, 0] < x1) & (oxy[:, 1] > y0) & (oxy[:, 1] < y1)
+    oxy, odeg = oxy[k], odeg[k]
+    tree = shapely.STRtree(shapely.points(oxy))
+    rm = road_mask(a)
+    fx0, fy0, fx1, fy1 = frame
+    rm[:fy0], rm[fy1:], rm[:, :fx0], rm[:, fx1:] = False, False, False, False
+    m_px = fits[best]["m_per_px"]
+    sj, sdeg = raster_junctions(rm, m_px, lambda xy: xy)  # junctions in px
+    sj = np.asarray(sj, float)
+    A2, res = junction_refine(sj, np.asarray(sdeg), A, oxy, odeg, tree)
+    held_pass = (
+        res.get("held_out", 0) >= HELD_MIN
+        and res.get("held_rmse_m", 1e9) <= HELD_RMSE_MAX
+    )
+    # a failed refine is not used: the prior is then the outline fit alone
+    A_used = A2 if held_pass else A
+    g2 = shapely.make_valid(affine_transform(ext_px, A_used))
+    return {
+        "sheet": f"{PLAN_ID}-MAP002",
+        "scale": "1:70,000",
+        "image_px": [W, H],
+        "frame_px": frame,
+        "outline_fits": fits,
+        "outline_target": best,
+        "iou_bar": IOU_MIN,
+        "iou_pass": fits[best]["iou"] >= IOU_MIN,
+        "sheet_junctions": len(sj),
+        "osm_junctions": len(oxy),
+        "junction_refine": res,
+        "after_refine_vs_target": outline_stats(g2, targets[best]),
+        "held_bar": {"rmse_m": HELD_RMSE_MAX, "min_points": HELD_MIN},
+        "held_pass": held_pass,
+        "A_px_to_32643": list(map(float, A_used)),
+        "A_outline_only": list(map(float, A)),
+        "A_refined": list(map(float, A2)),
+        "m_per_px": float(np.sqrt(abs(A_used[0] * A_used[3] - A_used[1] * A_used[2]))),
+        "uncertainty_m": max(FLOOR_M, res.get("held_rmse_m", float("nan")))
+        if held_pass
+        else max(FLOOR_M, fits[best].get("outline_median_m", FLOOR_M)),
+        "classes": "not extracted: MAP002 is coloured by taluk, not land use",
+    }
+
+
+def stage_lpa(args, out_dir):
+    zdir = os.path.join(args.data_root, "planning", "zones")
+    a = render(os.path.join(args.data_root, "raw", PLAN_ID, f"{PLAN_ID}-MAP002.pdf"))
     L = pq.read_table(os.path.join(zdir, "BMRDA-LPA-MAP_lpas.parquet")).to_pylist()
 
     def lpa(e):
@@ -309,72 +410,13 @@ def stage_lpa(args, out_dir):
         )
 
     mad, n_mad = madhure_villages(args.data_root, args.cadastral_dir)
-    targets = {
-        "current": lpa("current"),
-        "pre_strr": lpa("pre_strr"),
-        "pre_strr_less_madhure": shapely.difference(lpa("pre_strr"), mad.buffer(30)),
-    }
-    print(
-        f"MAP002 extent {ext_px.area:.0f} px2; Madhure villages {n_mad} "
-        f"({mad.area / 1e6:.1f} km2); targets "
-        + ", ".join(f"{k} {v.area / 1e6:.1f} km2" for k, v in targets.items()),
-        flush=True,
+    print(f"Madhure villages {n_mad} ({mad.area / 1e6:.1f} km2)", flush=True)
+    out = fit_map002(
+        a,
+        lpa_targets(lpa("current"), lpa("pre_strr"), mad),
+        read_json(os.path.join(args.data_root, "osm", "major.json"))["elements"],
+        log=lambda m: print(m, flush=True),
     )
-    fits = {}
-    for name, T in targets.items():
-        # initial: scale from the areas, y flipped, centroids aligned
-        s = float(np.sqrt(T.area / ext_px.area))
-        p, q = np.array(ext_px.centroid.coords[0]), np.array(T.centroid.coords[0])
-        A0 = [s, 0.0, 0.0, -s, q[0] - s * p[0], q[1] + s * p[1]]
-        A = fit_icp([(ext_px, T)], A0, iters=80)
-        g = shapely.make_valid(affine_transform(ext_px, A))
-        st = outline_stats(g, T)
-        st["km2"] = round(g.area / 1e6, 1)
-        st["m_per_px"] = float(np.sqrt(abs(A[0] * A[3] - A[1] * A[2])))
-        fits[name] = {"A": list(map(float, A)), **st}
-        print(f"  fit to {name}: {st}", flush=True)
-    best = max(fits, key=lambda k: fits[k]["iou"])
-    A = np.array(fits[best]["A"])
-
-    # junction refine on major roads
-    tr = Transformer.from_crs(4326, 32643, always_xy=True)
-    oxy, odeg = osm_junctions(
-        read_json(os.path.join(args.data_root, "osm", "major.json"))["elements"], tr
-    )
-    x0, y0, x1, y1 = shapely.make_valid(affine_transform(ext_px, A)).buffer(2000).bounds
-    k = (oxy[:, 0] > x0) & (oxy[:, 0] < x1) & (oxy[:, 1] > y0) & (oxy[:, 1] < y1)
-    oxy, odeg = oxy[k], odeg[k]
-    tree = shapely.STRtree(shapely.points(oxy))
-    rm = road_mask(a)
-    fx0, fy0, fx1, fy1 = frame
-    rm[:fy0], rm[fy1:], rm[:, :fx0], rm[:, fx1:] = False, False, False, False
-    m_px = fits[best]["m_per_px"]
-    sj, sdeg = raster_junctions(rm, m_px, lambda xy: xy)  # junctions in px
-    sj = np.asarray(sj, float)
-    A2, res = junction_refine(sj, np.asarray(sdeg), A, oxy, odeg, tree)
-    g2 = shapely.make_valid(affine_transform(ext_px, A2))
-    out = {
-        "sheet": f"{PLAN_ID}-MAP002",
-        "scale": "1:70,000",
-        "image_px": [W, H],
-        "frame_px": frame,
-        "outline_fits": fits,
-        "outline_target": best,
-        "iou_bar": IOU_MIN,
-        "iou_pass": fits[best]["iou"] >= IOU_MIN,
-        "sheet_junctions": len(sj),
-        "osm_junctions": len(oxy),
-        "junction_refine": res,
-        "after_refine_vs_target": outline_stats(g2, targets[best]),
-        "held_bar": {"rmse_m": HELD_RMSE_MAX, "min_points": HELD_MIN},
-        "held_pass": res.get("held_out", 0) >= HELD_MIN
-        and res.get("held_rmse_m", 1e9) <= HELD_RMSE_MAX,
-        "A_px_to_32643": list(map(float, A2)),
-        "A_outline_only": list(map(float, A)),
-        "m_per_px": float(np.sqrt(abs(A2[0] * A2[3] - A2[1] * A2[2]))),
-        "uncertainty_m": max(FLOOR_M, res.get("held_rmse_m", float("nan"))),
-        "classes": "not extracted: MAP002 is coloured by taluk, not land use",
-    }
     with open(os.path.join(out_dir, "map002_georef.json"), "w") as f:
         json.dump(out, f, indent=1)
     print(json.dumps({k: v for k, v in out.items() if k != "outline_fits"}, indent=1))
@@ -431,71 +473,122 @@ def osm_fine(sheet_roads, m_px, A, osm_all, tr):
     return B, float(C[iy, ix] / max(float(C2.max()), 1e-9))
 
 
-def stage_grids(args, out_dir):
+def prior_maps(a2, a4, log=print):
+    """MAP004 placed on MAP002 by their tanks; the layer stacks the grid priors match to."""
+    w2 = onehot(a2, ["water"])
+    r42 = register(onehot(a4, ["water"]), w2, np.arange(0.295, 0.3061, 0.001))
+    log(f"MAP004 on MAP002: {r42}")
+    o4h = resample(onehot(a4, MATCH_CLASSES), 0.5)  # MAP004 at half resolution
+    return {"r42": r42, "w2": w2, "o4h": o4h}
+
+
+def grid_prior(a, A2, pm, w_ref=3447):
+    """A grid sheet's prior from the plan's own maps: its land-use colours on MAP004 (then
+    MAP004 -> MAP002 -> ground), or its tanks straight on MAP002 when it is not on the
+    conurbation map. w_ref: px width of grid A1 (MAP005), whose scale on MAP004 is 0.239."""
+    r42 = pm["r42"]
+    s0 = 0.239 * w_ref / a.shape[1]
+    oh = onehot(a, MATCH_CLASSES)
+    r = register(oh, pm["o4h"], s0 / 2 * np.arange(0.96, 1.041, 0.008), excl=8)
+    via = "MAP004"
+    s1, t1 = 2 * r["s"], (2 * r["tx"], 2 * r["ty"])
+    s42, t42 = r42["s"], (r42["tx"], r42["ty"])
+    if r["peak_ratio"] < 1.15:  # not on the conurbation map: tanks to MAP002
+        r = register(
+            oh[[MATCH_CLASSES.index("water")]],
+            pm["w2"],
+            s0 * r42["s"] * np.arange(0.94, 1.061, 0.01),
+            excl=4,
+        )
+        via = "MAP002"
+        s1, t1, s42, t42 = r["s"], (r["tx"], r["ty"]), 1.0, (0.0, 0.0)
+    A = compose(A2, s42, t42, s1, t1)
+    return {
+        "image_px": [a.shape[1], a.shape[0]],
+        "prior_via": via,
+        "prior_match": r,
+        "A_prior": A,
+        "m_per_px_prior": float(np.sqrt(abs(A[0] * A[3] - A[1] * A[2]))),
+    }
+
+
+def prior_box(rec):
+    return affine_transform(shapely.box(0, 0, *rec["image_px"]), rec["A_prior"])
+
+
+def grid_refine(a, rec, osm_all, oxy, odeg, otree, tr):
+    """OSM refine within +-PRIOR_WIN_M of the prior: road correlation, junction affine with a
+    held-out half and the null baseline. Returns the fields to add to the sheet's record;
+    `brief_bars` (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches) and `null_pass`
+    (matches >= 3x the null baseline) are reported apart."""
     from georef_osm import refine
     from georef_osm import road_mask as sheet_road_mask
+
+    A, m_px = rec["A_prior"], rec["m_per_px_prior"]
+    tm = onehot(a, ["transport"])[0]
+    roads = sheet_road_mask(a, tm)
+    x0f, y0f, x1f, y1f = map_frame(a)
+    roads[:y0f], roads[y1f:], roads[:, :x0f], roads[:, x1f:] = (False,) * 4
+    Af, fine_ratio = osm_fine(roads, m_px, A, osm_all, tr)
+    Ar, chk = refine(roads, m_px, Af, oxy, odeg, otree)
+    c = np.array([[a.shape[1] / 2, a.shape[0] / 2]])
+    shift = float(np.hypot(*(apply(np.array(Ar), c) - apply(np.array(A), c))[0]))
+    n = chk.get("matched_total", 0)
+    rmse = chk.get("rmse_m")
+    brief = (
+        rmse is not None
+        and rmse <= GRID_HELD_MAX_M
+        and shift <= SHIFT_MAX_M
+        and n >= GRID_MIN_MATCH
+    )
+    null_pass = n >= 3 * max(chk.get("null_matches_mean") or 0.0, 1.0)
+    ok_core = chk.get("accepted") and shift <= SHIFT_MAX_M
+    status = (
+        "accepted"
+        if ok_core and n >= GRID_MIN_MATCH
+        else "accepted_few_checks"
+        if ok_core and n >= 3
+        else "rejected"
+    )
+    return {
+        "fine_peak_ratio": fine_ratio,
+        "A": Ar,
+        "osm_check": chk,
+        "shift_from_prior_m": shift,
+        "brief_bars": bool(brief),
+        "null_pass": bool(null_pass),
+        "status": status,
+    }
+
+
+def stage_grids(args, out_dir):
     from raster_plan import osm_roads
 
     raw = os.path.join(args.data_root, "raw", PLAN_ID)
     g2 = read_json(os.path.join(out_dir, "map002_georef.json"))
     A2 = g2["A_px_to_32643"]
-    a2 = render(sheet_path(raw, "MAP002"))
-    a4 = render(sheet_path(raw, "MAP004"))
-    w2 = onehot(a2, ["water"])
-    r42 = register(onehot(a4, ["water"]), w2, np.arange(0.295, 0.3061, 0.001))
-    print(f"MAP004 on MAP002: {r42}", flush=True)
-    o4h = resample(onehot(a4, MATCH_CLASSES), 0.5)  # MAP004 at half resolution
-    del a4
+    pm = prior_maps(
+        render(sheet_path(raw, "MAP002")),
+        render(sheet_path(raw, "MAP004")),
+        log=lambda m: print(m, flush=True),
+    )
     tr = Transformer.from_crs(4326, 32643, always_xy=True)
     lo = Transformer.from_crs(32643, 4326, always_xy=True).transform
     gpath = os.path.join(out_dir, "grids_georef.json")
     prev = read_json(gpath)["sheets"] if os.path.exists(gpath) else {}
-    out = {"map004_on_map002": r42, "sheets": {}}
-    w_ref = 3447  # px width of grid A1 (MAP005), whose scale on MAP004 is 0.239
+    out = {"map004_on_map002": pm["r42"], "sheets": {}}
+    keep = ("image_px", "prior_via", "prior_match", "A_prior", "m_per_px_prior")
     # 1. priors from the plan's own maps (kept from an earlier run)
     for doc, (grid, town) in GRIDS.items():
         if doc in prev and not args.redo_priors:
-            out["sheets"][doc] = {
-                k: prev[doc][k]
-                for k in (
-                    "grid",
-                    "town",
-                    "image_px",
-                    "prior_via",
-                    "prior_match",
-                    "A_prior",
-                    "m_per_px_prior",
-                )
-            }
-            continue
-        a = render(sheet_path(raw, doc))
-        s0 = 0.239 * w_ref / a.shape[1]
-        oh = onehot(a, MATCH_CLASSES)
-        r = register(oh, o4h, s0 / 2 * np.arange(0.96, 1.041, 0.008), excl=8)
-        via = "MAP004"
-        s1, t1 = 2 * r["s"], (2 * r["tx"], 2 * r["ty"])
-        s42, t42 = r42["s"], (r42["tx"], r42["ty"])
-        if r["peak_ratio"] < 1.15:  # not on the conurbation map: tanks to MAP002
-            r = register(
-                oh[[MATCH_CLASSES.index("water")]],
-                w2,
-                s0 * r42["s"] * np.arange(0.94, 1.061, 0.01),
-                excl=4,
-            )
-            via = "MAP002"
-            s1, t1, s42, t42 = r["s"], (r["tx"], r["ty"]), 1.0, (0.0, 0.0)
-        A = compose(A2, s42, t42, s1, t1)
-        out["sheets"][doc] = {
-            "grid": grid,
-            "town": town,
-            "image_px": [a.shape[1], a.shape[0]],
-            "prior_via": via,
-            "prior_match": r,
-            "A_prior": A,
-            "m_per_px_prior": float(np.sqrt(abs(A[0] * A[3] - A[1] * A[2]))),
-        }
+            rec = {k: prev[doc][k] for k in keep}
+        else:
+            rec = grid_prior(render(sheet_path(raw, doc)), A2, pm)
+        out["sheets"][doc] = {"grid": grid, "town": town, **rec}
         print(
-            f"  {doc} {grid:3s} prior via {via} peak {r['peak_ratio']:.2f}", flush=True
+            f"  {doc} {grid:3s} prior via {rec['prior_via']} peak "
+            f"{rec['prior_match']['peak_ratio']:.2f}",
+            flush=True,
         )
     with open(gpath, "w") as f:
         json.dump(out, f, indent=1)
@@ -504,13 +597,7 @@ def stage_grids(args, out_dir):
     # 2. OSM roads per town (box of the priors + 1 km), then the refine
     for town in sorted({v[1] for v in GRIDS.values()}):
         docs = [d for d, (_g, tw) in GRIDS.items() if tw == town]
-        boxes = [
-            affine_transform(
-                shapely.box(0, 0, *out["sheets"][d]["image_px"]),
-                out["sheets"][d]["A_prior"],
-            )
-            for d in docs
-        ]
+        boxes = [prior_box(out["sheets"][d]) for d in docs]
         x0, y0, x1, y1 = shapely.union_all(boxes).buffer(1000).bounds
         osm_all = osm_roads(
             args.data_root, f"nlm_{town.lower()}", (*lo(x0, y0), *lo(x1, y1)), 0.02
@@ -519,45 +606,20 @@ def stage_grids(args, out_dir):
         otree = shapely.STRtree(shapely.points(oxy))
         for doc in docs:
             rec = out["sheets"][doc]
-            a = render(sheet_path(raw, doc))
-            A, m_px = rec["A_prior"], rec["m_per_px_prior"]
-            tm = onehot(a, ["transport"])[0]
-            roads = sheet_road_mask(a, tm)
-            x0f, y0f, x1f, y1f = map_frame(a)
-            roads[:y0f], roads[y1f:], roads[:, :x0f], roads[:, x1f:] = (False,) * 4
-            Af, fine_ratio = osm_fine(roads, m_px, A, osm_all, tr)
-            Ar, chk = refine(roads, m_px, Af, oxy, odeg, otree)
-            c = np.array([[a.shape[1] / 2, a.shape[0] / 2]])
-            shift = float(
-                np.hypot(*(apply(np.array(Ar), c) - apply(np.array(A), c))[0])
-            )
-            n = chk.get("matched_total", 0)
-            ok_core = chk.get("accepted") and shift <= SHIFT_MAX_M
-            status = (
-                "accepted"
-                if ok_core and n >= GRID_MIN_MATCH
-                else "accepted_few_checks"
-                if ok_core and n >= 3
-                else "rejected"
+            upd = grid_refine(
+                render(sheet_path(raw, doc)), rec, osm_all, oxy, odeg, otree, tr
             )
             flags = ["low-res source (1,024 px JPG)"] if doc == "MAP012" else []
-            if status == "accepted_few_checks":
+            if upd["status"] == "accepted_few_checks":
                 flags.append("few ground checks")
-            rec.update(
-                {
-                    "fine_peak_ratio": fine_ratio,
-                    "A": Ar,
-                    "osm_check": chk,
-                    "shift_from_prior_m": shift,
-                    "status": status,
-                    "flags": flags,
-                }
-            )
+            rec.update({**upd, "flags": flags})
+            chk = upd["osm_check"]
             print(
                 f"  {doc} {rec['grid']:3s} via {rec['prior_via']} peak "
-                f"{rec['prior_match']['peak_ratio']:.2f} fine {fine_ratio:.2f} shift {shift:.0f} m "
-                f"matches {n} held {chk.get('matched')} rmse {chk.get('rmse_m')} "
-                f"null {chk.get('null_matches_mean')} -> {status}",
+                f"{rec['prior_match']['peak_ratio']:.2f} fine {upd['fine_peak_ratio']:.2f} "
+                f"shift {upd['shift_from_prior_m']:.0f} m matches {chk.get('matched_total')} "
+                f"held {chk.get('matched')} rmse {chk.get('rmse_m')} "
+                f"null {chk.get('null_matches_mean')} -> {upd['status']}",
                 flush=True,
             )
             with open(gpath, "w") as f:

@@ -269,6 +269,9 @@ def osm_tiled(query: str, bbox_str: str, bbox_wsen, tile_deg: float) -> list[dic
 
 
 def old_json(args, *parts):
+    prev = getattr(args, "prev", None)
+    if prev is not None and tuple(parts) in prev:
+        return prev[tuple(parts)]
     if not args.old_data_root:
         return None
     p = os.path.join(args.old_data_root, *parts)
@@ -276,6 +279,53 @@ def old_json(args, *parts):
         return None
     with open(p, encoding="utf-8") as f:
         return json.load(f)
+
+
+def prev_from_index(ix: dict) -> dict:
+    """--osm-only (#43): the previous values the #40 tolerance rule compares against, read
+    from the index itself (the old data root no longer exists), keyed as old_json's parts."""
+    rows = {r["row_id"]: r for r in ix["rows"] if r.get("status") == "indexed"}
+    out: dict = {}
+    b = rows.get("BDA-RMP2031-PLUCOMP#p1")
+    if b:
+        out[("georef", "BDA-RMP2031-PLUCOMP.json")] = {
+            "affine_page_to_32643": b["georef"]["affine_page_to_32643"],
+            "georef_rmse_m": b["georef"]["rmse_m"],
+        }
+        out[("planning", "zones", "BDA-RMP2031_qa.json")] = {
+            "area_ha_by_class": {
+                k: v["ha"] for k, v in (b["qa"].get("class_check") or {}).items()
+            },
+            "zones": b["qa"].get("zones"),
+        }
+    hs = [
+        r
+        for r in rows.values()
+        if r["plan_id"] == "BMRDA-HSK-MP2031" and r["kind"] == "zones"
+    ]
+    if hs:
+        o = rows.get("BMRDA-HSK-MP2031-MP#lpa")
+        out[("planning", "zones", "BMRDA-HSK-MP2031_qa.json")] = {
+            "lpa_area_km2": o["qa"]["area_km2"] if o else None,
+            "georef_floor_m": (ix["plans"].get("BMRDA-HSK-MP2031") or {}).get(
+                "georef_floor_m"
+            ),
+            "sheets": [
+                {
+                    "map_no": r["extraction"]["map_no"],
+                    "osm_junctions": {
+                        "rmse_m": r["qa"].get("rmse_m"),
+                        "matched": r["qa"].get("matched", 0),
+                    },
+                    "georef_used_m": r["georef"].get("rmse_used_m"),
+                    "zone_area_ha": (r["qa"].get("class_check") or {}).get(
+                        "zone_area_ha"
+                    ),
+                }
+                for r in hs
+            ],
+        }
+    return out
 
 
 def keep_or_new(what: str, new: float, old: float | None, tol: float) -> float:
@@ -300,7 +350,7 @@ def build_bda(ix: dict, args, outlines: dict) -> None:
     plan_id, doc_id = "BDA-RMP2031", "BDA-RMP2031-PLUCOMP"
     plan = plan_row(plan_id)
     row_id, out_id = f"{doc_id}#p1", f"{doc_id}#lpa"
-    if done(ix, row_id) and done(ix, out_id):
+    if done(ix, row_id) and done(ix, out_id) and not args.osm_only:
         # already indexed: only the outline is needed again (LPA-map fit in this run)
         row = next(r for r in ix["rows"] if r["row_id"] == out_id)
         with qf.TempArea("build/bda") as area:
@@ -1001,10 +1051,115 @@ def legend_label(page, fills: list[str], frame_pt) -> tuple[str | None, list[str
     return (max(ok, key=len) if ok else None), cands[:10]
 
 
+# street-network strokes of Map No. 39 (0.48 pt grey lines; the 1.92 pt casings draw the
+# same roads), the sheet side of its OSM junction check (#45)
+ANK_ROAD_STROKES = {("#9c9c9c", 0.48), ("#6e6e6e", 0.48)}
+ANK_PT_M = 15.88  # metres per pt at 1:45,000 (grid fit)
+
+
+def ank_osm_check(ix: dict) -> dict:
+    """#43 / #45: Map No. 39 street junctions (grid-label fit) against OSM junctions of every
+    public road class: matches within 10 m, null baseline (same junctions shifted 1.5-3.5 km),
+    RMSE of the matches. Passing (>= 3x null and >= 10 matches) confirms the placement."""
+    import extract_hoskote as xh
+    import georef_plucomp as gp
+
+    doc_id = "BMRDA-ANK-MP2031-MAP39"
+    row = next(r for r in ix["rows"] if r["row_id"] == f"{doc_id}#map39")
+    fit = row["georef"]["grid_fit"]
+    x0f, y0f, x1f, y1f = ANK_FRAME_PT
+    with qf.TempArea("build/ank_osm") as area:
+        path, _d = fetch(doc_id, area)
+        doc = pymupdf.open(path)
+        segs = []
+        for dr in doc[0].get_drawings():
+            c = dr.get("color")
+            if (
+                c is None
+                or (_hex(c), round(dr.get("width") or 0, 2)) not in ANK_ROAD_STROKES
+            ):
+                continue
+            for it in dr["items"]:
+                if it[0] == "l":
+                    a, b = it[1], it[2]
+                elif it[0] == "c":
+                    a, b = it[1], it[4]
+                else:
+                    continue
+                if x0f <= a.x <= x1f and y0f <= a.y <= y1f:
+                    segs.append((a.x, a.y, b.x, b.y))
+        doc.close()
+        del doc
+    Jp = gp.junctions_from_segments(np.array(segs), snap=0.5)
+    G = np.column_stack(
+        [fit["E"][0] * Jp[:, 0] + fit["E"][1], fit["N"][0] * Jp[:, 1] + fit["N"][1]]
+    )
+    lpa = shapely.box(*shapely.total_bounds(shapely.points(G)))
+    els = overpass_roads(_wgs_box(lpa, 500), xh.OSM_HIGHWAYS)
+    oj, _odeg = xh.osm_junctions(els, TO_UTM)
+    del els
+    otree = shapely.STRtree(shapely.points(oj))
+    zs, zo = np.zeros(len(G), int), np.zeros(len(oj), int)
+    matched = junction_counts(G, zs, oj, zo, otree, use_deg=False)
+    nc = null_check(G, zs, oj, zo, otree, matched, use_deg=False)
+    # distances of the matched junctions, and the median offset of those within 60 m (a
+    # systematic shift of the whole sheet shows there)
+    d_i, d_o = otree.query(shapely.points(G), predicate="dwithin", distance=60.0)
+    near: dict[int, tuple[float, int]] = {}
+    for a, b in zip(d_i.tolist(), d_o.tolist(), strict=True):
+        dd = float(np.hypot(*(G[a] - oj[b])))
+        if a not in near or dd < near[a][0]:
+            near[a] = (dd, b)
+    d10 = [dd for dd, _b in near.values() if dd <= 10.0]
+    off = np.array([oj[b] - G[a] for a, (_dd, b) in near.items()])
+    chk = {
+        "sheet_junctions": len(G),
+        "osm_junctions": len(oj),
+        "matched_10m": matched,
+        "rmse_10m_m": round(float(np.sqrt(np.mean(np.square(d10)))), 2)
+        if d10
+        else None,
+        "median_offset_60m_m": [round(float(v), 1) for v in np.median(off, axis=0)]
+        if len(off)
+        else None,
+        "pairs_60m": len(near),
+        "strokes": sorted(f"{c} {w} pt" for c, w in ANK_ROAD_STROKES),
+    }
+    confirmed = bool(nc["pass_3x"] and matched >= 10)
+    log(f"  Anekal Map 39 OSM check: {json.dumps(chk)} null {json.dumps(nc)}")
+    qa = {**row["qa"], "null_check": nc, "osm_check": chk}
+    upd = {**row, "qa": qa}
+    if confirmed:
+        unc = max(chk["rmse_10m_m"] or 0.0, ANK_PT_M)
+        warns = [w for w in row.get("warnings", []) if w != UNCONFIRMED]
+        upd.update(
+            {
+                "placement_confirmed": True,
+                "position_uncertainty_m": round(unc, 1),
+                "warnings": warns,
+                "sheet_qa": {
+                    **row["sheet_qa"],
+                    "georef_rmse_m": round(unc, 1),
+                    "warnings": warns,
+                },
+                "georef": {
+                    **row["georef"],
+                    "basis": "grid-label fit on the sheet; OSM junction check passed "
+                    f"({dt.datetime.now(dt.UTC).date().isoformat()})",
+                },
+            }
+        )
+    upsert(ix, upd)
+    return {"osm_check": chk, "null_check": nc, "placement_confirmed": confirmed}
+
+
 def build_ank(ix: dict, args, outlines: dict) -> None:
     """Anekal 2031 from the official Map No. 39 (open-decisions #39, #44, #45): vector fills
     inside the neatline, clipped to BMRDA's pre-STRR Anekal extent + 100 m."""
     plan_id, doc_id = "BMRDA-ANK-MP2031", "BMRDA-ANK-MP2031-MAP39"
+    if args.osm_only:
+        REPORT["steps"].append({"anekal_osm_check": ank_osm_check(ix)})
+        return
     plan = plan_row(plan_id)
     lpa_row = next((r for r in ix["rows"] if r["row_id"] == "STRR-LPA-MAP#lpas"), None)
     if lpa_row is None:
@@ -1212,6 +1367,374 @@ def build_ank(ix: dict, args, outlines: dict) -> None:
     log(f"Anekal indexed: Map No. 39, IoU {iou:.3f} vs BMRDA pre-STRR outline")
 
 
+NLM_PLAN = "BMRDA-NLM-MP2031"
+NLM_OUTLINE = "STRR-LPA-MAP#nlm"
+NLM_CLIP_BUFFER_M = 100.0
+NLM_MAX_RGB_DIST = (
+    60.0  # 96 dpi sheets: the distance the georeference's colour match uses
+)
+# sheets that pass the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches) but
+# not the null check, indexed unconfirmed by Tanmay's decision of 3 Oct 2026
+NLM_UNCONFIRMED_OK = ("A3", "B1", "C3", "D1")
+NLM_LABELS = {  # MAP005 legend
+    "residential": "Residential",
+    "commercial": "Commercial",
+    "industrial": "Industrial",
+    "public_semi_public": "Public & Semi-Public",
+    "open_space": "Park & Open Space",
+    "public_utility": "Public Utility",
+    "transport": "Transportation",
+    "water": "Water Bodies",
+}
+NLM_MAJOR = "motorway|trunk|primary|motorway_link|trunk_link|primary_link"
+
+
+def madhure_outline() -> tuple[shapely.Geometry, int]:
+    """The Madhure hobli villages added to the LPA in 2015 (dist 21, taluk 2, hobli 3), from
+    the cadastral service's parcel-union outlines, in memory only (#35)."""
+    import urllib.request
+
+    base = os.getenv("CADASTRAL_URL", "http://127.0.0.1:8011").rstrip("/")
+    with urllib.request.urlopen(
+        f"{base}/boundaries?dist=21&taluk=2&hobli=3", timeout=600
+    ) as r:
+        fc = json.load(r)
+    gs = []
+    for f in fc.get("features") or []:
+        if not f.get("geometry"):
+            continue
+        g = shapely.geometry.shape(f["geometry"])
+        gs.append(
+            shapely.transform(
+                g, lambda xy: np.column_stack(TO_UTM.transform(xy[:, 0], xy[:, 1]))
+            )
+        )
+    return shapely.make_valid(shapely.union_all(np.array(gs, dtype=object))), len(gs)
+
+
+def _wgs_box(g, buf_m: float):
+    x0, y0, x1, y1 = g.buffer(buf_m).bounds
+    w, s_ = TO_WGS.transform(x0, y0)
+    e, n = TO_WGS.transform(x1, y1)
+    return (w, s_, e, n)
+
+
+def nlm_grid_status(grid: str, rec: dict) -> tuple[str, bool]:
+    """(row status, placement_confirmed) for a refined grid sheet."""
+    if rec["status"] in ("accepted", "accepted_few_checks"):
+        return "indexed", True
+    if rec.get("brief_bars") and grid in NLM_UNCONFIRMED_OK:
+        return "indexed", False
+    return "rejected", False
+
+
+def build_nlm(ix: dict, args, outlines: dict) -> None:
+    """Nelamangala 2031 grid sheets (1:5,000): MAP002 fitted to the LPA, grid priors from the
+    plan's own maps, OSM refine within 300 m (georef_nlm.py). Accepted sheets are indexed
+    confirmed; A3 / B1 / C3 / D1 pass the brief's bars but not the null check and are indexed
+    unconfirmed (Tanmay, 3 Oct 2026); the rest are rows with status rejected."""
+    import gc
+
+    import extract_hoskote as xh
+    import georef_nlm as gn
+
+    plan = plan_row(NLM_PLAN)
+    lpa_row = next((r for r in ix["rows"] if r["row_id"] == "STRR-LPA-MAP#lpas"), None)
+    if lpa_row is None:
+        raise SystemExit(f"{NLM_PLAN} needs the STRR-LPA-MAP#lpas row (BMRDA-LPA-MAP)")
+    rep: dict = {"grids": {}}
+    REPORT["steps"].append({"nelamangala": rep})
+    with qf.TempArea("build/nlm") as area:
+        work = os.path.join(area, "work")
+        os.makedirs(work, exist_ok=True)
+        mpath, md = fetch("STRR-LPA-MAP", area)
+        ext = {}
+        for e in ("pre_strr", "current"):
+            job = {
+                "extraction": {
+                    "method": "bmrda_lpa_outline",
+                    "authority": "BMRDA-NLM",
+                    "extent": e,
+                },
+                "georef": lpa_row["georef"],
+                "source_path": mpath,
+                "page": 1,
+            }
+            res = worker(job, f"BMRDA-NLM outline {e} (LPA map)")
+            ext[e] = (res["outlines"][0], res["meta"]["outlines"][0], job["extraction"])
+        os.remove(mpath)
+        pre, ometa, oext = ext["pre_strr"]
+        upsert(
+            ix,
+            {
+                "plan_id": NLM_PLAN,
+                "authority": "BMRDA-NLM",
+                "doc_id": "STRR-LPA-MAP",
+                "source_url": md["source_url"],
+                "sha256": md["sha256"],
+                "row_id": NLM_OUTLINE,
+                "kind": "lpa_outline",
+                "page": 1,
+                "sheet": "Local Planning Areas in Bengaluru Metropolitan Region (1:125,000)",
+                "sheet_key": "nlm",
+                "extent_kind": "plan",
+                "label": "Nelamangala LPA, pre-STRR extent (BMRDA LPA map)",
+                "extent": extent(pre.bounds),
+                "georef": lpa_row["georef"],
+                "extraction": oext,
+                "qa": {
+                    "area_km2": ometa["area_km2"],
+                    "legend_km2": ometa["legend_km2"],
+                },
+                "status": "indexed",
+            },
+        )
+        mad, n_mad = madhure_outline()
+        rep["madhure_villages"] = n_mad
+        log(f"  Madhure villages: {n_mad} ({mad.area / 1e6:.1f} km2)")
+        targets = gn.lpa_targets(ext["current"][0], pre, mad)
+        # B1: MAP002 on the LPA, then the major-road refine
+        p2, _d2 = fetch(f"{NLM_PLAN}-MAP002", area)
+        a2 = gn.render(p2)
+        os.remove(p2)
+        major = []
+        if os.getenv("NLM_MAJOR_REFINE", "0") == "1":
+            # off by default (#63): ~90 Overpass tiles for a refine that failed its bar on
+            # 2 Oct (1 junction pair); the prior is then the outline fit, as on 2 Oct
+            try:
+                major = overpass_roads(_wgs_box(pre, 3000), NLM_MAJOR)
+            except RuntimeError as ex:  # Overpass down (#43)
+                log(
+                    f"  major roads unavailable ({ex}); MAP002 prior = outline fit only"
+                )
+        g2 = gn.fit_map002(a2, targets, major, log=log)
+        del major
+        rep["map002"] = {
+            k: v for k, v in g2.items() if k not in ("outline_fits", "A_outline_only")
+        }
+        rep["map002"]["outline_fits"] = {
+            k: {kk: vv for kk, vv in v.items() if kk != "A"}
+            for k, v in g2["outline_fits"].items()
+        }
+        log(
+            f"  MAP002: IoU {g2['outline_fits'][g2['outline_target']]['iou']:.3f} "
+            f"({g2['outline_target']}), refine {g2['junction_refine']}"
+        )
+        # B2: priors from the plan's own maps (one grid sheet on disk at a time)
+        p4, _d4 = fetch(f"{NLM_PLAN}-MAP004", area)
+        pm = gn.prior_maps(a2, gn.render(p4), log=log)
+        os.remove(p4)
+        del a2
+        rep["map004_on_map002"] = pm["r42"]
+        recs: dict = {}
+
+        def sheet_file(doc):
+            d = doc_row(f"{NLM_PLAN}-{doc}")
+            ext_ = os.path.splitext(d["source_url"])[1].lower() or ".pdf"
+            return fetch(f"{NLM_PLAN}-{doc}", area, f"{doc}{ext_}")
+
+        for doc, (grid, town) in gn.GRIDS.items():
+            path, _d = sheet_file(doc)
+            pr = gn.grid_prior(gn.render(path), g2["A_px_to_32643"], pm)
+            recs[doc] = {"grid": grid, "town": town, **pr}
+            os.remove(path)
+            gc.collect()
+            log(
+                f"  {doc} {grid} prior via {pr['prior_via']} "
+                f"peak {pr['prior_match']['peak_ratio']:.2f}"
+            )
+        del pm
+        # OSM roads per town (box of the priors + 1 km), then the refine and the QA extraction
+        for town in sorted({v[1] for v in gn.GRIDS.values()}):
+            docs = [d for d, (_g, tw) in gn.GRIDS.items() if tw == town]
+            box = shapely.union_all([gn.prior_box(recs[d]) for d in docs])
+            osm_all = overpass_roads(_wgs_box(box, 1000), xh.OSM_HIGHWAYS, 0.04)
+            oxy, odeg = gn.osm_junctions(osm_all, TO_UTM)
+            otree = shapely.STRtree(shapely.points(oxy))
+            for doc in docs:
+                nlm_sheet(
+                    ix,
+                    plan,
+                    recs[doc],
+                    doc,
+                    town,
+                    sheet_file,
+                    osm_all,
+                    oxy,
+                    odeg,
+                    otree,
+                    pre,
+                    work,
+                    rep,
+                )
+                gc.collect()
+            del osm_all, oxy, odeg, otree
+        ix["plans"][NLM_PLAN] = {"outline_row": NLM_OUTLINE, "overlay_kinds": []}
+        save_index(ix)
+    n_ok = sum(1 for g in rep["grids"].values() if g["row_status"] == "indexed")
+    log(f"Nelamangala: {n_ok} of {len(rep['grids'])} grid sheets indexed")
+
+
+def nlm_sheet(
+    ix, plan, rec, doc, town, sheet_file, osm_all, oxy, odeg, otree, pre, work, rep
+):
+    """Refine one grid sheet, decide its status and (if indexed) run the QA extraction."""
+    import georef_nlm as gn
+
+    path, d = sheet_file(doc)
+    a = gn.render(path)
+    rec.update(gn.grid_refine(a, rec, osm_all, oxy, odeg, otree, TO_UTM))
+    status, confirmed = nlm_grid_status(rec["grid"], rec)
+    chk = rec["osm_check"]
+    g_rep = {
+        "grid": rec["grid"],
+        "town": town,
+        "prior_via": rec["prior_via"],
+        "prior_peak": round(rec["prior_match"]["peak_ratio"], 2),
+        "fine_peak": round(rec["fine_peak_ratio"], 2),
+        "shift_m": round(rec["shift_from_prior_m"]),
+        "matches": chk.get("matched_total"),
+        "held_out": chk.get("matched"),
+        "held_rmse_m": None if chk.get("rmse_m") is None else round(chk["rmse_m"], 1),
+        "null_mean": chk.get("null_matches_mean"),
+        "brief_bars": rec["brief_bars"],
+        "null_pass": rec["null_pass"],
+        "georef_status": rec["status"],
+        "row_status": status,
+        "placement_confirmed": confirmed,
+    }
+    rep["grids"][doc] = g_rep
+    log(f"  {doc} {rec['grid']}: {json.dumps(g_rep)}")
+    row_id = f"{d['doc_id']}#{rec['grid'].lower()}"
+    base = {
+        "plan_id": NLM_PLAN,
+        "authority": "BMRDA-NLM",
+        "doc_id": d["doc_id"],
+        "source_url": d["source_url"],
+        "sha256": d["sha256"],
+        "row_id": row_id,
+        "kind": "zones",
+        "page": 1,
+        "sheet": f"Grid {rec['grid']} ({town})",
+        "sheet_key": rec["grid"].lower(),
+        "source_layer": "detail",
+    }
+    if status != "indexed":
+        del a
+        os.remove(path)
+        upsert(
+            ix,
+            {
+                **base,
+                "status": "rejected",
+                "qa": {"georef": g_rep},
+                "reason": "placement not confirmed: "
+                + (
+                    "fails the brief's bars (held-out RMSE <= 10 m, shift <= 300 m, >= 6 matches)"
+                    if not rec["brief_bars"]
+                    else "passes the brief's bars but not the null check, and is not one of "
+                    "the four sheets approved unconfirmed (A3, B1, C3, D1)"
+                ),
+            },
+        )
+        return
+    H, W = a.shape[:2]
+    mrect = [int(v) for v in gn.map_frame(a)]
+    del a
+    classes = [
+        {"label": NLM_LABELS[k], "cnorm": k, "colours": [gn.LEGEND[k]]}
+        for k in gn.LEGEND
+    ]
+    A = [float(v) for v in rec["A"]]
+    rmse = float(chk.get("rmse_m") or 0.0)
+    m_px = float(np.sqrt(abs(A[0] * A[3] - A[1] * A[2])))
+    unc = max(rmse, m_px) if confirmed else max(100.0, rmse)
+    warns = [] if confirmed else [UNCONFIRMED]
+    if doc == "MAP012":
+        warns.append("Low-resolution source (1,024 px JPG): about 4.5 m per pixel.")
+    if rec["status"] == "accepted_few_checks":
+        warns.append("Few ground checks (3-5 junction matches).")
+    georef = {
+        "method": "nlm_prior_osm_junction_affine",
+        "affine_px_to_32643": A,
+        "residual_m": rmse,
+        "basis": "grid prior from MAP004 / MAP002 (the plan's own maps), refined on OSM roads "
+        f"within 300 m ({dt.datetime.now(dt.UTC).date().isoformat()}, same sha256)",
+    }
+    extraction = {
+        "method": "raster_affine_sheet",
+        "image_size": [W, H],
+        "map_rect": mrect,
+        "classes": classes,
+        "max_rgb_dist": NLM_MAX_RGB_DIST,
+        "scale": 5000,
+    }
+    res = worker(
+        {
+            **base,
+            "georef": georef,
+            "extraction": extraction,
+            "source_path": path,
+            "work_dir": work,
+            "chunk_m": 2000.0,
+        },
+        f"{row_id} zones",
+    )
+    os.remove(path)
+    g, _cols = table_geoms(res["zones"])
+    cg = shapely.intersection(g, pre.buffer(NLM_CLIP_BUFFER_M))
+    keep = ~shapely.is_empty(cg)
+    m = res["meta"]
+    sheet_qa = {
+        "doc_id": d["doc_id"],
+        "status": plan["status"],
+        "extraction": "raster",
+        "georef_rmse_m": round(rmse, 1),
+        "m_per_px": round(m_px, 2),
+        "georef_method": georef["method"],
+        "legend_check": "pass",
+        "qa_failures": [] if confirmed else ["null_check"],
+        "sheet_scale": "1:5,000",
+        "source_layer": "detail",
+        "sheet": base["sheet"],
+        "warnings": warns,
+    }
+    upsert(
+        ix,
+        {
+            **base,
+            "priority": {"rank": 0, "order": [0, 5000, int(doc[3:])]},
+            "extent": extent(shapely.total_bounds(cg[keep])),
+            "georef": georef,
+            "legend": {"classes": classes},
+            "extraction": extraction,
+            "clip": {
+                "to": NLM_OUTLINE,
+                "buffer_m": NLM_CLIP_BUFFER_M,
+                "min_area_m2": 1.0,
+            },
+            "merge": {"cut_grid": None, "dissolve_grid": 0.01},
+            "qa": {
+                "georef": g_rep,
+                "null_check": {
+                    "matches": chk.get("matched_total"),
+                    "null_mean": chk.get("null_matches_mean"),
+                    "pass_3x": rec["null_pass"],
+                },
+                "class_area_ha": m.get("class_area_ha"),
+                "unknown_px_pct": m.get("unknown_px_pct"),
+                "zones_unclipped": m["zones"],
+                "worker_seconds": m["seconds"],
+            },
+            "sheet_qa": sheet_qa,
+            "position_uncertainty_m": round(unc, 1),
+            "placement_confirmed": confirmed,
+            "warnings": warns,
+            "status": "indexed",
+        },
+    )
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--plans", required=True)
@@ -1219,7 +1742,15 @@ def main() -> None:
     ap.add_argument(
         "--no-osm", action="store_true", help="index without OSM checks (#43)"
     )
+    ap.add_argument(
+        "--osm-only",
+        action="store_true",
+        help="re-run the OSM-dependent calibration and checks of indexed plans (#43); the "
+        "previous values come from the index, kept when within the #40 tolerance",
+    )
     args = ap.parse_args()
+    if args.osm_only and args.no_osm:
+        raise SystemExit("--osm-only and --no-osm exclude each other")
     job_dir = os.getenv(
         "QNIT_JOB_DIR"
     )  # detached run: its log folder, locked by this PID
@@ -1228,6 +1759,7 @@ def main() -> None:
             f.write(str(os.getpid()))
     qf.install_urlopen_counter()
     ix = load_index()
+    args.prev = prev_from_index(ix) if args.osm_only else None
     outlines: dict = {}
     t0 = time.time()
     failed = None
@@ -1239,6 +1771,7 @@ def main() -> None:
                     "BMRDA-HSK-MP2031": build_hsk,
                     "BMRDA-LPA-MAP": build_lpa_map,
                     "BMRDA-ANK-MP2031": build_ank,
+                    "BMRDA-NLM-MP2031": build_nlm,
                 }[p](ix, args, outlines)
             except Exception:  # noqa: BLE001 - reported, then the temp area is cleared
                 import traceback

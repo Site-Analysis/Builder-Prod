@@ -771,6 +771,21 @@ def _read_chunks(path: str) -> dict[int, pa.Table]:
     return out
 
 
+SNAP_M = 0.01  # merge snapping (metres)
+
+
+def _poly(g):
+    """Polygonal part of a geometry made valid (make_valid can add stray lines / points,
+    which snapped overlays reject as mixed-dimension input)."""
+    g = shapely.make_valid(g)
+    parts = [
+        q for q in shapely.get_parts(g) if q.geom_type in ("Polygon", "MultiPolygon")
+    ]
+    if not parts:
+        return shapely.Polygon()
+    return parts[0] if len(parts) == 1 else shapely.union_all(parts)
+
+
 def _clip_pieces(g, clip, min_a):
     """The service's per-sheet clip (LPA outline): pieces outside are cut, slivers under
     min_a dropped. Returns (geoms, source index)."""
@@ -876,11 +891,16 @@ def merge_batch(job: dict) -> None:
                                 grid_size=grid,
                             )
                     else:
+                        # valid inputs and 1 cm snapping: an unsnapped intersection of an
+                        # invalid Hoskote footprint crashed GEOS (access violation, 3 Oct)
+                        cut = [
+                            _poly(shapely.intersection(_poly(c), bx, grid_size=SNAP_M))
+                            for c in hits
+                        ]
                         q = shapely.difference(
-                            q,
-                            shapely.union_all(
-                                [shapely.intersection(c, bx) for c in hits]
-                            ),
+                            _poly(q),
+                            shapely.union_all(cut, grid_size=SNAP_M),
+                            grid_size=SNAP_M,
                         )
                 for p in shapely.get_parts(q):
                     if p.geom_type == "Polygon" and p.area >= min_a and not p.is_empty:
