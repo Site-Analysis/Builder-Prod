@@ -1,0 +1,45 @@
+{
+ "_about": "Zonal Regulations rows that key on road width, transcribed from the plan's ZR PDF (text layer), with the PDF page and the page number printed on it. Bands follow ZR Table 4: upto_9 (<= 9 m), over_9_to_12, over_12_to_18, over_18_to_24, over_24. Road width per ZR 11.3 X: distance between the boundaries of the road incl. footways and drains; where it varies, the minimum over 200 m either side of the plot centre; service roads add to the main road.",
+ "BMRDA-ANK-MP2031": {
+  "doc_id": "BMRDA-ANK-MP2031-ZR",
+  "transcribed": "2026-10-04",
+  "rules": [
+   {"table": "Table 4", "use": "Residential", "band": "upto_9", "rule": "Maximum FAR, road width up to 9 m", "value": "1.50", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Residential", "band": "over_9_to_12", "rule": "Maximum FAR, road width over 9 to 12 m", "value": "1.75", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Residential", "band": "over_12_to_18", "rule": "Maximum FAR, road width over 12 to 18 m", "value": "2.00", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Residential", "band": "over_18_to_24", "rule": "Maximum FAR, road width over 18 to 24 m", "value": "2.25", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Residential", "band": "over_24", "rule": "Maximum FAR, road width over 24 m", "value": "2.50", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Commercial", "band": "upto_9", "rule": "Maximum FAR, road width up to 9 m", "value": "1.50", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Commercial", "band": "over_9_to_12", "rule": "Maximum FAR, road width over 9 to 12 m", "value": "1.75", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Commercial", "band": "over_12_to_18", "rule": "Maximum FAR, road width over 12 to 18 m", "value": "2.00", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Commercial", "band": "over_18_to_24", "rule": "Maximum FAR, road width over 18 to 24 m", "value": "2.25", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Commercial", "band": "over_24", "rule": "Maximum FAR, road width over 24 m", "value": "2.50", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Public & semi-public, traffic & transportation, public utility", "band": "upto_9", "rule": "Maximum FAR, road width up to 9 m", "value": "1.25", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Public & semi-public, traffic & transportation, public utility", "band": "over_9_to_12", "rule": "Maximum FAR, road width over 9 to 12 m", "value": "1.50", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Public & semi-public, traffic & transportation, public utility", "band": "over_12_to_18", "rule": "Maximum FAR, road width over 12 to 18 m", "value": "1.75", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Public & semi-public, traffic & transportation, public utility", "band": "over_18_to_24", "rule": "Maximum FAR, road width over 18 to 24 m", "value": "1.75", "pdf_page": 35, "printed_page": 172},
+   {"table": "Table 4", "use": "Public & semi-public, traffic & transportation, public utility", "band": "over_24", "rule": "Maximum FAR, road width over 24 m", "value": "2.00", "pdf_page": 35, "printed_page": 172},
+   {"table": "11.3.1 a)", "use": "Group housing", "band": "upto_9", "rule": "Approach road to a group housing project must be at least 12.00 m wide (minimum area 1.00 ha)", "value": "Minimum 12.00 m", "pdf_page": 36, "printed_page": 173},
+   {"table": "11.3.1 a)", "use": "Group housing", "band": "over_9_to_12", "rule": "Approach road to a group housing project must be at least 12.00 m wide (minimum area 1.00 ha)", "value": "Minimum 12.00 m", "pdf_page": 36, "printed_page": 173},
+   {"table": "Table 6", "use": "Group housing", "band": "over_9_to_12", "rule": "Plot coverage / FAR, road width 12.0 m", "value": "60 % / 2.00", "pdf_page": 36, "printed_page": 173},
+   {"table": "Table 6", "use": "Group housing", "band": "over_12_to_18", "rule": "Plot coverage / FAR, road width above 12 and up to 18 m", "value": "55 % / 2.25", "pdf_page": 36, "printed_page": 173},
+   {"table": "Table 6", "use": "Group housing", "band": "over_18_to_24", "rule": "Plot coverage / FAR, road width above 18 and up to 24 m", "value": "55 % / 2.50", "pdf_page": 36, "printed_page": 173},
+   {"table": "Table 6", "use": "Group housing", "band": "over_24", "rule": "Plot coverage / FAR, road width above 24 m", "value": "50 % / 2.75", "pdf_page": 36, "printed_page": 173},
+   {"table": "Table 10 A", "use": "IT / BT (industrial zone)", "band": "over_9_to_12", "rule": "Ground coverage / FAR, road width above 9 m up to 12 m (plot up to 1,000 sq m)", "value": "55 % / 1.50", "pdf_page": 39, "printed_page": 176},
+   {"table": "Table 10 A", "use": "IT / BT (industrial zone)", "band": "over_12_to_18", "rule": "Ground coverage / FAR, road width above 12.0 m up to 18.0 m (plot above 1,000 up to 2,000 sq m)", "value": "50 % / 1.75", "pdf_page": 39, "printed_page": 176},
+   {"table": "Table 10 A", "use": "IT / BT (industrial zone)", "band": "over_18_to_24", "rule": "Ground coverage / FAR, road width above 18.0 up to 24.0 m (plot above 2,000 up to 4,000 sq m)", "value": "50 % / 2.00", "pdf_page": 39, "printed_page": 176},
+   {"table": "Table 10 A", "use": "IT / BT (industrial zone)", "band": "over_24", "rule": "Ground coverage / FAR, road width above 24.0 up to 30.0 m (plot above 4,000 up to 6,000 sq m); above 30.0 m (plot above 6,000 sq m): 45 % / 2.50", "value": "45 % / 2.25", "pdf_page": 39, "printed_page": 176}
+  ],
+  "building_lines": [
+   {"road": "STRR", "row_m": 90.0, "building_line_m": 6.0},
+   {"road": "IRR", "row_m": 90.0, "building_line_m": 6.0},
+   {"road": "ITRR", "row_m": 90.0, "building_line_m": 6.0},
+   {"road": "Radial road", "row_m": 60.0, "building_line_m": 6.0}
+  ],
+  "building_lines_ref": {"table": "Table 21", "rule": "Proposed Building Line: proposed right of way (m) and building line from the edge of ROW (m)", "pdf_page": 69, "printed_page": 206},
+  "notes": [
+   {"table": "11.3 IV iii", "rule": "When the site does not face the road of the required width, the FAR for the width of the road it faces applies", "pdf_page": 54, "printed_page": 191},
+   {"table": "11.3 X b", "rule": "If the road width varies along the road, the minimum width over 200 m either side of the centre of the plot is considered", "pdf_page": 57, "printed_page": 194}
+  ]
+ }
+}

@@ -32,6 +32,21 @@
       }
     },
     {
+      "label": "builders all",
+      "detail": "Start cadastral :8011, planning :8012 and web :3000 (skips any already running) and print the links",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${workspaceFolder}\\infra\\scripts\\dev\\builders_all.ps1\"",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "label": "Builders"
+      }
+    },
+    {
       "label": "Run ALL",
       "dependsOn": ["Docker: Up", "Frontend: Dev"],
       "dependsOrder": "parallel",
