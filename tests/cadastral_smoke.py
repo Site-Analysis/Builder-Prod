@@ -16,6 +16,9 @@ Covers:
   (j) /village-search short query → 422
   (k) /village-search → list (empty OK without parquet data; shape checked if populated)
   (l) /nearby → GeoJSON FeatureCollection (empty OK without LGD data)
+  (n) auth: no token, wrong iss, wrong azp, expired, ID token as bearer → 401; valid → passes
+  (o) DEV_BYPASS_AUTH refuses to start unless APP_ENV=local
+  (p) /openapi.json and /docs off unless ENABLE_API_DOCS=1
 
 Run: pytest tests/cadastral_smoke.py
 Requires geopandas: cd services/cadastral && pip install -r requirements.txt
@@ -56,15 +59,41 @@ _HAS_DATA = bool(os.environ.get("CADASTRAL_DATA_DIR"))
 _DUMMY_PAYLOAD = {"sub": "test-user", "preferred_username": "smoke-test"}
 
 
-def _make_client(monkeypatch, tmp_path, flags: str):
-    """Build a TestClient with auth bypassed and SURVEY_INDEX_DB in a writable tmpdir."""
+_KC_URL = "https://kc.test/auth"
+_KC_REALM = "TestRealm"
+_KC_CLIENT = "sat-builder"
+_ISSUER = f"{_KC_URL}/realms/{_KC_REALM}"
+
+
+def _import_app(monkeypatch, tmp_path, flags: str, **env):
+    """Fresh import of app.main with the given env (Keycloak settings set by default)."""
     monkeypatch.setenv("FLAGS", flags)
     monkeypatch.setenv("SURVEY_INDEX_DB", str(tmp_path / "survey_index.db"))
-    sys.modules.pop("app", None)
-    sys.modules.pop("app.main", None)
-    sys.modules.pop("app.auth", None)
-    from app.auth import verify_token
+    base = {
+        "KEYCLOAK_URL": _KC_URL,
+        "KEYCLOAK_REALM": _KC_REALM,
+        "KEYCLOAK_CLIENT_ID": _KC_CLIENT,
+    }
+    for k in ("DEV_BYPASS_AUTH", "APP_ENV", "ENABLE_API_DOCS", "KEYCLOAK_ISSUER",
+              "KEYCLOAK_JWKS_URL"):
+        monkeypatch.delenv(k, raising=False)
+    for k, v in {**base, **env}.items():
+        if v is None:
+            monkeypatch.delenv(k, raising=False)
+        else:
+            monkeypatch.setenv(k, v)
+    for m in [k for k in sys.modules if k == "app" or k.startswith("app.")]:
+        sys.modules.pop(m, None)
     from app.main import app
+
+    return app
+
+
+def _make_client(monkeypatch, tmp_path, flags: str):
+    """Build a TestClient with auth overridden and SURVEY_INDEX_DB in a writable tmpdir."""
+    app = _import_app(monkeypatch, tmp_path, flags)
+    from app.auth import verify_token
+
     app.dependency_overrides[verify_token] = lambda: _DUMMY_PAYLOAD
     client = TestClient(app)
     return client, app
@@ -201,6 +230,110 @@ def test_m_rtc_shape(client):
     body = r.json()
     assert isinstance(body.get("owners"), list)
     assert isinstance(body.get("mutations"), list)
+
+
+# ─── auth (n-p) ─────────────────────────────────────────────────────────────
+
+
+@pytest.fixture(scope="module")
+def _rsa():
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from jose import jwk
+
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    ).decode()
+    pub = key.public_key().public_bytes(
+        serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode()
+    public_jwk = {**jwk.construct(pub, "RS256").to_dict(), "kid": "k1", "use": "sig"}
+    return pem, {"keys": [public_jwk]}
+
+
+def _token(pem, **claims):
+    import time as _t
+
+    from jose import jwt
+
+    now = int(_t.time())
+    body = {
+        "iss": _ISSUER,
+        "sub": "user-1",
+        "azp": _KC_CLIENT,
+        "typ": "Bearer",
+        "iat": now,
+        "exp": now + 300,
+        **claims,
+    }
+    return jwt.encode(body, pem, algorithm="RS256", headers={"kid": "k1"})
+
+
+@pytest.fixture
+def real_auth(monkeypatch, tmp_path, _rsa):
+    """App with the real verify_token; JWKS pre-loaded so no network is used."""
+    import time as _t
+
+    app = _import_app(monkeypatch, tmp_path, _LAND_FLAG)
+    from app import auth
+
+    monkeypatch.setattr(auth, "_jwks_cache", _rsa[1])
+    monkeypatch.setattr(auth, "_jwks_fetched_at", _t.monotonic())
+    return TestClient(app), _rsa[0]
+
+
+def test_n_auth_rejects_bad_tokens(real_auth):
+    import time as _t
+
+    c, pem = real_auth
+    now = int(_t.time())
+    cases = {
+        "no token": None,
+        "wrong iss": _token(pem, iss="https://evil.test/realms/x"),
+        "wrong azp": _token(pem, azp="other-client"),
+        "ID token as bearer": _token(pem, typ="ID"),
+        "expired": _token(pem, iat=now - 600, exp=now - 300),
+        "no exp": _token(pem, exp=None),
+    }
+    for name, tok in cases.items():
+        h = {"Authorization": f"Bearer {tok}"} if tok else {}
+        r = c.get("/districts", headers=h)
+        assert r.status_code == 401, (name, r.status_code, r.text)
+
+
+def test_n_auth_accepts_valid_access_token(real_auth):
+    c, pem = real_auth
+    r = c.get("/districts", headers={"Authorization": f"Bearer {_token(pem)}"})
+    assert r.status_code != 401, r.text
+    assert c.get("/health").status_code == 200  # health needs no token
+
+
+def test_o_bypass_needs_app_env_local(monkeypatch, tmp_path):
+    for env in (None, "production", "uat", "staging"):
+        with pytest.raises(RuntimeError, match="APP_ENV=local"):
+            _import_app(
+                monkeypatch, tmp_path, _LAND_FLAG, DEV_BYPASS_AUTH="1", APP_ENV=env
+            )
+    app = _import_app(
+        monkeypatch, tmp_path, _LAND_FLAG, DEV_BYPASS_AUTH="1", APP_ENV="local"
+    )
+    assert TestClient(app).get("/districts").status_code != 401
+
+
+def test_o_missing_keycloak_config_refuses_start(monkeypatch, tmp_path):
+    with pytest.raises(RuntimeError, match="KEYCLOAK_CLIENT_ID"):
+        _import_app(monkeypatch, tmp_path, _LAND_FLAG, KEYCLOAK_CLIENT_ID=None)
+
+
+def test_p_docs_off_by_default(monkeypatch, tmp_path):
+    c = TestClient(_import_app(monkeypatch, tmp_path, _LAND_FLAG))
+    for path in ("/openapi.json", "/docs", "/redoc"):
+        assert c.get(path).status_code == 404, path
+    c = TestClient(_import_app(monkeypatch, tmp_path, _LAND_FLAG, ENABLE_API_DOCS="1"))
+    assert c.get("/openapi.json").status_code == 200
 
 
 if __name__ == "__main__":

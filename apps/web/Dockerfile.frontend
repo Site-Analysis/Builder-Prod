@@ -21,6 +21,11 @@ RUN npm run build --workspace=apps/web
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 FROM node:20-slim
+
+# commit the image was built from: docker build --build-arg GIT_SHA=$(git rev-parse --short HEAD)
+ARG GIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$GIT_SHA org.opencontainers.image.source="https://github.com/Site-Analysis/Builder-Prod" org.opencontainers.image.title="builder-frontend"
+ENV GIT_SHA=$GIT_SHA
 WORKDIR /app
 
 COPY --from=node-builder /build/apps/web/.next/standalone ./

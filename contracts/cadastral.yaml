@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Cadastral Service
-  version: "1.0.0"
+  version: "1.20.0"
   description: >
     Karnataka e-Chawadi (Bhoomi) cadastral data service. Exposes parcel geometries
     and administrative hierarchy (district / taluk / hobli / village). All parcel
@@ -10,15 +10,25 @@ info:
 
     Gated by `feature.cadastral.land-records`.
 
+    Every data endpoint (all except `/health`) requires a Keycloak access token for the
+    builder client: `Authorization: Bearer <token>`. The service checks the RS256
+    signature against the realm's JWKS, `iss` (KEYCLOAK_ISSUER), `exp`, `typ` = Bearer
+    and `azp` = KEYCLOAK_CLIENT_ID; anything else is 401. The interactive docs
+    (`/docs`, `/redoc`, `/openapi.json`) are served only when ENABLE_API_DOCS=1.
+
 servers:
   - url: http://localhost:8011
     description: Local dev
+
+security:
+  - keycloakBearer: []
 
 paths:
   /health:
     get:
       operationId: healthCheck
-      summary: Health check
+      summary: Health check (no token needed)
+      security: []
       responses:
         "200":
           description: Service running
@@ -284,6 +294,25 @@ paths:
           description: Feature flag disabled
 
 components:
+  securitySchemes:
+    keycloakBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Keycloak access token issued to the builder client (azp = KEYCLOAK_CLIENT_ID).
+        Missing, expired, wrong-issuer, wrong-client or ID tokens get 401
+        `{"detail": "..."}`.
+  responses:
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [detail]
+            properties:
+              detail: { type: string, example: "Missing Bearer token" }
   schemas:
     HierarchyItem:
       type: object

@@ -9,7 +9,8 @@ import { MapPin, Plus } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/auth";
 
 import { useProjectStore } from "@/lib/stores/project";
-import { getProjects } from "@/lib/api/projects";
+import { createProject, getProjects } from "@/lib/api/projects";
+import { signOutEverywhere } from "@/lib/logout";
 import type { Project } from "@/lib/stores/project";
 import { useIsMobile } from "@/lib/useIsMobile";
 
@@ -564,15 +565,12 @@ export default function DashboardPage() {
   }, [isAuthenticated, router, setProjects]);
 
   async function handleCreate(name: string, location: string) {
-    const res = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ name, location: location || null }),
-    });
-    if (res.ok) {
-      const proj = await res.json();
+    try {
+      // a 401 here starts sign-in or shows "access denied" (lib/auth-recovery)
+      const proj = await createProject(name, location || null);
       router.push(`/project/${proj.id}`);
+    } catch (err) {
+      console.error("[projects] create failed:", err);
     }
   }
 
@@ -606,7 +604,7 @@ export default function DashboardPage() {
             <span style={{ fontSize: 12, color: "#7B8F83" }}>{user.name}</span>
           )}
           <button
-            onClick={() => { window.location.href = "/api/auth/logout"; }}
+            onClick={signOutEverywhere}
             style={{
               background: "none", border: "1px solid #CFD6C4", borderRadius: 6,
               padding: "4px 12px", fontSize: 12, color: "#7B8F83", cursor: "pointer",

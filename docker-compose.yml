@@ -38,8 +38,12 @@ services:
       SURVEY_INDEX_DB: /survey_index/survey_index.db
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-sat}
+      # tokens are accepted only when issued to this client (azp); required at start-up
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-sat-web}
       CORS_ORIGINS: '["http://localhost:3000","https://builder.qnit.site"]'
-      # DEV_BYPASS_AUTH: "1"   # uncomment to skip JWT validation locally
+      # skip JWT validation locally: set BOTH (the bypass is refused unless APP_ENV=local)
+      # APP_ENV: local
+      # DEV_BYPASS_AUTH: "1"
     volumes:
       - ${CADASTRAL_DATA_ROOT}:/data:ro
       - survey_index_vol:/survey_index

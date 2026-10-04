@@ -4,7 +4,8 @@
 // Phase 1A — district / taluk / hobli / village cascade + parcel GeoJSON fetch.
 // Survey search, RCCMS, mutations, overlays added in later phases.
 
-import { getSession, signOut } from "next-auth/react";
+import { getSession } from "next-auth/react";
+import { handleUnauthorized } from "@/lib/auth-recovery";
 import { useAuthStore } from "@/lib/stores/auth";
 
 const _parcelCache = new Map<string, GeoJSON.FeatureCollection>();
@@ -37,10 +38,7 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
       headers: { ...authHeader },
       signal: ctrl.signal,
     });
-    if (res.status === 401) {
-      signOut({ redirect: true, callbackUrl: "/" });
-      throw new Error("Session expired — signing out");
-    }
+    if (res.status === 401) await handleUnauthorized(); // sign in or "access denied"; never sign out
     if (!res.ok) {
       const detail = await res.json().then((b) => b?.detail ?? `HTTP ${res.status}`).catch(() => `HTTP ${res.status}`);
       throw new Error(String(detail));

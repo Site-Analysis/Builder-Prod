@@ -4,8 +4,11 @@
 import NextAuth from "next-auth"
 import Keycloak from "next-auth/providers/keycloak"
 
-async function refreshKeycloakToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string; expiresAt: number } | null> {
-  const url = `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`
+// public Keycloak base incl. any path prefix (e.g. https://uat.qnit.in/auth); trailing / ok
+const KC_BASE = (process.env.KEYCLOAK_URL ?? "").replace(/\/+$/, "")
+
+async function refreshKeycloakToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string; idToken?: string; expiresAt: number } | null> {
+  const url = `${KC_BASE}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`
   const params = new URLSearchParams({
     grant_type: "refresh_token",
     client_id: process.env.KEYCLOAK_CLIENT_ID!,
@@ -19,6 +22,7 @@ async function refreshKeycloakToken(refreshToken: string): Promise<{ accessToken
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? refreshToken,
+      idToken: data.id_token,
       expiresAt: Math.floor(Date.now() / 1000) + (data.expires_in ?? 3600),
     }
   } catch {
@@ -39,7 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // confidential client: the code exchange needs the secret (before this, only the
       // token refresh above sent it, so the first login was rejected)
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
-      issuer: `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}`,
+      issuer: `${KC_BASE}/realms/${process.env.KEYCLOAK_REALM}`,
       checks: ["pkce", "state"],
     }),
   ],
@@ -59,6 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (refreshed) {
             token.accessToken = refreshed.accessToken
             token.refreshToken = refreshed.refreshToken
+            if (refreshed.idToken) token.idToken = refreshed.idToken
             token.expiresAt = refreshed.expiresAt
           }
         }
@@ -66,8 +71,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token
     },
     async session({ session, token }) {
+      // idToken stays in the encrypted JWT only (read server-side by /api/auth/logout)
       session.accessToken = token.accessToken as string | undefined
-      session.idToken = token.idToken as string | undefined
       session.user.id = token.sub ?? ""
       return session
     },
@@ -77,7 +82,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 declare module "next-auth" {
   interface Session {
     accessToken?: string
-    idToken?: string
     user: {
       id: string
       name?: string | null

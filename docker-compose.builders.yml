@@ -24,11 +24,15 @@ services:
     container_name: builder-server
     networks: [qnit-shared]
     environment:
-      # NextAuth / Keycloak (runtime — not baked into image)
-      KEYCLOAK_URL: http://keycloak-prod:8080/auth
-      KEYCLOAK_REALM: sat
-      KEYCLOAK_CLIENT_ID: sat-web
-      NEXTAUTH_URL: https://builder.qnit.site
+      # Auth.js / Keycloak (runtime — not baked into image). Full reference:
+      # .env.builders.example. Both services refuse to start if one is missing.
+      APP_ENV: production
+      # PUBLIC Keycloak URL: the browser is redirected here (an internal name fails)
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      AUTH_URL: https://builder.qnit.site
       AUTH_SECRET: ${AUTH_SECRET}
       # Supabase (runtime)
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}

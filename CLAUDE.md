@@ -62,9 +62,10 @@ Every parquet stores `Polygon(Northing, Easting)` instead of `Polygon(Easting, N
 
 ### Auth
 
-- **Frontend**: `next-auth` v5 with Keycloak OIDC provider (authorization code + PKCE). Session exposes `session.accessToken` (Keycloak JWT).
-- **Backend**: FastAPI `verify_token` fetches JWKS from Keycloak, validates RS256 JWT.
-- **Local dev**: set `DEV_BYPASS_AUTH=1` on the backend to skip JWT validation entirely.
+- **Frontend**: `next-auth` v5 with Keycloak OIDC provider (authorization code + PKCE; confidential client, so `KEYCLOAK_CLIENT_SECRET` is required). Session exposes `session.accessToken` (Keycloak JWT); the id_token stays in the encrypted JWT and is used only by `POST /api/auth/logout` (Keycloak end-session with `id_token_hint`).
+- **Backend**: FastAPI `verify_token` checks the RS256 signature against the realm JWKS (cached, refreshed on an unknown kid), `iss` (`KEYCLOAK_ISSUER`), `exp`, `typ`=Bearer and `azp`=`KEYCLOAK_CLIENT_ID`. `/docs` and `/openapi.json` only with `ENABLE_API_DOCS=1`.
+- **Start-up checks**: both services refuse to start if a required auth variable is missing (full list: `.env.builders.example`).
+- **Local dev**: `DEV_BYPASS_AUTH=1` skips JWT validation, and is allowed **only** with `APP_ENV=local` (any other value or unset: the service refuses to start).
 - Keycloak: `https://auth.builder.qnit.site`, realm `sat`, client `sat-web` (public, no secret, PKCE).
 
 ### Project storage (Supabase)
@@ -159,6 +160,8 @@ $env:SURVEY_INDEX_DB = "C:\Users\tanny\Downloads\survey_index\survey_index.db"
 $env:KEYCLOAK_URL = "https://auth.builder.qnit.site"
 $env:KEYCLOAK_REALM = "sat"
 $env:CORS_ORIGINS = '["http://localhost:3000"]'
+$env:KEYCLOAK_CLIENT_ID = "sat-web"
+$env:APP_ENV = "local"          # required for the bypass below
 $env:DEV_BYPASS_AUTH = "1"
 .venv\Scripts\uvicorn app.main:app --port 8011 --reload
 ```
@@ -216,5 +219,5 @@ ruff format --check services/
 - **`survey_index.db` on temp dir.** If `SURVEY_INDEX_DB` points to a temp dir, the index rebuilds every restart (~15 min). Use a persistent bind mount.
 - **CORS_ORIGINS must be valid JSON.** `CORS_ORIGINS=["http://localhost:3000"]` — pydantic-settings parses it as a JSON list. Comma-separated strings will fail.
 - **echawadi JSON location.** Must be one directory **above** `CADASTRAL_DATA_DIR`. The service derives its path as `os.path.dirname(DATA_DIR) + "/echawadi_village_list.json"`. If it's missing, district/taluk/hobli/village names show as numeric codes (still works, just ugly).
-- **DEV_BYPASS_AUTH in production.** Never set `DEV_BYPASS_AUTH=1` in production. It disables all JWT validation.
+- **DEV_BYPASS_AUTH in production.** Refused at start-up unless `APP_ENV=local` (web and API). It disables all JWT validation.
 - **Next.js 16 breaking changes.** No `next lint` subcommand — treat `lint` as a directory arg. CI uses `tsc --noEmit` only (no eslint).

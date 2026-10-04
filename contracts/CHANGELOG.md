@@ -4,6 +4,33 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.20.0 — 2026-10-04 — cadastral (auth hardening)
+
+Numbered 1.20.0 because `feat/planning-2031-phase0` already uses 1.8.0–1.19.0 (planning).
+
+**Security scheme (documented, now enforced):** every route except `/health` needs
+`Authorization: Bearer <Keycloak access token>` (`components.securitySchemes.keycloakBearer`,
+global `security`; `/health` has `security: []`). A token passes only if the RS256 signature
+matches the realm JWKS, `iss` = KEYCLOAK_ISSUER, `exp` is in the future, `typ` = `Bearer` and
+`azp` = KEYCLOAK_CLIENT_ID. Missing, expired, wrong-issuer, wrong-client and ID tokens get
+**401** `{"detail": ...}` (before: issuer and client were not checked, so any token signed by
+the realm, including another client's or an ID token, was accepted).
+
+**Docs:** `/docs`, `/redoc` and `/openapi.json` are served only with `ENABLE_API_DOCS=1`
+(before: always public). Off they return 404.
+
+**Start-up (fail closed):** the service refuses to start if KEYCLOAK_URL, KEYCLOAK_REALM or
+KEYCLOAK_CLIENT_ID is missing, or if DEV_BYPASS_AUTH is set with APP_ENV other than `local`.
+New optional env: KEYCLOAK_ISSUER, KEYCLOAK_JWKS_URL (internal JWKS fetch).
+
+**Frontend (no contract change):** confidential Keycloak client (KEYCLOAK_CLIENT_SECRET);
+logout is `POST /api/auth/logout` → 303 to Keycloak end-session with `client_id`,
+`post_logout_redirect_uri` (AUTH_URL) and `id_token_hint`; a 401 from a data call starts
+sign-in (no session) or shows "access denied" (session present), never sign-out; web server
+refuses to start on missing auth env or a bypass outside APP_ENV=local.
+
+---
+
 ## 1.7.0 — 2026-09-15 — cadastral
 
 **New endpoint `GET /rtc`:** Live RCCMS (Records of Rights) + mutations proxy for a survey parcel.

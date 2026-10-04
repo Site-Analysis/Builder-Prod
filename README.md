@@ -104,7 +104,9 @@ $env:SURVEY_INDEX_DB = "C:\path\to\survey_index.db"
 $env:KEYCLOAK_URL = "https://auth.builder.qnit.site"
 $env:KEYCLOAK_REALM = "sat"
 $env:CORS_ORIGINS = '["http://localhost:3000"]'
-$env:DEV_BYPASS_AUTH = "1"   # skip JWT validation for local testing
+$env:KEYCLOAK_CLIENT_ID = "sat-web"
+$env:APP_ENV = "local"          # the bypass below is refused unless APP_ENV=local
+$env:DEV_BYPASS_AUTH = "1"      # skip JWT validation for local testing
 .venv\Scripts\uvicorn app.main:app --port 8011 --reload
 
 # Terminal 2 — frontend

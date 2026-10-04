@@ -9,13 +9,21 @@ import os
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.auth import verify_token
+from app.auth import check_config, verify_token
 from app.routers.land_records import router as land_router
 from app.routers.parcels import router as parcel_router
 
+check_config()  # fail closed: bad auth config (or bypass outside APP_ENV=local) stops start-up
+
+# interactive docs / schema are off unless asked for (they list every route publicly)
+_DOCS = os.getenv("ENABLE_API_DOCS", "").strip().lower() in ("1", "true", "yes")
+
 app = FastAPI(
     title="Cadastral Service",
-    version="1.0.0",
+    version="1.20.0",
+    docs_url="/docs" if _DOCS else None,
+    redoc_url="/redoc" if _DOCS else None,
+    openapi_url="/openapi.json" if _DOCS else None,
     description=(
         "Karnataka e-Chawadi (Bhoomi) cadastral data: parcel geometries and "
         "administrative hierarchy (district / taluk / hobli / village). "
