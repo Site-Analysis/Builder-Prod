@@ -64,8 +64,10 @@ services:
       FLAGS: >-
         feature.planning.layers feature.planning.coverage-layer
         feature.planning.plan.BDA-RMP2031 feature.planning.plan.BMRDA-HSK-MP2031
-        feature.planning.plan.BMRDA-ANK-MP2031
+        feature.planning.plan.BMRDA-ANK-MP2031 feature.planning.roads
       PLANNING_REGISTER_DIR: /register
+      # plan roads (contract 1.20): the published tile manifest, read into memory
+      PLANNING_ROADS_SOURCE: ${PLANNING_ROADS_SOURCE:-}
       # sheet extraction runs in a capped worker subprocess (infra/scripts/planning)
       PLANNING_WORKER_PYTHON: python
       PLANNING_WORKER_SCRIPT: /worker/sheet_worker.py

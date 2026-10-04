@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: Planning Service
-  version: "1.19.0"
+  version: "1.21.0"
   description: >
     Bengaluru statutory planning layers. This version covers 2031 plans only
     (BDA RMP 2031 and the BMRDA Local Planning Area Master Plans 2031).
@@ -302,6 +302,11 @@ paths:
         hits are missing until a later call); `build_id` names the index version;
         `village_summary` and `disagreement_note` carry the village-table view when it
         differs from the parcel's geometry answer.
+        1.20: `abutting_roads` lists the plan roads the parcel fronts (pre-drawn plan road
+        layers, e.g. the Anekal Mobility Plan), each with the plan ROW, the part of the parcel
+        inside the ROW (a widening dedication), an estimate of the existing width and the
+        Zonal Regulations rows for the width used. Gated by `feature.planning.roads`; null
+        when that flag is off.
       parameters:
         - { name: dist, in: query, required: true, schema: { type: string } }
         - { name: taluk, in: query, required: true, schema: { type: string } }
@@ -312,6 +317,16 @@ paths:
           required: true
           schema: { type: string }
           example: "45/2"
+        - name: road_width_m
+          in: query
+          required: false
+          schema: { type: number, exclusiveMinimum: 0, maximum: 120 }
+          example: 9
+          description: >
+            1.20: the existing width of the road the parcel fronts (the first entry of
+            `abutting_roads`) as the user measured or knows it. It replaces the estimate for
+            that road's width band and Zonal Regulations rows; a warning is added when it is
+            more than one band away from the estimate.
       responses:
         "200":
           description: Zones touching the parcel (may be empty)
@@ -328,6 +343,96 @@ paths:
 
 components:
   schemas:
+    AbuttingRoad:
+      type: object
+      description: >
+        1.20. A plan road next to the parcel. `row_m` is what the plan draws or labels (a
+        warning and a dedication until the land is acquired); the existing width decides the
+        Zonal Regulations rows (`width_used_m`).
+      required: [plan_id, doc_id, doc_status, row_m, status, status_text, width_source,
+        plan_confidence, distance_m, frontage_m, widening_area_sqm, existing_width,
+        declared_width_m, width_used_m, width_used_source, tier, zr_rules, warnings]
+      properties:
+        plan_id: { type: string, example: BMRDA-ANK-MP2031 }
+        doc_id: { type: string, example: BMRDA-ANK-MP2031-MOB-10K }
+        doc_status:
+          type: string
+          enum: [final, draft, superseded, reference]
+          description: Status of the road source in plan_docs (the Anekal Mobility Plan is `reference`)
+        road_name: { type: [string, "null"], example: "SH 87" }
+        row_m: { type: number, example: 18, description: Plan right of way (m) }
+        status:
+          type: string
+          enum: [to_be_widened, proposed, existing_row_stated, ring_proposed, existing_drawn, plan_row_stated]
+          description: >
+            existing_drawn (1.21): an existing road the plan draws without a width label; its
+            `row_m` is the width as drawn (the plan's grey road band, to scale); plan_row_stated
+            (1.21): a road on the plan with its stated ROW, the plan not saying existing or proposed
+            (BDA RMP 2031 composite)
+        status_text: { type: string, example: "Existing road to be widened (plan ROW)" }
+        width_source:
+          type: string
+          enum: [label_and_drawn, label, drawn, legend, drawn_band]
+          description: >
+            label_and_drawn: width label with drawn ROW edges that agree; label: width label
+            only; drawn: drawn ROW edges only (no label); legend: ring / radial road ROW from
+            the sheet legend (checked against the Zonal Regulations); drawn_band (1.21): the
+            grey road band measured on the plan (no label)
+        plan_confidence: { type: string, enum: [HIGH, MEDIUM, LOW] }
+        distance_m: { type: number, description: Parcel to the ROW corridor (0 = inside) }
+        drawn_band_m:
+          type: [number, "null"]
+          description: "1.21: width of the existing road as drawn on the plan (grey band, to scale), when consistent along the road"
+        frontage_m: { type: number, description: Length of the parcel boundary within 15 m of the corridor }
+        widening_area_sqm:
+          type: number
+          description: Parcel area inside the plan ROW corridor (A_net = A_gross - widening)
+        existing_width:
+          oneOf:
+            - $ref: "#/components/schemas/ExistingWidthEstimate"
+            - type: "null"
+        declared_width_m: { type: [number, "null"], description: "`road_width_m` when given (first road only)" }
+        width_used_m: { type: [number, "null"], description: "Declared width, else a MEDIUM estimate (a LOW one is shown, not used), else null" }
+        width_used_source: { type: string, enum: [declared, estimate, none] }
+        tier:
+          type: [string, "null"]
+          enum: [upto_9, over_9_to_12, over_12_to_18, over_18_to_24, over_24, null]
+          description: Zonal Regulations road-width band of `width_used_m`
+        zr_rules:
+          type: array
+          items: { $ref: "#/components/schemas/ZrRoadRule" }
+        warnings: { type: array, items: { type: string } }
+    ExistingWidthEstimate:
+      type: object
+      description: >
+        1.20. Existing road width estimated from the cadastral map: the gap between the
+        parcels either side of the plan centreline, sampled every 10 m along the frontage.
+        Unsurveyed strips count as road, so it reads wide; layout roads inside undivided survey
+        numbers are not measured. Confirm on site.
+      required: [value_m, tier, method, confidence, samples, note]
+      properties:
+        value_m: { type: number, example: 11.5 }
+        tier: { type: string, enum: [upto_9, over_9_to_12, over_12_to_18, over_18_to_24, over_24] }
+        method:
+          type: string
+          enum: [cadastral_gap, plan_drawn]
+          description: "plan_drawn (1.21): the existing road's band as drawn on the plan's road sheets; cadastral_gap: the gap between cadastral parcels"
+        confidence: { type: string, enum: [MEDIUM, LOW] }
+        samples: { type: integer }
+        iqr_m: { type: [array, "null"], items: { type: number } }
+        note: { type: string }
+    ZrRoadRule:
+      type: object
+      description: 1.20. A Zonal Regulations row that keys on road width, quoted with its page.
+      required: [doc_id, table, use, rule, value, pdf_page, printed_page]
+      properties:
+        doc_id: { type: string, example: BMRDA-ANK-MP2031-ZR }
+        table: { type: string, example: "Table 4" }
+        use: { type: string, example: Residential }
+        rule: { type: string, example: "Maximum FAR, road width over 9 to 12 m" }
+        value: { type: string, example: "1.75" }
+        pdf_page: { type: integer, example: 35 }
+        printed_page: { type: integer, example: 172 }
     DocStatus:
       type: string
       enum: [final, draft, superseded, reference]
@@ -1045,3 +1150,12 @@ components:
           type: [string, "null"]
           example: "Most of village Bandenallasandra is in BMRDA-ANK; this parcel is in BDA."
           description: Set when the parcel's geometry answer and the village summary disagree (1.18)
+        abutting_roads:
+          oneOf:
+            - type: array
+              items: { $ref: "#/components/schemas/AbuttingRoad" }
+            - type: "null"
+          description: >
+            1.20: plan roads whose ROW corridor lies within 15 m of the parcel, the longest
+            frontage first (at most 5). Empty when no plan road layer covers the parcel; null
+            when `feature.planning.roads` is off.

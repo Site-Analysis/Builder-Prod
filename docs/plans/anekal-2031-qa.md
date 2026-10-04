@@ -248,3 +248,59 @@ uncertainty of 100 m (#45) until the `--osm-only` pass confirms it.
 Build (3 Oct, `build_layer_index.py --plans BMRDA-ANK-MP2031 --no-osm`): 345 s, worker peak
 1,098 MB, temp peak 224 MB, 0 bytes left; fetched anekal.tpa.gov.in 45.63 MB and
 strrpa.karnataka.gov.in 3.23 MB.
+
+## 8. Plan roads from the Mobility Plan (R1, 4 Oct 2026)
+
+Source: `BMRDA-ANK-MP2031-MOB-10K` (23 sheets, 1:10,000, sha256 `6573467d…`), registered
+`reference` (status not stated on the sheets). Built by `infra/scripts/planning/build_roads.py`
+(extractor `roads_mob.py`); summary in `layer_index.json` → `roads.BMRDA-ANK-MP2031`.
+Decisions #72-#75.
+
+### 8.1 Georeference (no grid printed on the sheets)
+
+| Check | Result |
+|---|---|
+| Model | 23 sheets = 6 x 5 km cells of one grid (key plan); 2 unknowns E0 / N0 for all |
+| Seed | 159 village names on the sheets vs cadastral village points, 121 within 1 km |
+| Fit | E0 781,413.0, N0 1,435,698.9 (EPSG:32643); 22 sheets refined on cadastral parcel edges, sheet residual median 2.3 m, max 9.8 m (grid 23 has no Anekal-taluk parcels under it) |
+| Per sheet vs null (parcel edges, shifts of 1.5-3.5 km) | match ratio 3.1x - 42.8x, every sheet >= 3x |
+| Survey numbers landing in the parcel of that number | 204 of the 383 survey labels that fall inside a parcel (409 read), vs 2.5 for the null shifts |
+| Quadrant agreement (rotation / scale) | within 11 m on every sheet (most <= 5 m) |
+| OSM (independent) | 63.6 % of OSM centreline points (motorway - tertiary, 2,941 ways) inside the plan corridors vs 2.5 % shifted (25x); median distance to the plan centreline 8.7 m, mean offset (-1.0, +0.7) m: no systematic shift between plan, cadastral and OSM |
+
+### 8.2 Widths
+
+| Check | Result |
+|---|---|
+| Labelled red-edged roads: drawn ROW (edge spacing) minus label | 331 pieces, 56 km: median +0.2 m, p10 -1.1 m, p90 +1.1 m; 72.8 % within 1 m, 98.5 % within 2 m |
+| Ring / radial roads: legend ROW vs ZR "Proposed Building Line" (p. 69) | STRR 90 = 90, ITRR 90 = 90, radial (RR) 60 = 60; building line 6 m. No IRR stroke on the sheets |
+| Spot check (20 random labelled pieces, source crop with the extracted centreline and the label-width corridor) | 19 correct; 1 short piece crosses the STRR band at a junction (grid 22) |
+
+### 8.3 What is on the layer
+
+389.6 km of plan roads (ring-road corridors extra): 128.2 km to be widened, 10.9 km proposed,
+250.4 km existing roads whose ROW the plan states. By ROW: 18 m 128.6 km, 24 m 78.6 km, 30 m
+64.0 km, 45 m 47.8 km, 60 m 20.7 km, 90 m 16.1 km, 12 m 9.3 km, others (incl. drawn-only
+widths) < 30 km. Confidence: HIGH 309.4 km, MEDIUM 80.2 km. 925 width labels inside the
+sheets' own cells.
+
+Limits: unlabelled existing roads (no plan width) are not on the layer; a bold bare number
+is "the plan states its ROW" (the legend does not say existing or proposed); labels claim at
+most 600 m along a road, so long unlabelled stretches stay off; ring-road lines are the plan's,
+the ZR defers to the BMRDA notified alignments. Worker peak 939 MB (cap 2 GB); temp peak
+~250 MB, removed after the build.
+
+### 8.4 Parcel answers and the map (R2-R4, 4 Oct 2026)
+
+Contract `planning` 1.20.0: `/zones/at` returns `abutting_roads` (behind
+`feature.planning.roads`) and takes `road_width_m`. Roads published to Supabase Storage
+(`roads/BMRDA-ANK-MP2031.20261003T211341Z.geojson`, 4.6 MB, 7,912 features); the map shows
+them under "Roads (plan ROW)".
+
+| Check | Result |
+|---|---|
+| Smoke tests (fixture road 5 m off a 60 x 60 m parcel, 12 m gap across it) | flag off -> null; ROW 18 m, 240 m² inside the ROW, estimate 12.0 m MEDIUM, band over 9 to 12, ZR Table 4 residential FAR 1.75; declared 20 m -> band over 18 to 24, FAR 2.25 and a "more than one band" warning; `road_width_m=0` -> 422. 24 / 24 pass |
+| Real parcels, five road types (Menasiganahalli, Kammasandra Agrahara, Chikkahosahalli, A Medihalli, Neraluru) | each lists the right plan roads with ROW, status, frontage and area inside the ROW; ring roads carry the 6 m building line (ZR Table 21); a declared 7 m gives band up to 9 m and Table 4 FAR 1.50 / 1.50 / 1.25 |
+| Existing-width estimate on 60 parcels beside plan roads | see open-decisions #76: available for a minority, mostly LOW (not used); the card asks for the measured width |
+| Map (Playwright, localhost:3000) | corridors coloured by ROW with labels; popup on a 60 m road; legend card road key; parcel card Roads section with the width box: 7 m entered -> ZR rows shown. No console errors |
+| Service memory | 380 MB working set with roads loaded (bar 1 GB) |

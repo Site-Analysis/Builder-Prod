@@ -12,7 +12,8 @@ import { useEffect, useRef, useState } from "react";
 import { GeoJSON, Rectangle, useMap } from "react-leaflet";
 import type { PathOptions } from "leaflet";
 import {
-  MAX_BBOX_COARSE_DEG, PLAN_ID, PLAN_NAMES, WEB_PLANS, fetchCoverage, fetchOverlays, fetchPlans,
+  MAX_BBOX_COARSE_DEG, PLAN_ID, PLAN_NAMES, ROAD_BAND_LABEL, WEB_PLANS, fetchCoverage, fetchOverlays, fetchPlans,
+  type AbuttingRoad,
   fetchVillageAuthority, fetchZones, simplifyForZoom, splitBbox, statusBadge,
   type AuthorityInfo, type Bbox, type CoverageCollection, type DocStatus, type OverlayKind,
   type PendingSheet, type PlanCoverage, type PlanInfo, type ZoneHit, type ZonesAtResult,
@@ -20,7 +21,8 @@ import {
 } from "@/lib/api/planning";
 import { PLANNING_LEGEND } from "@/lib/planning/legend.generated";
 import { PLAN_SUBAREAS, type SubArea } from "@/lib/planning/subareas";
-import { PrebuiltPlanLayer, type PrebuiltManifest } from "./PrebuiltPlanLayers";
+import { PrebuiltPlanLayer, type PrebuiltManifest, type PrebuiltRoads } from "./PrebuiltPlanLayers";
+import { ROAD_CLASSES } from "./PlanRoadsLayer";
 
 const MIN_ZOOM = 10; // L2: plan layers show from zoom 10 (0.25 deg boxes at simplify 25)
 const MAX_TILES = 16; // service boxes per plan per view, after dropping those off the plan
@@ -55,6 +57,7 @@ export interface PlanningToggles {
   zones: boolean; // derived: any plan switched on (kept for the parcel layer)
   plans: Record<string, boolean>; // one per plan_id
   opacity: Record<string, number>; // 0.1-1 per plan
+  roads: Record<string, boolean>; // plan road layer (ROW corridors) per plan_id (1.20)
   ngt_buffer: boolean;
   forest_symbol: boolean;
   stream_centreline: boolean;
@@ -85,7 +88,7 @@ const STORAGE_KEY = "planning.toggles.v3";
 const NO_PLANS = Object.fromEntries(WEB_PLANS.map((p) => [p.plan_id, false]));
 const FULL = Object.fromEntries(WEB_PLANS.map((p) => [p.plan_id, 1]));
 const ALL_OFF: PlanningToggles = {
-  zones: false, plans: { ...NO_PLANS }, opacity: { ...FULL }, ngt_buffer: false, forest_symbol: false,
+  zones: false, plans: { ...NO_PLANS }, opacity: { ...FULL }, roads: { ...NO_PLANS }, ngt_buffer: false, forest_symbol: false,
   stream_centreline: false, coverage: false, open: false,
 };
 
@@ -97,13 +100,15 @@ export function loadPlanningToggles(): PlanningToggles {
     const saved = JSON.parse(raw) as Partial<PlanningToggles>;
     const plans = { ...NO_PLANS };
     const opacity = { ...FULL };
+    const roads = { ...NO_PLANS };
     for (const p of WEB_PLANS) {
+      roads[p.plan_id] = saved.roads?.[p.plan_id] === true; // shown only while its plan is on
       // plan switches always start off on reload (Tanmay, 3 Oct); opacity is remembered
       const o = saved.opacity?.[p.plan_id];
       if (typeof o === "number" && o >= 0.1 && o <= 1) opacity[p.plan_id] = o;
     }
     return {
-      zones: Object.values(plans).some(Boolean), plans, opacity,
+      zones: Object.values(plans).some(Boolean), plans, opacity, roads,
       ngt_buffer: saved.ngt_buffer === true, forest_symbol: saved.forest_symbol === true,
       stream_centreline: saved.stream_centreline === true, coverage: false, // layer removed from the panel (Tanmay, 3 Oct)
       open: saved.open === true,
@@ -455,8 +460,9 @@ const SHEET_STATE: Record<string, string> = {
 };
 
 function PlanSection({
-  plan, info, toggles, setToggles, view, onZoomTo, onShow, onFly,
+  plan, info, toggles, setToggles, view, onZoomTo, onShow, onFly, hasRoads,
 }: {
+  hasRoads: boolean;
   plan: { plan_id: string; label: string };
   info: PlanInfo | undefined;
   toggles: PlanningToggles;
@@ -494,6 +500,14 @@ function PlanSection({
           />
         </div>
       </div>
+      {hasRoads && (
+        <div style={{ paddingLeft: 22 }}>
+          <Switch
+            on={toggles.roads?.[id] === true} label="Roads (plan ROW)" disabled={!on}
+            onClick={() => set({ roads: { ...toggles.roads, [id]: !(toggles.roads?.[id] === true) } })}
+          />
+        </div>
+      )}
       {expanded && (
         <div style={{ paddingLeft: 22, fontSize: 11, color: "#3A3F3B" }}>
           <label style={{ display: "flex", alignItems: "center", gap: 6, margin: "4px 0" }}>
@@ -569,8 +583,9 @@ function PlanSection({
 /** Collapsible side panel (right; a bottom sheet on mobile) for every 2031 plan layer and the
  * Everything is off by default; the choice is kept in browser storage. */
 export function PlanningPanel({
-  toggles, setToggles, status, view, plans, isMobile, onZoomTo, onShow, onFly,
+  toggles, setToggles, status, view, plans, isMobile, onZoomTo, onShow, onFly, roads = {},
 }: {
+  roads?: Record<string, PrebuiltRoads>; // plans with a published road layer (1.20)
   toggles: PlanningToggles;
   setToggles: (t: PlanningToggles) => void;
   status: string;
@@ -644,7 +659,7 @@ export function PlanningPanel({
             {loaded.map((p) => (
               <PlanSection
                 key={p.plan_id} plan={p} info={plans?.[p.plan_id]} toggles={toggles} setToggles={setToggles}
-                view={view} onZoomTo={onZoomTo} onShow={onShow} onFly={onFly}
+                view={view} onZoomTo={onZoomTo} onShow={onShow} onFly={onFly} hasRoads={!!roads[p.plan_id]}
               />
             ))}
           </div>
@@ -685,7 +700,13 @@ function coverageLine(a: AuthorityInfo): string {
 
 /** Parcel-card section: the coverage line, then every plan hit grouped per plan with its own
  * status, condition, warnings and markers; facts only. */
-export function PlanningCardSection({ result }: { result: ZonesAtResult | "loading" | { error: string } }) {
+export function PlanningCardSection({
+  result, declaredWidth, onDeclareWidth,
+}: {
+  result: ZonesAtResult | "loading" | { error: string };
+  declaredWidth?: number | null; // 1.20: the width the user entered for this parcel's road
+  onDeclareWidth?: (w: number | null) => void;
+}) {
   const [auth, setAuth] = useState<AuthorityInfo | null>(null);
   const p = typeof result === "object" && "parcel" in result ? (result.parcel as unknown as Record<string, string>) : null;
   const key = p ? `${p.dist}/${p.taluk}/${p.hobli}/${p.vlg}` : "";
@@ -789,6 +810,105 @@ export function PlanningCardSection({ result }: { result: ZonesAtResult | "loadi
         </div>
       )}
       {result.note && <div style={{ color: "#7B8F83", fontSize: 10, marginTop: 5 }}>{result.note}</div>}
+      {result.abutting_roads && (
+        <RoadsCardSection roads={result.abutting_roads} declared={declaredWidth ?? null} onDeclare={onDeclareWidth} />
+      )}
+    </div>
+  );
+}
+
+const USED_SOURCE: Record<string, string> = {
+  declared: "your measured width",
+  estimate: "estimated from the cadastral map",
+  none: "unknown",
+};
+
+/** 1.20: the plan roads the parcel fronts. Plan ROW and widening are what the plan draws; the
+ * existing width (estimate, or the width the user enters) picks the Zonal Regulations rows.
+ * Conditional wording only: nothing here says what may be built. */
+function RoadsCardSection({
+  roads, declared, onDeclare,
+}: {
+  roads: AbuttingRoad[];
+  declared: number | null;
+  onDeclare?: (w: number | null) => void;
+}) {
+  const [draft, setDraft] = useState(declared != null ? String(declared) : "");
+  useEffect(() => { setDraft(declared != null ? String(declared) : ""); }, [declared]);
+  const submit = () => {
+    const v = Number(draft);
+    onDeclare?.(draft.trim() === "" || !(v > 0 && v <= 120) ? null : v);
+  };
+  return (
+    <div data-testid="roads-section" style={{ fontSize: 11, marginTop: 8, borderTop: "1px solid #E8EEE4", paddingTop: 6 }}>
+      <div style={{ fontWeight: 800, fontSize: 12, color: "#306223", marginBottom: 3 }}>Roads</div>
+      {roads.length === 0 && <div style={{ color: "#7B8F83" }}>No plan road within 15 m of this parcel on the road layers loaded.</div>}
+      {roads.map((r, k) => {
+        const est = r.existing_width;
+        const far = r.zr_rules.filter((z) => z.table === "Table 4");
+        const other = r.zr_rules.filter((z) => z.table !== "Table 4");
+        return (
+          <div key={`${r.plan_id}-${r.row_m}-${r.status}-${k}`} style={{ marginBottom: 6 }}>
+            <div>
+              <span style={{ fontWeight: 700 }}>
+                {k === 0 ? "Fronts" : "Also near"} {r.road_name ?? "a plan road"}
+              </span>
+              {r.status === "existing_drawn" ? (
+                <>{": "}existing road the plan draws about {r.row_m} m wide (no width label; {r.plan_confidence}).</>
+              ) : (
+                <>
+                  {": "}plan shows ROW {r.row_m} m ({r.status_text.charAt(0).toLowerCase() + r.status_text.slice(1)}; width from{" "}
+                  {r.width_source === "label_and_drawn" ? "label and drawn lines" : r.width_source === "legend" ? "the sheet legend" : r.width_source === "drawn" ? "drawn lines" : "label"},{" "}
+                  {r.plan_confidence}).
+                </>
+              )}
+            </div>
+            <div style={{ color: "#5B6B60" }}>
+              Frontage about {r.frontage_m.toFixed(0)} m{r.distance_m > 0 ? `, ${r.distance_m.toFixed(0)} m from the ROW` : ""}.
+              {r.widening_area_sqm >= 1 && <> About <b>{r.widening_area_sqm.toFixed(0)} m²</b> of the parcel lies inside the plan ROW (possible widening dedication).</>}
+            </div>
+            <div>
+              Existing width:{" "}
+              {r.width_used_m != null
+                ? <><b>{r.width_used_m.toFixed(1)} m</b> ({r.width_used_source === "estimate" && est ? `${est.method === "plan_drawn" ? "as drawn on the plan" : "estimated from the cadastral map"}, ${est.confidence}` : USED_SOURCE[r.width_used_source]})</>
+                : est
+                  ? <><span style={{ color: "#9A4F00" }}>not confirmed</span> (≈ {est.value_m.toFixed(1)} m {est.method === "plan_drawn" ? "as drawn on the plan" : "from the cadastral map"}, LOW: shown, not used)</>
+                  : <span style={{ color: "#9A4F00" }}>not known</span>}
+              {r.tier && <> · ZR band {ROAD_BAND_LABEL[r.tier]}</>}
+            </div>
+            {k === 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, margin: "3px 0" }}>
+                <label htmlFor="road-width-input" style={{ color: "#3A3F3B" }}>Actual width (m)</label>
+                <input
+                  id="road-width-input" type="number" min={1} max={120} step={0.5} value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+                  style={{ width: 56, fontSize: 11, padding: "1px 3px" }}
+                />
+                <button onClick={submit} style={{ fontSize: 10, border: "1px solid #CFD6C4", borderRadius: 4, background: "#FDFCFB", padding: "1px 6px", cursor: "pointer" }}>Use</button>
+                {declared != null && (
+                  <button onClick={() => onDeclare?.(null)} style={{ fontSize: 10, border: "none", background: "transparent", color: "#5B6B60", cursor: "pointer", textDecoration: "underline" }}>clear</button>
+                )}
+              </div>
+            )}
+            {far.length > 0 && (
+              <div style={{ color: "#3A3F3B" }}>
+                ZR Table 4 (p. {far[0].printed_page}), max FAR at this width:{" "}
+                {far.map((z) => `${z.use.split(",")[0]} ${z.value}`).join(" · ")}
+              </div>
+            )}
+            {other.map((z) => (
+              <div key={`${z.table}-${z.use}-${z.rule}`} style={{ color: "#3A3F3B" }}>
+                ZR {z.table} (p. {z.printed_page}), {z.use}: {z.rule}: {z.value}
+              </div>
+            ))}
+            {r.warnings.map((w) => <div key={w} style={{ color: "#9A4F00", fontSize: 10 }}>{w}</div>)}
+          </div>
+        );
+      })}
+      <div style={{ color: "#7B8F83", fontSize: 10 }}>
+        Plan roads: what the plan draws; the authority decides on the existing width. Check on site.
+      </div>
     </div>
   );
 }
@@ -889,8 +1009,9 @@ export const CLASS_MEANING: Record<string, string> = {
 /** Floating legend (bottom-left): every colour of the plans switched on, with the plan's own
  * label and what it means, plus the keys for unconfirmed placement and uncoloured areas. */
 export function PlanningLegendCard({
-  toggles, view, plans,
+  toggles, view, plans, roadsOn = false,
 }: {
+  roadsOn?: boolean; // a plan road layer is on (1.20)
   toggles: PlanningToggles;
   view: PlanningView | null;
   plans: Record<string, PlanInfo> | null;
@@ -938,6 +1059,24 @@ export function PlanningLegendCard({
               </div>
             );
           })}
+          {roadsOn && (
+            <div style={{ borderTop: "1px solid #E8EEE4", paddingTop: 5, marginBottom: 6 }}>
+              <div style={{ fontWeight: 800, marginBottom: 3 }}>Plan roads: right of way (ROW)</div>
+              {ROAD_CLASSES.map((c) => (
+                <div key={c.label} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                  <span style={{ width: 14, height: 8, background: c.colour, opacity: 0.6, border: `1px solid ${c.colour}`, flexShrink: 0 }} />
+                  <span>{c.label}</span>
+                </div>
+              ))}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                <span style={{ width: 14, height: 8, border: "1.5px dashed #5B6B60", flexShrink: 0 }} />
+                <span>Dashed: proposed road. Lighter fill: existing road whose ROW the plan states. Thin pale: existing road without a width label, width as drawn (≈)</span>
+              </div>
+              <div style={{ color: "#5B6B60", marginTop: 3, fontSize: 10 }}>
+                Corridors are the plan&apos;s ROW, drawn to scale (width labels from zoom 15). They show what the plan draws, not today&apos;s width.
+              </div>
+            </div>
+          )}
           <div style={{ borderTop: "1px solid #E8EEE4", paddingTop: 5, color: "#5B6B60" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
               <span style={{ width: 14, height: 11, background: "#FFFFFF", border: "1px dashed #9E9E9E", flexShrink: 0 }} />

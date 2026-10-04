@@ -65,6 +65,7 @@ class Store:
     authorities: dict[str, dict] = field(default_factory=dict)
     sources_checked: list[dict] = field(default_factory=list)
     od: object | None = None  # app.services.ondemand.OnDemand
+    roads: object | None = None  # app.services.roads.RoadStore (contract 1.20)
     villages: object | None = (
         None  # app.services.villages.VillageIndex (point -> village)
     )
@@ -201,6 +202,14 @@ def load_store() -> Store:
 
     st.villages = VillageIndex(
         [k[:3] for k in st.authority],
+        os.getenv("CADASTRAL_URL", "http://localhost:8011"),
+    )
+    from app.services.roads import RoadStore
+
+    st.roads = RoadStore(
+        os.getenv("PLANNING_ROADS_SOURCE") or None,
+        reg,
+        st.docs,
         os.getenv("CADASTRAL_URL", "http://localhost:8011"),
     )
     index = os.getenv("PLANNING_LAYER_INDEX", os.path.join(reg, "layer_index.json"))

@@ -134,16 +134,22 @@ async def get_zones_at(
     hobli: str = Query(...),
     vlg: str = Query(...),
     survey: str = Query(...),
+    road_width_m: float | None = Query(None, gt=0, le=120),
     authorization: str | None = Header(default=None),
 ) -> dict:
     _require_flag()
     fc = await zs.fetch_parcel(dist, taluk, hobli, vlg, survey, authorization)
     q = {"dist": dist, "taluk": taluk, "hobli": hobli, "vlg": vlg, "survey": survey}
     # merging sheets is CPU work: off the event loop, so other requests are not held up
-    return await run_in_threadpool(_zones_at, fc, q)
+    return await run_in_threadpool(_zones_at, fc, q, road_width_m, authorization)
 
 
-def _zones_at(fc: dict, q: dict) -> dict:
+def _zones_at(
+    fc: dict,
+    q: dict,
+    road_width_m: float | None = None,
+    authorization: str | None = None,
+) -> dict:
     st = get_store()
     if st.od is not None:
         window = zs.parcel_geometry(fc)[0].buffer(WINDOW_M).envelope
@@ -151,7 +157,15 @@ def _zones_at(fc: dict, q: dict) -> dict:
             if _plan_enabled(plan_id):
                 st.od.premerge(plan_id, window)  # worker merge, outside COMPUTE
     with COMPUTE, memtrace(f"/zones/at {q}"):
-        return _zones_at_locked(fc, q)
+        res = _zones_at_locked(fc, q)
+    # 1.20: plan roads (outside COMPUTE: the road estimate reads the village's parcels)
+    res["abutting_roads"] = None
+    if "feature.planning.roads" in _flags() and st.roads is not None:
+        parcel = zs.parcel_geometry(fc)[0]
+        res["abutting_roads"] = st.roads.abutting(
+            parcel, q, road_width_m, authorization
+        )
+    return res
 
 
 def _zones_at_locked(fc: dict, q: dict) -> dict:

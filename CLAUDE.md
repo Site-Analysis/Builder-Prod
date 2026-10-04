@@ -28,7 +28,7 @@ apps/web/.env.example      Frontend env
 | Feature | Branch | Status | Phases |
 |---------|--------|--------|--------|
 | Karnataka Cadastral Explorer | `Cadestral` | Complete | 1A (scaffold), 1B (backend), 1D (search + click) |
-| 2031 planning layers (BDA, Hoskote, Anekal) | `feat/planning-2031-phase0` | In review (draft PR #20) | on-demand layer index (contract 1.19), pre-drawn map tiles in Supabase Storage, side panel + area picker + legend card; setup in README "2031 planning layers — Setup" |
+| 2031 planning layers (BDA, Hoskote, Anekal) | `feat/planning-2031-phase0` | In review (draft PR #20) | on-demand layer index (contract 1.19), pre-drawn map tiles in Supabase Storage, side panel + area picker + legend card; plan roads for Anekal, Hoskote, BDA (contract 1.21: ROW corridors on the map, `abutting_roads` on the parcel card); setup in README "2031 planning layers — Setup" |
 
 Phase 1C (CockroachDB) was cancelled — filesystem + SQLite approach used instead.
 

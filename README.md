@@ -129,13 +129,17 @@ The map shows the 2031 master-plan zones of BDA (RMP 2031, draft), Hoskote and A
 - a side panel with plan switches, opacity, legend and sources;
 - an area / sub-area picker in the toolbar;
 - a zone legend card;
-- the plans that touch the parcel, on the parcel card.
+- the plans that touch the parcel, on the parcel card;
+- plan roads for Anekal (Mobility Plan), Hoskote (Master Plan atlas) and BDA (RMP 2031 composite): ROW corridors with width labels
+  ("Roads (plan ROW)" under the plan), and a Roads section on the parcel card (plan ROW, area
+  inside the ROW, existing width, Zonal Regulations rows for that width).
 
 **No plan data is stored in the repo or on disk.**
 
 | Part | Where it comes from |
 |---|---|
 | Map zones | Pre-drawn raster tiles (PMTiles) in the public Supabase Storage bucket `planning-tiles`, read by the browser. Built once by `infra/scripts/planning/build_tiles.py` |
+| Plan roads | A GeoJSON per plan in the same bucket (`roads/…`, listed under `roads` in `manifest.json`), read by the browser (map) and by the planning service into memory (parcel answers). Built once by `infra/scripts/planning/build_roads.py --publish` |
 | Parcel answers (`/zones/at`, `/authority`) | The planning service (port 8012). It downloads the plan sheets listed in `infra/planning/layer_index.json` on demand, extracts them in a memory-capped worker, keeps the result in RAM, and deletes the download. See `infra/planning/LAYER_INDEX.md` |
 
 ### 1. Python environments
@@ -156,6 +160,7 @@ cd ../../infra/scripts/planning && python3.12 -m venv .venv
 NEXT_PUBLIC_PLANNING_API_URL=http://localhost:8012
 NEXT_PUBLIC_ENABLE_PLANNING_LAYERS=1
 NEXT_PUBLIC_PLANNING_PREBUILT_TILES=1
+NEXT_PUBLIC_PLANNING_ROADS=1
 ```
 
 `NEXT_PUBLIC_SUPABASE_URL` must point to the Supabase project that holds the `planning-tiles` bucket. The tiles are
@@ -165,7 +170,9 @@ public, so the browser needs no key.
 
 ```powershell
 cd services/planning
-$env:FLAGS = "feature.planning.layers feature.planning.coverage-layer feature.planning.plan.BDA-RMP2031 feature.planning.plan.BMRDA-HSK-MP2031 feature.planning.plan.BMRDA-ANK-MP2031"
+$env:FLAGS = "feature.planning.layers feature.planning.coverage-layer feature.planning.roads feature.planning.plan.BDA-RMP2031 feature.planning.plan.BMRDA-HSK-MP2031 feature.planning.plan.BMRDA-ANK-MP2031"
+# plan roads for the parcel card: the published manifest of your Supabase project
+$env:PLANNING_ROADS_SOURCE = "https://<project>.supabase.co/storage/v1/object/public/planning-tiles/manifest.json"
 $env:PLANNING_REGISTER_DIR = "..\..\infra\planning"
 $env:PLANNING_WORKER_PYTHON = "..\..\infra\scripts\planning\.venv\Scripts\python.exe"
 $env:CADASTRAL_URL = "http://127.0.0.1:8011"
@@ -189,9 +196,16 @@ curl http://127.0.0.1:8012/health          # {"status":"ok","service":"planning"
 services/planning/.venv/Scripts/python -m pytest tests/planning_smoke.py
 ```
 
-Open `http://localhost:3000/dashboard` and open a project:
+Open `http://localhost:3000/dashboard` and open a project. The first header row, **Choose which
+analysis:**, switches between **Cadastral** (land-records toolbar) and **Zones** (2031 plans: place
+search, plan area / sub-area, roads, "Parcels here"; the 2031 side panel, legend and parcel-card
+sections show in Zones). Place search uses OpenStreetMap geocoding (Photon, Nominatim fallback;
+no key), plan sub-areas first.
 - toolbar: **2031 plan area**, then **Sub-area**; the map flies there and draws the zones;
-- or the right panel **2031 plan layers**: switching a plan on zooms to it.
+- or the right panel **2031 plan layers**: switching a plan on zooms to it;
+- **Roads (plan ROW)** under Anekal: corridors from zoom 12, width labels from zoom 15, click a
+  corridor for what the plan says; click a parcel for its Roads section (enter the measured road
+  width to see the Zonal Regulations rows for it).
 
 ### Re-drawing the map tiles (after a plan is re-indexed)
 
@@ -205,6 +219,24 @@ infra/scripts/planning/.venv/Scripts/python infra/scripts/planning/build_tiles.p
 - It uploads one file per plan plus `manifest.json`; the map picks the new tiles up within a minute.
 - It needs the planning service running (for `/plans`).
 - Downloads go to the temp folder and are deleted afterwards.
+
+### Re-building the plan roads
+
+```powershell
+# cadastral service on :8011 (the sheets are placed on the cadastral parcel edges)
+infra\scripts\planning\.venv\Scripts\python.exe infra\scripts\planning\build_roads.py `
+  --geojson $env:TEMP\qnit_planning\roads_out --publish
+```
+
+- About 45 min (most of it the OSM check on Overpass); `--no-osm` keeps the previous OSM result.
+- Writes the QA summary to `infra/planning/layer_index.json` (`roads`, text only) and uploads the
+  roads file plus `manifest.json` (key from `apps/web/.env.local`, never printed). Delete the
+  `roads_out` temp folder afterwards.
+- Hoskote: `build_roads_atlas.py --plan BMRDA-HSK-MP2031 --geojson <temp dir> --publish` (~10 min;
+  the 175 MB atlas is downloaded to temp; `--local` reuses a copy, sha256 checked).
+- BDA: `build_roads_bda.py --geojson <temp dir> --publish` (~1 min).
+- Files are uploaded gzip (`.geojson.gz`). Details and QA: `docs/plans/roads-2031-qa.md`,
+  `docs/plans/anekal-2031-qa.md` §8, open-decisions #72-#81.
 
 ---
 

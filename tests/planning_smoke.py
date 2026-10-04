@@ -25,6 +25,7 @@ Requires: cd services/planning && pip install -r requirements.txt
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import os
@@ -57,6 +58,7 @@ if not _HAS_GEOPANDAS:
 
 from fastapi.testclient import TestClient  # noqa: E402
 from pyproj import Transformer  # noqa: E402
+import shapely  # noqa: E402
 from shapely.geometry import box, mapping  # noqa: E402
 from shapely.ops import transform  # noqa: E402
 
@@ -601,3 +603,143 @@ def test_t2_coverage_flag(client_layers_only):
     r = client_layers_only.get("/coverage?bbox=77.40,12.80,77.62,13.00")
     assert r.status_code == 403
 
+
+def _road_fixture() -> Path:
+    """A manifest with one plan road: an 18 m ROW (to be widened) running east-west 5 m
+    north of the test parcel's top edge, so 4 m of the parcel lies inside the ROW."""
+    from shapely.geometry import LineString
+
+    line = LineString([(_E + 300, _N + 465), (_E + 560, _N + 465)])
+    corr = line.buffer(9.0, cap_style="flat")
+    small = LineString([(_E + 395, _N + 440), (_E + 395, _N + 500)])
+    small_props = {
+        "rid": 2,
+        "row_m": 9.0,
+        "status": "existing_drawn",
+        "width_source": "drawn_band",
+        "confidence": "MEDIUM",
+        "road_name": None,
+        "drawn_band_m": 9.0,
+    }
+    props = {
+        "rid": 1,
+        "row_m": 18.0,
+        "status": "to_be_widened",
+        "width_source": "label_and_drawn",
+        "confidence": "HIGH",
+        "road_name": None,
+    }
+    fc = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": mapping(transform(_TO_WGS, line)),
+                "properties": {**props, "part": "centreline"},
+            },
+            {
+                "type": "Feature",
+                "geometry": mapping(transform(_TO_WGS, corr)),
+                "properties": {**props, "part": "corridor"},
+            },
+            # 1.21: a drawn-only existing road (9 m band) along the parcel's west edge
+            {
+                "type": "Feature",
+                "geometry": mapping(transform(_TO_WGS, small)),
+                "properties": {**small_props, "part": "centreline"},
+            },
+            {
+                "type": "Feature",
+                "geometry": mapping(transform(_TO_WGS, small.buffer(4.5, cap_style="flat"))),
+                "properties": {**small_props, "part": "corridor"},
+            },
+        ],
+    }
+    _TMP.mkdir(parents=True, exist_ok=True)
+    # published roads files are gzip (1.21)
+    (_TMP / "roads.geojson.gz").write_bytes(gzip.compress(json.dumps(fc).encode()))
+    man = {
+        "roads": {
+            "BMRDA-ANK-MP2031": {
+                "url": (_TMP / "roads.geojson.gz").as_uri(),
+                "doc_id": "BMRDA-ANK-MP2031-MOB-10K",
+            }
+        }
+    }
+    (_TMP / "manifest.json").write_text(json.dumps(man))
+    return _TMP / "manifest.json"
+
+
+@pytest.fixture
+def client_roads(monkeypatch):
+    monkeypatch.setenv("PLANNING_ROADS_SOURCE", str(_road_fixture()))
+    c, app = _make_client(monkeypatch, _FLAGS + " feature.planning.roads")
+    from app.services import roads as rd
+
+    # the village map either side of the road: the parcel (top edge N+460) and one parcel
+    # across the road (bottom edge N+472): a 12 m gap
+    village = [
+        box(_E + 400, _N + 400, _E + 460, _N + 460),
+        box(_E + 380, _N + 472, _E + 480, _N + 520),
+    ]
+    monkeypatch.setattr(
+        rd.RoadStore,
+        "village_parcels",
+        lambda self, q, auth, parcel=None: (village, shapely.STRtree(village)),
+    )
+    yield c
+    app.dependency_overrides.clear()
+
+
+def test_u_roads_flag_off(client, monkeypatch):
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 400, _N + 400, _E + 460, _N + 460))
+    r = client.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1")
+    assert r.status_code == 200
+    assert r.json()["abutting_roads"] is None
+
+
+def test_v_abutting_roads(client_roads, monkeypatch):
+    _stub_parcel(monkeypatch, _parcel_fc(_E + 400, _N + 400, _E + 460, _N + 460))
+    r = client_roads.get("/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1")
+    assert r.status_code == 200
+    roads = r.json()["abutting_roads"]
+    assert len(roads) == 2
+    rd = roads[0]
+    small = roads[1]
+    assert small["status"] == "existing_drawn" and small["row_m"] == 9.0
+    assert small["width_source"] == "drawn_band" and small["drawn_band_m"] == 9.0
+    assert small["existing_width"]["method"] == "plan_drawn"
+    # the drawn band is shown (LOW), not used for the Zonal Regulations rows (#78)
+    assert small["existing_width"]["confidence"] == "LOW"
+    assert small["tier"] is None and small["width_used_source"] == "none"
+    assert not any("inside the plan ROW" in w for w in small["warnings"])
+    assert rd["row_m"] == 18.0 and rd["status"] == "to_be_widened"
+    assert rd["doc_status"] == "reference"  # plan_docs.csv: the Mobility Plan
+    assert abs(rd["widening_area_sqm"] - 240.0) < 2.0  # 60 m x 4 m inside the ROW
+    assert rd["frontage_m"] >= 60.0
+    est = rd["existing_width"]
+    assert est["method"] == "cadastral_gap" and abs(est["value_m"] - 12.0) < 0.6
+    assert est["confidence"] == "MEDIUM" and est["tier"] == "over_9_to_12"
+    assert rd["width_used_source"] == "estimate" and rd["tier"] == "over_9_to_12"
+    far = {(z["table"], z["use"]): z["value"] for z in rd["zr_rules"]}
+    assert far[("Table 4", "Residential")] == "1.75"
+    assert all(z["pdf_page"] and z["printed_page"] for z in rd["zr_rules"])
+    assert any("wider than the existing width" in w for w in rd["warnings"])
+    assert any("inside the plan ROW" in w for w in rd["warnings"])
+    # a declared width replaces the estimate's band; two bands away -> warning
+    r2 = client_roads.get(
+        "/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1&road_width_m=20"
+    )
+    rd2 = r2.json()["abutting_roads"][0]
+    assert rd2["declared_width_m"] == 20.0 and rd2["width_used_source"] == "declared"
+    assert rd2["tier"] == "over_18_to_24"
+    far2 = {(z["table"], z["use"]): z["value"] for z in rd2["zr_rules"]}
+    assert far2[("Table 4", "Residential")] == "2.25"
+    assert any("more than one band" in w for w in rd2["warnings"])
+    assert not any("wider than the existing width" in w for w in rd2["warnings"])
+    assert (
+        client_roads.get(
+            "/zones/at?dist=1&taluk=1&hobli=1&vlg=1&survey=1&road_width_m=0"
+        ).status_code
+        == 422
+    )

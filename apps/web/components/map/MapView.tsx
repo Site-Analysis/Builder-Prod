@@ -16,12 +16,15 @@ import {
 } from "@/lib/api/cadastral_records";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { isEnabled } from "@/lib/flags";
-import { fetchZonesAt, type ZonesAtResult } from "@/lib/api/planning";
+import { fetchVillageAt, fetchZonesAt, type ZonesAtResult } from "@/lib/api/planning";
 import {
-  PlanningAreaPicker, PlanningCardSection, PlanningLegendCard, PlanningMapLayers, PlanningPanel, type PlanningToggles, type PlanningView,
+  PlanningCardSection, PlanningLegendCard, PlanningMapLayers, PlanningPanel, type PlanningToggles, type PlanningView,
   effectiveToggles, loadPlanningToggles, savePlanningToggles, usePlanningPlans,
 } from "./PlanningLayers";
-import { usePrebuiltManifest } from "./PrebuiltPlanLayers";
+import { usePrebuiltManifest, usePrebuiltRoads } from "./PrebuiltPlanLayers";
+import { PlanRoadsLayer } from "./PlanRoadsLayer";
+import { AnalysisModeBar, loadAnalysisMode, saveAnalysisMode, type AnalysisMode } from "./AnalysisModeBar";
+import { ZonesToolbar } from "./ZonesToolbar";
 import "leaflet/dist/leaflet.css";
 
 // Build step 1.4 — RMP 2031 (Draft) planning layers; with the flag off nothing below renders.
@@ -295,6 +298,30 @@ const TILES = {
 
 interface VillageCoords { dist: string; taluk: string; hobli: string; vlg: string; }
 
+
+// 1.20: the road width a user entered per parcel ("dist/taluk/hobli/vlg/survey" -> m), kept in
+// this browser only (a convenience; the answer is re-asked with it)
+const ROAD_WIDTH_STORE = "planning.roadWidth.v1";
+function loadRoadWidth(key: string): number | null {
+  try {
+    const m = JSON.parse(window.localStorage.getItem(ROAD_WIDTH_STORE) ?? "{}") as Record<string, number>;
+    const v = m[key];
+    return typeof v === "number" && v > 0 && v <= 120 ? v : null;
+  } catch {
+    return null;
+  }
+}
+function saveRoadWidth(key: string, w: number | null): void {
+  try {
+    const m = JSON.parse(window.localStorage.getItem(ROAD_WIDTH_STORE) ?? "{}") as Record<string, number>;
+    if (w == null) delete m[key];
+    else m[key] = w;
+    window.localStorage.setItem(ROAD_WIDTH_STORE, JSON.stringify(m));
+  } catch {
+    // storage blocked: the width still applies to this answer
+  }
+}
+
 export function MapView() {
   const [parcelFc, setParcelFc]             = useState<GeoJSON.FeatureCollection | null>(null);
   const [loadKey, setLoadKey]               = useState(0);
@@ -316,10 +343,35 @@ export function MapView() {
   const [planningStatus, setPlanningStatus]         = useState("");
   const [zonesAt, setZonesAt]                       = useState<ZonesAtResult | "loading" | { error: string } | null>(null);
   const zonesAtReq    = useRef(0);
+  // which analysis the header is for: Cadastral (land records) or Zones (2031 plans, US-02)
+  const [mode, setModeState] = useState<AnalysisMode>("cadastral");
+  useEffect(() => { if (PLANNING) setModeState(loadAnalysisMode()); }, []);
+  const setMode = (m: AnalysisMode) => { setModeState(m); saveAnalysisMode(m); };
+  const ZONES = PLANNING && mode === "zones";
+  const [parcelsStatus, setParcelsStatus] = useState("");
+  // 1.20: the road width the user entered for a parcel (browser storage, per parcel)
+  const [declaredWidth, setDeclaredWidth] = useState<number | null>(null);
+  const zonesAtParcel = useRef<[string, string, string, string, string] | null>(null);
   const planningShown = effectiveToggles(planningToggles);
   const [planningView, setPlanningView]             = useState<PlanningView | null>(null);
-  const planningPlans = usePlanningPlans(PLANNING && (planningToggles.open || planningShown.zones));
+  const planningPlans = usePlanningPlans(ZONES);
   const prebuiltPlans = usePrebuiltManifest();
+  const prebuiltRoads = usePrebuiltRoads();
+  const roadsOn = Object.keys(planningShown.plans).filter((id) => planningShown.plans[id] && planningShown.roads?.[id] && prebuiltRoads[id]);
+  const loadZonesAt = (k: [string, string, string, string, string], width: number | null) => {
+    const req = ++zonesAtReq.current;
+    setZonesAt("loading");
+    fetchZonesAt(k[0], k[1], k[2], k[3], k[4], width)
+      .then((r) => { if (req === zonesAtReq.current) setZonesAt(r); })
+      .catch((e: Error) => { if (req === zonesAtReq.current) setZonesAt({ error: e.message }); });
+  };
+  const declareWidth = (w: number | null) => {
+    const k = zonesAtParcel.current;
+    if (!k) return;
+    saveRoadWidth(k.join("/"), w);
+    setDeclaredWidth(w);
+    loadZonesAt(k, w);
+  };
   useEffect(() => { if (PLANNING) savePlanningToggles(planningToggles); }, [planningToggles]);
   const mapRef        = useRef<LeafletMap | null>(null);
   // 2031 plan navigation: fit a plan, bring it into view only when needed, fly to a sub-area
@@ -408,6 +460,37 @@ export function MapView() {
     setTimeout(() => setAutoSelect({ dist, taluk, hobli, vlg }), 0);
   }
 
+  async function loadParcelsHere() {
+    const c = mapRef.current?.getCenter();
+    if (!c) return;
+    setParcelsStatus("Finding the village…");
+    const near = await fetchNearbyBoundaries(c.lat, c.lng, 5);
+    const hit = near?.features.find((f) => f.properties?.has_data && f.properties?.dist);
+    let key = hit?.properties as Record<string, string> | undefined;
+    let name = String(key?.village_name ?? "");
+    if (!key) {
+      // fallback: the planning service's point -> village index (cadastral village outlines)
+      const vs = await fetchVillageAt(c.lat, c.lng).then((r) => r.village_summary).catch(() => null);
+      if (vs) { key = { dist: vs.dist, taluk: vs.taluk, hobli: vs.hobli, vlg: vs.vlg }; name = vs.village_name ?? ""; }
+    }
+    if (!key) {
+      setParcelsStatus("No village found here yet (the village index loads on first use, a few minutes): try again shortly");
+      return;
+    }
+    const { dist, taluk, hobli, vlg } = key;
+    setParcelsStatus("Loading parcels…");
+    const fc = await fetchParcelData(dist, taluk, hobli, vlg);
+    if (!fc) { setParcelsStatus("Parcels unavailable"); return; }
+    setParcelFc(fc);
+    setLoadKey((k) => k + 1);
+    setClickedParcelProps(null); setClickPos(null); setRtcData(null); setClickedLatLng(null); setZonesAt(null);
+    setHighlightedSurveyNo(null);
+    setLoadedVillage({ dist, taluk, hobli, vlg });
+    loadBoundaries({ dist, taluk, hobli, vlg }, showNearby);
+    setAutoSelect({ dist, taluk, hobli, vlg }); // keeps the Cadastral toolbar in step
+    setParcelsStatus(`${fc.features.length} parcels${name ? ` · ${name}` : ""}: click one for its zones and roads`);
+  }
+
   function handleHighlight(result: SearchResult) {
     setHighlightedSurveyNo(result.survey_no);
     if (mapRef.current && parcelFc) {
@@ -451,6 +534,20 @@ export function MapView() {
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {/* Cadastral toolbar sits above the map */}
+      {PLANNING && <AnalysisModeBar mode={mode} setMode={setMode} zonesAvailable={PLANNING} />}
+      {ZONES && (
+        <ZonesToolbar
+          plans={planningPlans} toggles={planningToggles} setToggles={setPlanningToggles} roads={prebuiltRoads}
+          onFit={fitPlanBox} onFly={flyToSubArea}
+          onPlace={(lat, lon, bb) => {
+            if (bb && bb[2] - bb[0] > 0.0005) mapRef.current?.fitBounds([[bb[1], bb[0]], [bb[3], bb[2]]], { padding: [40, 40], maxZoom: 16 });
+            else mapRef.current?.setView([lat, lon], 16);
+          }}
+          onParcelsHere={loadParcelsHere}
+          parcelsStatus={parcelsStatus}
+        />
+      )}
+      <div style={{ display: ZONES ? "none" : "contents" }}>
       <CadastralToolbar
         onLoad={(fc, _label, hier) => {
           setParcelFc(fc);
@@ -471,13 +568,8 @@ export function MapView() {
         autoSelect={autoSelect}
         autoStatus={autoStatus}
         loadedSurveyNos={loadedSurveyNos}
-        extra={PLANNING ? (
-          <PlanningAreaPicker
-            plans={planningPlans} toggles={planningToggles} setToggles={setPlanningToggles}
-            onFit={fitPlanBox} onFly={flyToSubArea}
-          />
-        ) : undefined}
       />
+      </div>
 
       {/* Map fills remaining height */}
       <div style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
@@ -528,13 +620,13 @@ export function MapView() {
           </div>
         </div>
 
-        {PLANNING && (
+        {ZONES && (
           <>
-            <PlanningLegendCard toggles={planningShown} view={planningView} plans={planningPlans} />
+            <PlanningLegendCard toggles={planningShown} view={planningView} plans={planningPlans} roadsOn={roadsOn.length > 0} />
             <PlanningPanel
               toggles={planningToggles} setToggles={setPlanningToggles} status={planningStatus}
               view={planningView} plans={planningPlans} isMobile={isMobile}
-              onZoomTo={fitPlanBox} onShow={showPlanBox} onFly={flyToSubArea}
+              onZoomTo={fitPlanBox} onShow={showPlanBox} onFly={flyToSubArea} roads={prebuiltRoads}
             />
           </>
         )}
@@ -548,7 +640,7 @@ export function MapView() {
             boxShadow: "0 4px 16px rgba(0,0,0,0.18)", border: "1px solid #CFD6C4",
             minWidth: 180, maxWidth: 260,
             // planning section makes the card taller: keep it inside the map and scroll
-            ...(PLANNING ? { maxHeight: `calc(100% - ${clickPos.y + 12}px)`, overflowY: "auto" as const } : {}),
+            ...(ZONES ? { maxHeight: `calc(100% - ${clickPos.y + 12}px)`, overflowY: "auto" as const } : {}),
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontWeight: 800, fontSize: 13, color: "#306223" }}>
@@ -616,7 +708,9 @@ export function MapView() {
                 )}
               </div>
             )}
-            {PLANNING && zonesAt && <PlanningCardSection result={zonesAt} />}
+            {ZONES && zonesAt && (
+              <PlanningCardSection result={zonesAt} declaredWidth={declaredWidth} onDeclareWidth={declareWidth} />
+            )}
           </div>
         )}
         <MapContainer
@@ -642,7 +736,8 @@ export function MapView() {
               fillOpacity={0.10}
             />
           )}
-          {PLANNING && (
+          {ZONES && roadsOn.map((id) => <PlanRoadsLayer key={`roads-${id}`} roads={prebuiltRoads[id]} />)}
+          {ZONES && (
             <PlanningMapLayers
               toggles={planningShown} plans={planningPlans} prebuilt={prebuiltPlans}
               onStatus={setPlanningStatus} onView={setPlanningView}
@@ -652,7 +747,7 @@ export function MapView() {
             <>
               <ParcelLayer
                 key={`${loadKey}-${planningShown.zones ? 1 : 0}`} fc={parcelFc} mapLayer={mapLayer}
-                faint={PLANNING && planningShown.zones && Object.values(planningShown.plans).some(Boolean)}
+                faint={ZONES && planningShown.zones && Object.values(planningShown.plans).some(Boolean)}
               />
               <MapClickHandler parcelFc={parcelFc} onParcelClick={(props, pos, latlng) => {
                 setClickedParcelProps(props); setClickPos(pos); setClickedLatLng(latlng);
@@ -663,15 +758,15 @@ export function MapView() {
                     String(props.village_code ?? ""), String(props.survey_no ?? ""),
                   ).then(setRtcData);
                 }
-                if (PLANNING && loadedVillage && props.survey_no) {
-                  const req = ++zonesAtReq.current;
-                  setZonesAt("loading");
-                  fetchZonesAt(
+                if (ZONES && loadedVillage && props.survey_no) {
+                  const k: [string, string, string, string, string] = [
                     loadedVillage.dist, loadedVillage.taluk, loadedVillage.hobli, loadedVillage.vlg,
                     String(props.survey_no),
-                  )
-                    .then((r) => { if (req === zonesAtReq.current) setZonesAt(r); })
-                    .catch((e: Error) => { if (req === zonesAtReq.current) setZonesAt({ error: e.message }); });
+                  ];
+                  zonesAtParcel.current = k;
+                  const w = loadRoadWidth(k.join("/"));
+                  setDeclaredWidth(w);
+                  loadZonesAt(k, w);
                 }
               }} />
               {highlightedSurveyNo && (() => {

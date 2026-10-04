@@ -75,6 +75,29 @@ is fetched into memory or the build's temp area, never kept), runs the worker fo
 are discarded), writes the rows and deletes everything. Its log is under
 `%TEMP%\qnit_planning\logs\build_index\`; read it, then delete it.
 
+### Plan roads (`"roads"`)
+
+`layer_index.json` also has a top-level `"roads"` object, one entry per plan, written by
+`infra/scripts/planning/build_roads.py` (Anekal), `build_roads_atlas.py` (Hoskote) and
+`build_roads_bda.py` (BDA); open-decisions #72-#81. It is text
+only, like the rows: source and sha256, the grid georeference (`e0`, `n0`, cell size, and
+the QA of each sheet against cadastral parcel edges), the extraction parameters, and the QA
+(label vs drawn ROW, ring-road ROW vs the Zonal Regulations, the OSM check, km by width,
+status and confidence). The service does not read it yet: zone rows are untouched and
+`build_id` is not changed.
+
+```powershell
+# cadastral service on :8011 (georeference against parcel edges); ~50 min, mostly Overpass
+infra\scripts\planning\.venv\Scripts\python.exe infra\scripts\planning\build_roads.py `
+  --spotcheck 20 --geojson $env:TEMP\qnit_planning\roads_out
+```
+
+`--geojson` writes the features (WGS84) to that temp folder; with `--publish` they are uploaded
+to the `planning-tiles` bucket and listed under `roads` in `manifest.json` (the map and the
+service's `abutting_roads` read them there). Read the spot-check sheet, then delete the folder. `--fit E0,N0` skips the
+village-name seed, `--no-osm` the OSM check, `--pages` runs a test on a few sheets (no index
+write).
+
 ### When a source changes
 
 The service reports the sheet as `source_changed` (the map says "Source changed; needs

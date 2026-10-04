@@ -237,7 +237,59 @@ export interface ZonesAtResult {
   pending_sheets?: PendingSheet[];
   village_summary?: VillageSummary | null; // 1.18
   disagreement_note?: string | null; // 1.18
+  abutting_roads?: AbuttingRoad[] | null; // 1.20 (null: feature.planning.roads off)
 }
+
+export type RoadBand = "upto_9" | "over_9_to_12" | "over_12_to_18" | "over_18_to_24" | "over_24";
+
+/** Existing width from the cadastral gap across the road (1.20). */
+export interface ExistingWidthEstimate {
+  value_m: number;
+  tier: RoadBand;
+  method: "cadastral_gap" | "plan_drawn"; // plan_drawn: grey band on the plan (1.21)
+  confidence: "MEDIUM" | "LOW";
+  samples: number;
+  iqr_m?: number[] | null;
+  note: string;
+}
+
+/** A Zonal Regulations row keyed on road width, with its page (1.20). */
+export interface ZrRoadRule {
+  doc_id: string; table: string; use: string; rule: string; value: string;
+  pdf_page: number; printed_page: number;
+}
+
+/** A plan road next to the parcel (1.20). */
+export interface AbuttingRoad {
+  plan_id: string;
+  doc_id: string;
+  doc_status: "final" | "draft" | "superseded" | "reference";
+  road_name: string | null;
+  row_m: number;
+  status: "to_be_widened" | "proposed" | "existing_row_stated" | "ring_proposed" | "existing_drawn" | "plan_row_stated";
+  status_text: string;
+  width_source: "label_and_drawn" | "label" | "drawn" | "legend" | "drawn_band";
+  drawn_band_m?: number | null; // 1.21: existing road as drawn on the plan
+  plan_confidence: "HIGH" | "MEDIUM" | "LOW";
+  distance_m: number;
+  frontage_m: number;
+  widening_area_sqm: number;
+  existing_width: ExistingWidthEstimate | null;
+  declared_width_m: number | null;
+  width_used_m: number | null;
+  width_used_source: "declared" | "estimate" | "none";
+  tier: RoadBand | null;
+  zr_rules: ZrRoadRule[];
+  warnings: string[];
+}
+
+export const ROAD_BAND_LABEL: Record<RoadBand, string> = {
+  upto_9: "up to 9 m",
+  over_9_to_12: "over 9 to 12 m",
+  over_12_to_18: "over 12 to 18 m",
+  over_18_to_24: "over 18 to 24 m",
+  over_24: "over 24 m",
+};
 
 export type PlanCoverage =
   | "plan_loaded" | "plan_registered_not_loaded" | "lpa_no_zone_map"
@@ -288,10 +340,19 @@ export function fetchOverlays(bbox: Bbox, kind: OverlayKind, simplify: SimplifyM
 
 export function fetchZonesAt(
   dist: string, taluk: string, hobli: string, vlg: string, survey: string,
+  roadWidthM?: number | null, // 1.20: the user's measured width of the road the parcel fronts
   signal?: AbortSignal,
 ): Promise<ZonesAtResult> {
   const q = new URLSearchParams({ dist, taluk, hobli, vlg, survey });
+  if (roadWidthM && roadWidthM > 0) q.set("road_width_m", String(roadWidthM));
   return get<ZonesAtResult>(`/zones/at?${q.toString()}`, signal);
+}
+
+/** The village (and authority) at a point; `village_summary` is null until the service's
+ * village outlines have loaded (they start on the first point query, a few minutes). */
+export function fetchVillageAt(lat: number, lng: number, signal?: AbortSignal) {
+  const q = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+  return get<{ village_summary?: VillageSummary | null }>(`/authority?${q.toString()}`, signal);
 }
 
 export function fetchVillageAuthority(dist: string, taluk: string, hobli: string, vlg: string, signal?: AbortSignal) {

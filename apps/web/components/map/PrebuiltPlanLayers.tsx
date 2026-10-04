@@ -28,18 +28,53 @@ export type PrebuiltManifest = Record<string, PrebuiltPlan>;
 export const PREBUILT_ON = process.env.NEXT_PUBLIC_PLANNING_PREBUILT_TILES === "1";
 const MANIFEST_URL = `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/planning-tiles/manifest.json`;
 
+/** Plan roads published with the tiles (contract 1.20; `manifest.roads`). */
+export interface PrebuiltRoads {
+  url: string;
+  bytes: number;
+  features: number;
+  doc_id: string;
+  doc_status: string;
+  built_at: string;
+}
+
+interface ManifestJson {
+  plans?: PrebuiltManifest;
+  roads?: Record<string, PrebuiltRoads>;
+}
+
+// one manifest request per page load, shared by every hook
+let manifestPromise: Promise<ManifestJson> | null = null;
+function loadManifest(): Promise<ManifestJson> {
+  if (!manifestPromise) {
+    // a minute-resolution cache-buster: a re-built plan shows within a minute
+    manifestPromise = fetch(`${MANIFEST_URL}?v=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}));
+  }
+  return manifestPromise;
+}
+
 /** The manifest of pre-drawn plans ({} when off or unavailable: everything stays on demand). */
 export function usePrebuiltManifest(): PrebuiltManifest {
   const [m, setM] = useState<PrebuiltManifest>({});
   useEffect(() => {
     if (!PREBUILT_ON) return;
-    const ctrl = new AbortController();
-    // a minute-resolution cache-buster: a re-built plan shows within a minute
-    fetch(`${MANIFEST_URL}?v=${Math.floor(Date.now() / 60000)}`, { signal: ctrl.signal, cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : { plans: {} }))
-      .then((j) => setM(j.plans ?? {}))
-      .catch(() => setM({}));
-    return () => ctrl.abort();
+    let live = true;
+    loadManifest().then((j) => { if (live) setM(j.plans ?? {}); });
+    return () => { live = false; };
+  }, []);
+  return m;
+}
+
+/** Plan road layers in the manifest (plan_id -> file); {} when off or none. */
+export function usePrebuiltRoads(): Record<string, PrebuiltRoads> {
+  const [m, setM] = useState<Record<string, PrebuiltRoads>>({});
+  useEffect(() => {
+    if (!PREBUILT_ON || process.env.NEXT_PUBLIC_PLANNING_ROADS !== "1") return;
+    let live = true;
+    loadManifest().then((j) => { if (live) setM(j.roads ?? {}); });
+    return () => { live = false; };
   }, []);
   return m;
 }

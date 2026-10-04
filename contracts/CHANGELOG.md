@@ -4,6 +4,38 @@ Monotonic version across all services. Each entry: version, date, service, summa
 
 ---
 
+## 1.21.0 — 2026-10-04 — planning
+
+Additive.
+- `AbuttingRoad.status` adds `existing_drawn` (an existing road the plan draws without a width
+  label; `row_m` is its width as drawn), `width_source` adds `drawn_band`, new
+  `drawn_band_m` (the existing road's grey band measured on the plan, to scale); status
+  `plan_row_stated` for roads whose plan states a ROW without saying existing or proposed.
+  Road layers: Anekal (Mobility Plan), Hoskote (Master Plan atlas), BDA (RMP 2031 composite).
+- `ExistingWidthEstimate.method` adds `plan_drawn`: for roads to be widened, existing roads
+  with a stated ROW and drawn-only roads, the existing width comes from the plan's grey band
+  (MEDIUM) before the cadastral gap. Roads files are published gzip (`.geojson.gz`).
+
+---
+
+## 1.20.0 — 2026-10-04 — planning
+
+Additive.
+- `/zones/at`: new `abutting_roads` (AbuttingRoad[], null when `feature.planning.roads` is
+  off) and optional query `road_width_m`. Each road: plan ROW and status (to be widened,
+  proposed, existing road whose ROW the plan states, ring / radial), where the width comes
+  from (label, drawn ROW edges, legend) and its confidence, distance and frontage, the parcel
+  area inside the ROW corridor (`widening_area_sqm`), an existing-width estimate from the
+  cadastral gap across the road (`existing_width`, MEDIUM / LOW), the width used (declared,
+  else estimate), its Zonal Regulations band and the ZR rows for that band (Table 4 FAR by
+  use, Table 6 group housing, Table 10A IT, with pages), and warnings (plan ROW wider than the
+  existing width, proposed road, declared width far from the estimate).
+- Roads come from pre-drawn plan road layers (first: Anekal Mobility Plan,
+  `BMRDA-ANK-MP2031-MOB-10K`, `reference`), read by the service from the published manifest
+  (`PLANNING_ROADS_SOURCE`) into memory.
+
+---
+
 ## 1.19.0 — 2026-10-03 — planning
 
 Additive.
