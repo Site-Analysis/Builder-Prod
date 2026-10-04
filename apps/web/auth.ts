@@ -36,7 +36,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Keycloak({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
+      // confidential client: the code exchange needs the secret (before this, only the
+      // token refresh above sent it, so the first login was rejected)
+      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
       issuer: `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}`,
+      checks: ["pkce", "state"],
     }),
   ],
   callbacks: {
